@@ -39,6 +39,7 @@ typedef enum opcode {
   AND,
   SUB,
   MUL,
+  DIV,
 } opcode;
 
 typedef struct inst {
@@ -59,12 +60,6 @@ inst *decode_op(uint64_t);
 
 /* exec.c */
 vm *exec_op(vm *, inst *);
-vm *exec_add(vm *, inst *);
-vm *exec_sub(vm *, inst *);
-vm *exec_mul(vm *, inst *);
-vm *exec_and(vm *, inst *);
-vm *exec_nop(vm *, inst *);
-vm *inc_ip(vm *);
 
 /* mem.c */
 void init_mem(mem *);
