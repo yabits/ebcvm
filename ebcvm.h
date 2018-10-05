@@ -53,8 +53,14 @@ typedef struct inst {
 
 /* mem.c */
 void init_mem(mem *);
-uint8_t read_mem(mem *, size_t);
-void write_mem(mem *, size_t, uint8_t);
+uint8_t read_mem8(mem *, size_t);
+uint16_t read_mem16(mem *, size_t);
+uint32_t read_mem32(mem *, size_t);
+uint64_t read_mem64(mem *, size_t);
+void write_mem8(mem *, size_t, uint8_t);
+void write_mem16(mem *, size_t, uint16_t);
+void write_mem32(mem *, size_t, uint32_t);
+void write_mem64(mem *, size_t, uint64_t);
 
 /* vm.c */
 vm *init_vm(void);
