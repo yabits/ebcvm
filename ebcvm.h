@@ -43,6 +43,8 @@ typedef enum opcode {
   AND,
   OR,
   XOR,
+  SHL,
+  SHR,
 } opcode;
 
 typedef struct inst {
