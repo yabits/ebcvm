@@ -40,6 +40,7 @@ typedef enum opcode {
   SUB,
   MUL,
   DIV,
+  MOD,
 } opcode;
 
 typedef struct inst {
