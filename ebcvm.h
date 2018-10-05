@@ -45,6 +45,8 @@ typedef enum opcode {
   XOR,
   SHL,
   SHR,
+  NEG,
+  NOT,
 } opcode;
 
 typedef struct inst {

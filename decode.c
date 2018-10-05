@@ -25,6 +25,10 @@ static opcode decode_opcode(uint8_t _opcode) {
       return SHL;
     case 0x18:
       return SHR;
+    case 0x0b:
+      return NEG;
+    case 0x0a:
+      return NOT;
     default:
       return NOP;
   }
