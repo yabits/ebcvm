@@ -23,6 +23,7 @@ static vm *exec_div(vm *, inst *);
 static vm *exec_mod(vm *, inst *);
 static vm *exec_and(vm *, inst *);
 static vm *exec_or(vm *, inst *);
+static vm *exec_xor(vm *, inst *);
 static vm *exec_nop(vm *, inst *);
 
 static op32 *read_op32(vm *_vm, inst *_inst) {
@@ -229,6 +230,30 @@ static vm *exec_or(vm *_vm, inst *_inst) {
   return _vm;
 }
 
+static vm *exec_xor(vm *_vm, inst *_inst) {
+  if (_inst->is_64op) {
+    op64 *_op64 = read_op64(_vm, _inst);
+    uint64_t op = _op64->op1 ^ _op64->op2;
+
+    if (_inst->op1_indirect)
+      write_mem64(_vm->mem, _op64->op1val, op);
+    else
+      _vm->regs->regs[_inst->operand1] = op;
+    free(_op64);
+  } else {
+    op32 *_op32 = read_op32(_vm, _inst);
+    uint32_t op  = _op32->op1 ^ _op32->op2;
+
+    if (_inst->op1_indirect)
+      write_mem32(_vm->mem, _op32->op1val, op);
+    else
+      _vm->regs->regs[_inst->operand1] = (uint64_t)0x00 << 32 & op;
+    free(_op32);
+  }
+
+  return _vm;
+}
+
 static vm *exec_nop(vm *_vm, inst *_inst) {
   /* do nothing */
   return _vm;
@@ -267,6 +292,10 @@ vm *exec_op(vm *_vm, inst *_inst) {
       break;
     case OR:
       exec_or(_vm, _inst);
+      inc_ip(_vm);
+      break;
+    case XOR:
+      exec_xor(_vm, _inst);
       inc_ip(_vm);
       break;
     default:

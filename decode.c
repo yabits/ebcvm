@@ -19,6 +19,8 @@ static opcode decode_opcode(uint8_t _opcode) {
       return AND;
     case 0x15:
       return OR;
+    case 0x16:
+      return XOR;
     default:
       return NOP;
   }
