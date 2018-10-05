@@ -36,11 +36,12 @@ typedef struct vm {
 typedef enum opcode {
   NOP = 0,
   ADD,
-  AND,
   SUB,
   MUL,
   DIV,
   MOD,
+  AND,
+  OR,
 } opcode;
 
 typedef struct inst {

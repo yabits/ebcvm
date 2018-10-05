@@ -7,8 +7,6 @@ static opcode decode_opcode(uint8_t _opcode) {
   switch (_opcode & 0x3f) {
     case 0x0c:
       return ADD;
-    case 0x14:
-      return AND;
     case 0x0d:
       return SUB;
     case 0x0e:
@@ -17,6 +15,10 @@ static opcode decode_opcode(uint8_t _opcode) {
       return DIV;
     case 0x12:
       return MOD;
+    case 0x14:
+      return AND;
+    case 0x15:
+      return OR;
     default:
       return NOP;
   }
