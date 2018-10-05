@@ -16,7 +16,7 @@ static opcode decode_opcode(uint8_t _opcode) {
     case 0x10:
       return DIV;
     case 0x12:
-      return DIV;
+      return MOD;
     default:
       return NOP;
   }
