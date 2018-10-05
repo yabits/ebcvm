@@ -37,6 +37,7 @@ typedef enum opcode {
   NOP = 0,
   ADD,
   AND,
+  SUB,
 } opcode;
 
 typedef struct inst {
@@ -59,6 +60,7 @@ inst *decode_op(uint64_t);
 vm *exec_op(vm *, inst *);
 vm *exec_add(vm *, inst *);
 vm *exec_and(vm *, inst *);
+vm *exec_sub(vm *, inst *);
 vm *exec_nop(vm *, inst *);
 vm *inc_ip(vm *);
 

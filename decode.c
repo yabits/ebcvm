@@ -9,6 +9,8 @@ static opcode decode_opcode(uint8_t _opcode) {
       return ADD;
     case 0x14:
       return AND;
+    case 0x0d:
+      return SUB;
     default:
       return NOP;
   }
