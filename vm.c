@@ -5,6 +5,10 @@ static uint64_t fetch_op(vm *);
 static opcode decode_opcode(uint8_t);
 static reg decode_operand(uint8_t);
 static inst *decode_op(uint64_t);
+static vm *exec_op(vm *, inst *);
+static vm *exec_add(vm *, inst *);
+static vm *exec_nop(vm *, inst *);
+static vm *inc_ip(vm *);
 
 static void init_regs(regs *_regs) {
   _regs = malloc(sizeof(regs));
@@ -15,13 +19,11 @@ static void init_regs(regs *_regs) {
 static uint64_t fetch_op(vm *_vm) {
   uint64_t op = 0x0;
   uint64_t ip = _vm->regs->regs[IP];
-  op = read_mem(_vm->mem, ip + 0) << 0;
-  op = read_mem(_vm->mem, ip + 1) << 1;
+  op += read_mem8(_vm->mem, ip + 0) << 0;
+  op += read_mem8(_vm->mem, ip + 1) << 8;
   /* XXX: if bit 7 of byte 0 is present, load 16-bit imm */
-  if (op & 0x80) {
-    op = read_mem(_vm->mem, ip + 2) << 2;
-    op = read_mem(_vm->mem, ip + 3) << 3;
-  }
+  if (op & 0x80)
+    op += read_mem16(_vm->mem, ip + 2) << 16;
   return op;
 }
 
@@ -76,6 +78,78 @@ static inst *decode_op(uint64_t op) {
   return _inst;
 }
 
+static vm *exec_op(vm *_vm, inst *_inst) {
+  switch (_inst->opcode) {
+    case ADD:
+      exec_add(_vm, _inst);
+      inc_ip(_vm);
+      break;
+    default:
+      exec_nop(_vm, _inst);
+      inc_ip(_vm);
+      /* do nothing */
+  }
+  return _vm;
+}
+
+static vm *exec_add(vm *_vm, inst *_inst) {
+  if (_inst->is_64op) {
+    uint64_t op2;
+    uint64_t op2val = _vm->regs->regs[_inst->operand2];
+    if (_inst->op2_indirect)
+      op2 = read_mem64(_vm->mem, op2val + _inst->imm * 4); /* FIXME */
+    else
+      op2 = op2val + _inst->imm;
+
+    uint64_t op1;
+    uint64_t op1val = _vm->regs->regs[_inst->operand1];
+    if (_inst->op1_indirect)
+      op1 = read_mem64(_vm->mem, op1val);
+    else
+      op1 = op1val;
+
+    op1 = op1 + op2;
+
+    if (_inst->op1_indirect)
+      write_mem64(_vm->mem, op1val, op1);
+    else
+      _vm->regs->regs[_inst->operand1] = op1;
+  } else {
+    uint32_t op2;
+    uint64_t op2val = _vm->regs->regs[_inst->operand2];
+    if (_inst->op2_indirect)
+      op2 = read_mem32(_vm->mem, op2val + _inst->imm * 2); /* FIXME */
+    else
+      op2 = op2val + _inst->imm;
+
+    uint32_t op1;
+    uint64_t op1val = _vm->regs->regs[_inst->operand1];
+    if (_inst->op1_indirect)
+      op1 = read_mem32(_vm->mem, op1val);
+    else
+      op1 = op1val;
+
+    op1 = op1 + op2;
+
+    if (_inst->op1_indirect)
+      write_mem32(_vm->mem, op1val, op1);
+    else
+      _vm->regs->regs[_inst->operand1] = (uint64_t)0x00 << 32 & op1;
+  }
+
+  return _vm;
+}
+
+static vm *exec_nop(vm *_vm, inst *_inst) {
+  /* do nothing */
+  return _vm;
+}
+
+static vm *inc_ip(vm *_vm) {
+  _vm->regs->regs[IP]++;
+  return _vm;
+}
+
 vm *init_vm() {
   vm *_vm = malloc(sizeof(vm));
   init_regs(_vm->regs);
@@ -86,5 +160,6 @@ vm *init_vm() {
 vm *step_inst(vm *_vm) {
   uint64_t op = fetch_op(_vm);
   inst *_inst = decode_op(op);
+  _vm = exec_op(_vm, _inst);
   return _vm;
 }
