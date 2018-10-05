@@ -51,6 +51,15 @@ typedef struct inst {
   uint16_t imm;
 } inst;
 
+/* decode.c */
+inst *decode_op(uint64_t);
+
+/* exec.c */
+vm *exec_op(vm *, inst *);
+vm *exec_add(vm *, inst *);
+vm *exec_nop(vm *, inst *);
+vm *inc_ip(vm *);
+
 /* mem.c */
 void init_mem(mem *);
 uint8_t read_mem8(mem *, size_t);
@@ -64,6 +73,7 @@ void write_mem64(mem *, size_t, uint64_t);
 
 /* vm.c */
 vm *init_vm(void);
+vm *step_inst(vm *);
 
 /* util.c */
 void error(const char *, ...);
