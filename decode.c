@@ -11,6 +11,8 @@ static opcode decode_opcode(uint8_t _opcode) {
       return AND;
     case 0x0d:
       return SUB;
+    case 0x0e:
+      return MUL;
     default:
       return NOP;
   }
