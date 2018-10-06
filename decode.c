@@ -15,6 +15,12 @@ static opcode decode_opcode(uint8_t _opcode) {
       return DIV;
     case 0x12:
       return MOD;
+    case 0x0f:
+      return MULU;
+    case 0x11:
+      return DIVU;
+    case 0x13:
+      return MODU;
     case 0x14:
       return AND;
     case 0x15:

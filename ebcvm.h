@@ -34,7 +34,7 @@ typedef struct vm {
 } vm;
 
 typedef enum opcode {
-  NOP = 0,
+  NOP = 0x00,
   ADD,
   SUB,
   MUL,
@@ -47,6 +47,9 @@ typedef enum opcode {
   SHR,
   NEG,
   NOT,
+  MULU = 0x10,
+  DIVU,
+  MODU,
 } opcode;
 
 typedef struct inst {
