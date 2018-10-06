@@ -2,13 +2,35 @@
 
 #define OP(bits)          \
 typedef struct op##bits { \
-  uint##bits##_t op1;       \
-  uint##bits##_t op2;       \
+  uint##bits##_t op1;     \
+  uint##bits##_t op2;     \
   uint64_t op1val;        \
   uint64_t op2val;        \
 } op##bits;
+
+#define READ_OP(bits)                                   \
+static op##bits *read_op##bits(vm *_vm, inst *_inst) {  \
+  op##bits *_op##bits = malloc(sizeof(op##bits));       \
+  _op##bits->op2val = _vm->regs->regs[_inst->operand2]; \
+  if (_inst->op2_indirect)                              \
+    _op##bits->op2 = read_mem##bits(_vm->mem,           \
+                  _op##bits->op2val + _inst->imm * 2);  \
+  else                                                  \
+    _op##bits->op2 = _op##bits->op2val + _inst->imm;    \
+  _op##bits->op1val = _vm->regs->regs[_inst->operand1]; \
+  if (_inst->op1_indirect)                              \
+    _op##bits->op1 = read_mem##bits(_vm->mem,           \
+                  _op##bits->op1val);                   \
+  else                                                  \
+    _op##bits->op1 = _op##bits->op1val;                 \
+  return _op##bits;                                     \
+}
+
 OP(32);
 OP(64);
+
+READ_OP(32);
+READ_OP(64);
 
 #define ARITH_OP(NAME, OP) \
   static int64_t NAME(int64_t op1, int64_t op2) { return op1 OP op2; }
@@ -62,42 +84,6 @@ uarith_op uarith_ops[] = {
   _divu,
   _modu,
 };
-
-static op32 *read_op32(vm *_vm, inst *_inst) {
-  op32 *_op32 = malloc(sizeof(op32));
-
-  _op32->op2val = _vm->regs->regs[_inst->operand2];
-  if (_inst->op2_indirect)
-    _op32->op2 = read_mem32(_vm->mem, _op32->op2val + _inst->imm * 2);
-  else
-    _op32->op2 = _op32->op2val + _inst->imm;
-
-  _op32->op1val = _vm->regs->regs[_inst->operand1];
-  if (_inst->op1_indirect)
-    _op32->op1 = read_mem32(_vm->mem, _op32->op1val);
-  else
-    _op32->op1 = _op32->op1val;
-
-  return _op32;
-}
-
-static op64 *read_op64(vm *_vm, inst *_inst) {
-  op64 *_op64 = malloc(sizeof(op64));
-
-  _op64->op2val = _vm->regs->regs[_inst->operand2];
-  if (_inst->op2_indirect)
-    _op64->op2 = read_mem64(_vm->mem, _op64->op2val + _inst->imm * 4);
-  else
-    _op64->op2 = _op64->op2val + _inst->imm;
-
-  _op64->op1val = _vm->regs->regs[_inst->operand1];
-  if (_inst->op1_indirect)
-    _op64->op1 = read_mem64(_vm->mem, _op64->op1val);
-  else
-    _op64->op1 = _op64->op1val;
-
-  return _op64;
-}
 
 static vm *exec_arith(vm *_vm, inst *_inst,
     int64_t (*func)(int64_t, int64_t)) {
