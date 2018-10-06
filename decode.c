@@ -3,43 +3,43 @@
 static opcode decode_opcode(uint8_t);
 static reg decode_operand(uint8_t);
 
+opcode ops[] = {
+  NOP, /* 0x00 */
+  NOP, /* 0x01 */
+  NOP, /* 0x02 */
+  NOP, /* 0x03 */
+  RET, /* 0x04 */
+  NOP, /* 0x05 */
+  NOP, /* 0x06 */
+  NOP, /* 0x07 */
+  NOP, /* 0x08 */
+  NOP, /* 0x09 */
+  NOT, /* 0x0a */
+  NEG, /* 0x0b */
+  ADD, /* 0x0c */
+  SUB, /* 0x0d */
+  MUL, /* 0x0e */
+  MULU,/* 0x0f */
+  DIV, /* 0x10 */
+  DIVU,/* 0x11 */
+  MOD, /* 0x12 */
+  MODU,/* 0x13 */
+  AND, /* 0x14 */
+  OR,  /* 0x15 */
+  XOR, /* 0x16 */
+  SHL, /* 0x17 */
+  SHR, /* 0x18 */
+  NOP, /* 0x19 */
+  NOP, /* 0x1a */
+  NOP, /* 0x1b */
+  NOP, /* 0x1c */
+  NOP, /* 0x1d */
+  NOP, /* 0x1e */
+  NOP, /* 0x1f */
+};
+
 static opcode decode_opcode(uint8_t _opcode) {
-  switch (_opcode & 0x3f) {
-    case 0x0c:
-      return ADD;
-    case 0x0d:
-      return SUB;
-    case 0x0e:
-      return MUL;
-    case 0x10:
-      return DIV;
-    case 0x12:
-      return MOD;
-    case 0x0f:
-      return MULU;
-    case 0x11:
-      return DIVU;
-    case 0x13:
-      return MODU;
-    case 0x14:
-      return AND;
-    case 0x15:
-      return OR;
-    case 0x16:
-      return XOR;
-    case 0x17:
-      return SHL;
-    case 0x18:
-      return SHR;
-    case 0x0b:
-      return NEG;
-    case 0x0a:
-      return NOT;
-    case 0x04:
-      return RET;
-    default:
-      return NOP;
-  }
+  return ops[_opcode & 0x3f];
 }
 
 static reg decode_operand(uint8_t operand) {
