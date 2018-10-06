@@ -50,6 +50,7 @@ typedef enum opcode {
   MULU = 0x10,
   DIVU,
   MODU,
+  RET,
 } opcode;
 
 typedef struct inst {

@@ -26,6 +26,7 @@ static op32 *read_op32(vm *, inst *);
 static op64 *read_op64(vm *, inst *);
 static vm *exec_arith(vm *, inst *, int64_t (*func)(int64_t, int64_t));
 static vm *exec_uarith(vm *, inst *, uint64_t (*func)(uint64_t, uint64_t));
+static vm *exec_ret(vm *, inst *);
 static vm *exec_nop(vm *, inst *);
 
 ARITH_OP(_add, +)
@@ -152,6 +153,13 @@ static vm *exec_uarith(vm *_vm, inst *_inst,
   return _vm;
 }
 
+static vm *exec_ret(vm *_vm, inst *_inst) {
+  _vm->regs->regs[IP] = read_mem64(_vm->mem, _vm->regs->regs[R0]);
+  _vm->regs->regs[R0] = _vm->regs->regs[R0] + 16;
+
+  return _vm;
+}
+
 static vm *exec_nop(vm *_vm, inst *_inst) {
   /* do nothing */
   return _vm;
@@ -184,6 +192,9 @@ vm *exec_op(vm *_vm, inst *_inst) {
     case MODU:
       exec_uarith(_vm, _inst, uarith_ops[_inst->opcode - 0x10]);
       inc_ip(_vm);
+      break;
+    case RET:
+      exec_ret(_vm, _inst);
       break;
     default:
       exec_nop(_vm, _inst);

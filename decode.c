@@ -35,6 +35,8 @@ static opcode decode_opcode(uint8_t _opcode) {
       return NEG;
     case 0x0a:
       return NOT;
+    case 0x04:
+      return RET;
     default:
       return NOP;
   }
