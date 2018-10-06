@@ -1,23 +1,19 @@
 #include "ebcvm.h"
 
+#define OP(bits)          \
+typedef struct op##bits { \
+  uint##bits##_t op1;       \
+  uint##bits##_t op2;       \
+  uint64_t op1val;        \
+  uint64_t op2val;        \
+} op##bits;
+OP(32);
+OP(64);
+
 #define ARITH_OP(NAME, OP) \
   static int64_t NAME(int64_t op1, int64_t op2) { return op1 OP op2; }
 #define UARITH_OP(NAME, OP) \
   static uint64_t NAME(uint64_t op1, uint64_t op2) { return op1 OP op2; }
-
-typedef struct op32 {
-  uint32_t op1;
-  uint32_t op2;
-  uint64_t op1val;
-  uint64_t op2val;
-} op32;
-
-typedef struct op64 {
-  uint32_t op1;
-  uint32_t op2;
-  uint64_t op1val;
-  uint64_t op2val;
-} op64;
 
 typedef int64_t (*arith_op)(int64_t, int64_t);
 typedef uint64_t (*uarith_op)(uint64_t, uint64_t);
