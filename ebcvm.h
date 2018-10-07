@@ -56,6 +56,7 @@ typedef enum opcode {
   MULU,
   DIVU,
   MODU,
+  POP,
   PUSH,
   PUSHn,
   RET,

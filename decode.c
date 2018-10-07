@@ -49,7 +49,7 @@ opcode ops[] = {
   NOP, /* 0x29 */
   STORESP, /* 0x2a */
   PUSH,/* 0x2b */
-  NOP, /* 0x2c */
+  POP, /* 0x2c */
   NOP, /* 0x2d */
   NOP, /* 0x2e */
   NOP, /* 0x2f */
