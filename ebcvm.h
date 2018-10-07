@@ -56,6 +56,15 @@ typedef enum opcode {
   MULU,
   DIVU,
   MODU,
+  MOVbw,
+  MOVww,
+  MOVdw,
+  MOVqw,
+  MOVbd,
+  MOVwd,
+  MOVdd,
+  MOVqd,
+  MOVqq,
   POP,
   POPn,
   PUSH,
@@ -66,19 +75,29 @@ typedef enum opcode {
 
 typedef struct inst {
   opcode opcode;
-  bool is_imm;
-  bool is_64op;
+  bool op2_indirect;
+  reg operand2;
+  bool op1_indirect;
+  reg operand1;
   union {
-    bool op2_indirect;
-    reg operand2;
-    bool op1_indirect;
-    reg operand1;
+    struct {
+      bool is_imm;
+      bool is_64op;
+      uint16_t imm;
+    };
+    struct {
+      size_t op_len;
+      bool is_op1_idx;
+      bool is_op2_idx;
+      size_t idx_len;
+      uint64_t op1_idx;
+      uint64_t op2_idx;
+    };
   };
-  uint16_t imm;
 } inst;
 
 /* decode.c */
-inst *decode_op(uint64_t);
+inst *decode_op(uint8_t *);
 
 /* exec.c */
 vm *exec_op(vm *, inst *);

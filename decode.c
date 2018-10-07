@@ -34,18 +34,18 @@ opcode ops[] = {
   NOP, /* 0x1a */
   NOP, /* 0x1b */
   NOP, /* 0x1c */
-  NOP, /* 0x1d */
-  NOP, /* 0x1e */
-  NOP, /* 0x1f */
-  NOP, /* 0x20 */
-  NOP, /* 0x21 */
-  NOP, /* 0x22 */
-  NOP, /* 0x23 */
-  NOP, /* 0x24 */
+  MOVbw, /* 0x1d */
+  MOVww, /* 0x1e */
+  MOVdw, /* 0x1f */
+  MOVqw, /* 0x20 */
+  MOVbd, /* 0x21 */
+  MOVwd, /* 0x22 */
+  MOVdd, /* 0x23 */
+  MOVqd, /* 0x24 */
   NOP, /* 0x25 */
   NOP, /* 0x26 */
   NOP, /* 0x27 */
-  NOP, /* 0x28 */
+  MOVqq, /* 0x28 */
   NOP, /* 0x29 */
   STORESP, /* 0x2a */
   PUSH,/* 0x2b */
@@ -88,40 +88,131 @@ static reg decode_dd_reg(uint8_t operand) {
   return operand + 0;
 }
 
-inst *decode_op(uint64_t op) {
+inst *decode_op(uint8_t *op) {
+  if (!op)
+    goto fail;
+
   inst *_inst = malloc(sizeof(inst));
+  if (!_inst)
+    goto fail;
 
-  if (op & 0x80)
-    _inst->is_imm = true;
-  else
-    _inst->is_imm = false;
+  _inst->opcode = decode_opcode(op[0] & 0x3f);
 
-  if (op & 0x40)
-    _inst->is_64op = true;
-  else
-    _inst->is_64op = false;
+  if (_inst->opcode >= MOVbw && _inst->opcode <= MOVqq) {
+    if (op[0] & 0x80)
+      _inst->is_op1_idx = true;
+    else
+      _inst->is_op1_idx = false;
 
-  _inst->opcode = decode_opcode(op & 0x3f);
+    if (op[0] & 0x40)
+      _inst->is_op2_idx = true;
+    else
+      _inst->is_op2_idx = false;
+  } else {
+    if (op[0] & 0x80)
+      _inst->is_imm = true;
+    else
+      _inst->is_imm = false;
 
-  if (op & 0x8000)
+    if (op[0] & 0x40)
+      _inst->is_64op = true;
+    else
+      _inst->is_64op = false;
+  }
+
+  if (op[1] & 0x80)
     _inst->op2_indirect = true;
   else
     _inst->op2_indirect = false;
 
   if (_inst->opcode == STORESP)
-    _inst->operand2 = decode_dd_reg((op & 0x7000) >> 12);
+    _inst->operand2 = decode_dd_reg((op[1] & 0x70));
   else
-    _inst->operand2 = decode_gp_reg((op & 0x7000) >> 12);
+    _inst->operand2 = decode_gp_reg(op[1] & 0x70);
 
-  if (op & 0x4000)
+  if (op[1] & 0x40)
     _inst->op1_indirect = true;
   else
     _inst->op1_indirect = false;
 
-  _inst->operand1 = decode_gp_reg((op & 0x0700) >> 8);
+  _inst->operand1 = decode_gp_reg(op[1] & 0x07);
 
-  if (_inst->is_imm)
-    _inst->imm = ((op & 0xffff0000) >> 16);
+  switch (_inst->opcode) {
+    case MOVbw:
+    case MOVbd:
+      _inst->op_len = 1;
+      break;
+    case MOVww:
+    case MOVwd:
+      _inst->op_len = 2;
+      break;
+    case MOVdw:
+    case MOVdd:
+      _inst->op_len = 4;
+      break;
+    case MOVqw:
+    case MOVqd:
+    case MOVqq:
+      _inst->op_len = 8;
+      break;
+    default:
+      ;
+      /* do nothing */
+  }
+
+  if (_inst->opcode >= MOVbw && _inst->opcode <= MOVqq) {
+    if (_inst->opcode >= MOVbw && _inst->opcode <= MOVqw) {
+      _inst->op1_idx = 0x00;
+      _inst->op2_idx = 0x00;
+      if (_inst->is_op1_idx) {
+        _inst->op1_idx += (op[2] << 0) + (op[3] << 8);
+      }
+      if (_inst->is_op2_idx) {
+        int i = _inst->is_op1_idx ? 4 : 2;
+        _inst->op2_idx += (op[i + 0] << 0) + (op[i + 1] << 8);
+      }
+      _inst->idx_len = 2;
+    } else if (_inst->opcode >= MOVbd && _inst->opcode <= MOVqd) {
+      _inst->op1_idx = 0x00;
+      _inst->op2_idx = 0x00;
+      if (_inst->is_op1_idx) {
+        _inst->op1_idx += (op[2] << 0) + (op[3] << 8);
+        _inst->op1_idx += (op[4] << 16) + (op[5] << 24);
+      }
+      if (_inst->is_op2_idx) {
+        int i = _inst->is_op1_idx ? 6 : 2;
+        _inst->op2_idx += (op[i + 0] << 0) + (op[i + 1] << 8);
+        _inst->op2_idx += (op[i + 2] << 16) + (op[i + 3] << 24);
+      }
+      _inst->idx_len = 4;
+    } else if (_inst->opcode == MOVqq) {
+      _inst->op1_idx = 0x00;
+      _inst->op2_idx = 0x00;
+      if (_inst->is_op1_idx) {
+        _inst->op1_idx += (op[2] << 0) + (op[3] << 8);
+        _inst->op1_idx += (op[4] << 16) + (op[5] << 24);
+        _inst->op1_idx += ((uint64_t)op[6] << 32) + ((uint64_t)op[7] << 40);
+        _inst->op1_idx += ((uint64_t)op[8] << 48) + ((uint64_t)op[9] << 56);
+      }
+      if (_inst->is_op2_idx) {
+        int i = _inst->is_op1_idx ? 10 : 2;
+        _inst->op2_idx += (op[i + 0] << 0) + (op[i + 1] << 8);
+        _inst->op2_idx += (op[i + 2] << 16) + (op[i + 3] << 24);
+        _inst->op2_idx += ((uint64_t)op[i + 4] << 32) + ((uint64_t)op[i + 5] << 40);
+        _inst->op2_idx += ((uint64_t)op[i + 6] << 48) + ((uint64_t)op[i + 7] << 56);
+      }
+      _inst->idx_len = 8;
+    }
+  } else {
+    if (_inst->is_imm)
+      _inst->imm = (op[2] << 0) + (op[3] << 8);
+  }
+
+  free(op);
 
   return _inst;
+
+fail:
+  error("failed to decode inst");
+  return NULL;
 }

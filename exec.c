@@ -94,6 +94,88 @@ arith_op arith_ops[] = {
   exec_modu,
 };
 
+static vm *exec_mov(vm *_vm, inst *_inst) {
+  uint64_t op;
+  if (_inst->op2_indirect) {
+    switch (_inst->op_len) {
+      case 1:
+        op = read_mem8(_vm->mem, _vm->regs->regs[_inst->operand2]);
+        break;
+      case 2:
+        op = read_mem16(_vm->mem, _vm->regs->regs[_inst->operand2]);
+        break;
+      case 4:
+        op = read_mem32(_vm->mem, _vm->regs->regs[_inst->operand2]);
+        break;
+      case 8:
+        op = read_mem64(_vm->mem, _vm->regs->regs[_inst->operand2]);
+        break;
+      default:
+        error("invalid instruction");
+    }
+  } else
+    op = _vm->regs->regs[_inst->operand2];
+
+  if (_inst->is_op2_idx)
+    op += _inst->op2_idx;
+
+  if (_inst->op1_indirect) {
+    if (_inst->is_op1_idx) {
+      switch (_inst->op_len) {
+        case 1:
+          write_mem8(_vm->mem,
+              _vm->regs->regs[_inst->operand1] + _inst->op1_idx,
+              (uint8_t)op);
+          break;
+        case 2:
+          write_mem16(_vm->mem,
+              _vm->regs->regs[_inst->operand1] + _inst->op1_idx,
+              (uint16_t)op);
+          break;
+        case 4:
+          write_mem32(_vm->mem,
+              _vm->regs->regs[_inst->operand1] + _inst->op1_idx,
+              (uint32_t)op);
+          break;
+        case 8:
+          write_mem64(_vm->mem,
+              _vm->regs->regs[_inst->operand1] + _inst->op1_idx,
+              (uint64_t)op);
+          break;
+        default:
+          error("invalid instruction");
+      }
+    }
+    switch (_inst->op_len) {
+      case 1:
+        write_mem8(_vm->mem,
+            _vm->regs->regs[_inst->operand1], (uint8_t)op);
+        break;
+      case 2:
+        write_mem16(_vm->mem,
+            _vm->regs->regs[_inst->operand1], (uint16_t)op);
+        break;
+      case 4:
+        write_mem32(_vm->mem,
+            _vm->regs->regs[_inst->operand1], (uint32_t)op);
+        break;
+      case 8:
+        write_mem64(_vm->mem,
+            _vm->regs->regs[_inst->operand1], (uint64_t)op);
+        break;
+      default:
+        error("invalid instruction");
+    }
+  } else {
+    if (_inst->is_op1_idx)
+      error("invalid instruction");
+    else
+      _vm->regs->regs[_inst->operand1] = op;
+  }
+
+  return _vm;
+}
+
 static vm *exec_pop(vm *_vm, inst *_inst) {
   if (_inst->is_64op) {
     uint64_t op = read_mem64(_vm->mem, _vm->regs->regs[R0]);
@@ -297,6 +379,16 @@ vm *exec_op(vm *_vm, inst *_inst) {
     goto done_inc;
   }
   switch (_inst->opcode) {
+    case MOVbw:
+    case MOVww:
+    case MOVdw:
+    case MOVqw:
+    case MOVbd:
+    case MOVwd:
+    case MOVdd:
+    case MOVqd:
+    case MOVqq:
+      exec_mov(_vm, _inst);
     case POP:
       exec_pop(_vm, _inst);
       goto done_inc;
