@@ -97,7 +97,6 @@ arith_op arith_ops[] = {
 static vm *exec_push(vm *_vm, inst *_inst) {
   if (_inst->is_64op) {
     uint64_t op;
-    _vm->regs->regs[R0] = _vm->regs->regs[R0] - 8;
     if (_inst->is_imm) {
       if (_inst->op1_indirect) {
         op = read_mem64(_vm->mem,
@@ -113,10 +112,10 @@ static vm *exec_push(vm *_vm, inst *_inst) {
         op = _vm->regs->regs[_inst->operand1];
       }
     }
+    _vm->regs->regs[R0] = _vm->regs->regs[R0] - 8;
     write_mem64(_vm->mem, _vm->regs->regs[R0], op);
   } else {
     uint32_t op;
-    _vm->regs->regs[R0] = _vm->regs->regs[R0] - 4;
     if (_inst->is_imm) {
       if (_inst->op1_indirect) {
         op = read_mem32(_vm->mem,
@@ -132,6 +131,7 @@ static vm *exec_push(vm *_vm, inst *_inst) {
         op = _vm->regs->regs[_inst->operand1];
       }
     }
+    _vm->regs->regs[R0] = _vm->regs->regs[R0] - 4;
     write_mem32(_vm->mem, _vm->regs->regs[R0], op);
   }
 
