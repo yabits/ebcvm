@@ -26,114 +26,73 @@ static op##bits *read_op##bits(vm *_vm, inst *_inst) {  \
   return _op##bits;                                     \
 }
 
+#define EXEC_OP(type, name, op)                                     \
+static type _##name(type op1, type op2) {                           \
+  return op;                                                        \
+}                                                                   \
+static vm *exec_##name(vm *_vm, inst *_inst) {                      \
+  if (_inst->is_64op) {                                             \
+    op64 *_op64 = read_op64(_vm, _inst);                            \
+    type _op = _##name(_op64->op1, _op64->op2);                     \
+    if (_inst->op1_indirect)                                        \
+      write_mem64(_vm->mem, _op64->op1val, _op);                    \
+    else                                                            \
+      _vm->regs->regs[_inst->operand1] = _op;                       \
+    free(_op64);                                                    \
+  } else {                                                          \
+    op32 *_op32 = read_op32(_vm, _inst);                            \
+    type _op = (type)_##name(_op32->op1, _op32->op2);               \
+    if (_inst->op1_indirect)                                        \
+      write_mem32(_vm->mem, _op32->op1val, _op);                    \
+    else                                                            \
+      _vm->regs->regs[_inst->operand1] = (uint64_t)0x00 << 32 & _op;\
+    free(_op32);                                                    \
+  }                                                                 \
+  return _vm;                                                       \
+}
+
 OP(32);
 OP(64);
 
 READ_OP(32);
 READ_OP(64);
 
-#define ARITH_OP(NAME, OP) \
-  static int64_t NAME(int64_t op1, int64_t op2) { return op1 OP op2; }
-#define UARITH_OP(NAME, OP) \
-  static uint64_t NAME(uint64_t op1, uint64_t op2) { return op1 OP op2; }
+EXEC_OP(int64_t, add, (op1 + op2));
+EXEC_OP(int64_t, sub, op1 - op2);
+EXEC_OP(int64_t, mul, op1 * op2);
+EXEC_OP(int64_t, div, op1 / op2);
+EXEC_OP(int64_t, mod, op1 % op2);
+EXEC_OP(int64_t, and, op1 & op2);
+EXEC_OP(int64_t, or,  op1 | op2);
+EXEC_OP(int64_t, xor, op1 ^ op2);
+EXEC_OP(int64_t, shl, op1 << op2);
+EXEC_OP(int64_t, shr, op1 >> op2);
+EXEC_OP(int64_t, neg, -1 * op2);
+EXEC_OP(int64_t, not, ~op2);
+EXEC_OP(uint64_t, mulu, op1 * op2);
+EXEC_OP(uint64_t, divu, op1 / op2);
+EXEC_OP(uint64_t, modu, op1 % op2);
 
-typedef int64_t (*arith_op)(int64_t, int64_t);
-typedef uint64_t (*uarith_op)(uint64_t, uint64_t);
-
-static op32 *read_op32(vm *, inst *);
-static op64 *read_op64(vm *, inst *);
-static vm *exec_arith(vm *, inst *, int64_t (*func)(int64_t, int64_t));
-static vm *exec_uarith(vm *, inst *, uint64_t (*func)(uint64_t, uint64_t));
-static vm *exec_ret(vm *, inst *);
-static vm *exec_nop(vm *, inst *);
-
-ARITH_OP(_add, +)
-ARITH_OP(_sub, -)
-ARITH_OP(_mul, *)
-ARITH_OP(_div, /)
-ARITH_OP(_mod, %)
-ARITH_OP(_and, &)
-ARITH_OP(_or, |)
-ARITH_OP(_xor, ^)
-ARITH_OP(_shl, <<)
-ARITH_OP(_shr, >>)
-static int64_t _neg(int64_t op1, int64_t op2) { return -1 * op2; }
-static int64_t _not(int64_t op1, int64_t op2) { return ~op2; }
-UARITH_OP(_mulu, *)
-UARITH_OP(_divu, /)
-UARITH_OP(_modu, %)
+typedef vm *(*arith_op)(vm *, inst *);
 
 arith_op arith_ops[] = {
   NULL,
-  _add,
-  _sub,
-  _mul,
-  _div,
-  _mod,
-  _and,
-  _or,
-  _xor,
-  _shl,
-  _shr,
-  _neg,
-  _not,
+  exec_add,
+  exec_sub,
+  exec_mul,
+  exec_div,
+  exec_mod,
+  exec_and,
+  exec_or,
+  exec_xor,
+  exec_shl,
+  exec_shr,
+  exec_neg,
+  exec_not,
+  exec_mulu,
+  exec_divu,
+  exec_modu,
 };
-
-uarith_op uarith_ops[] = {
-  _mulu,
-  _divu,
-  _modu,
-};
-
-static vm *exec_arith(vm *_vm, inst *_inst,
-    int64_t (*func)(int64_t, int64_t)) {
-  if (_inst->is_64op) {
-    op64 *_op64 = read_op64(_vm, _inst);
-    int64_t op = (int64_t)func(_op64->op1, _op64->op2);
-
-    if (_inst->op1_indirect)
-      write_mem64(_vm->mem, _op64->op1val, op);
-    else
-      _vm->regs->regs[_inst->operand1] = op;
-    free(_op64);
-  } else {
-    op32 *_op32 = read_op32(_vm, _inst);
-    int32_t op = (int32_t)func(_op32->op1, _op32->op2);
-
-    if (_inst->op1_indirect)
-      write_mem32(_vm->mem, _op32->op1val, op);
-    else
-      _vm->regs->regs[_inst->operand1] = (uint64_t)0x00 << 32 & op;
-    free(_op32);
-  }
-
-  return _vm;
-}
-
-static vm *exec_uarith(vm *_vm, inst *_inst,
-    uint64_t (*func)(uint64_t, uint64_t)) {
-  if (_inst->is_64op) {
-    op64 *_op64 = read_op64(_vm, _inst);
-    uint64_t op = (uint64_t)func(_op64->op1, _op64->op2);
-
-    if (_inst->op1_indirect)
-      write_mem64(_vm->mem, _op64->op1val, op);
-    else
-      _vm->regs->regs[_inst->operand1] = op;
-    free(_op64);
-  } else {
-    op32 *_op32 = read_op32(_vm, _inst);
-    uint32_t op = (uint32_t)func(_op32->op1, _op32->op2);
-
-    if (_inst->op1_indirect)
-      write_mem32(_vm->mem, _op32->op1val, op);
-    else
-      _vm->regs->regs[_inst->operand1] = (uint64_t)0x00 << 32 & op;
-    free(_op32);
-  }
-
-  return _vm;
-}
 
 static vm *exec_ret(vm *_vm, inst *_inst) {
   _vm->regs->regs[IP] = read_mem64(_vm->mem, _vm->regs->regs[R0]);
@@ -153,28 +112,12 @@ static vm *inc_ip(vm *_vm) {
 }
 
 vm *exec_op(vm *_vm, inst *_inst) {
+  if (_inst->opcode >= ADD && _inst->opcode <= MODU) {
+    arith_ops[_inst->opcode](_vm, _inst);
+    inc_ip(_vm);
+    goto done;
+  }
   switch (_inst->opcode) {
-    case ADD:
-    case SUB:
-    case MUL:
-    case DIV:
-    case MOD:
-    case AND:
-    case OR:
-    case XOR:
-    case SHL:
-    case SHR:
-    case NEG:
-    case NOT:
-      exec_arith(_vm, _inst, arith_ops[_inst->opcode]);
-      inc_ip(_vm);
-      break;
-    case MULU:
-    case DIVU:
-    case MODU:
-      exec_uarith(_vm, _inst, uarith_ops[_inst->opcode - 0x10]);
-      inc_ip(_vm);
-      break;
     case RET:
       exec_ret(_vm, _inst);
       break;
@@ -183,6 +126,8 @@ vm *exec_op(vm *_vm, inst *_inst) {
       inc_ip(_vm);
       /* do nothing */
   }
+
+done:
   free(_inst);
   return _vm;
 }
