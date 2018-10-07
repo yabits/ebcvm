@@ -59,7 +59,7 @@ opcode ops[] = {
   NOP, /* 0x33 */
   NOP, /* 0x34 */
   PUSHn, /* 0x35 */
-  NOP, /* 0x36 */
+  POPn,/* 0x36 */
   NOP, /* 0x37 */
   NOP, /* 0x38 */
   NOP, /* 0x39 */

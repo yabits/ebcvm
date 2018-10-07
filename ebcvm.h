@@ -57,6 +57,7 @@ typedef enum opcode {
   DIVU,
   MODU,
   POP,
+  POPn,
   PUSH,
   PUSHn,
   RET,

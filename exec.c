@@ -96,6 +96,49 @@ arith_op arith_ops[] = {
 
 static vm *exec_pop(vm *_vm, inst *_inst) {
   if (_inst->is_64op) {
+    uint64_t op = read_mem64(_vm->mem, _vm->regs->regs[R0]);
+    if (_inst->is_imm) {
+      if (_inst->op1_indirect) {
+        write_mem64(_vm->mem,
+            _vm->regs->regs[_inst->operand1] + _inst->imm, op);
+      } else {
+        _vm->regs->regs[_inst->operand1] = op + (uint64_t)_inst->imm;
+      }
+    } else {
+      if (_inst->op1_indirect) {
+        write_mem64(_vm->mem,
+            _vm->regs->regs[_inst->operand1], op);
+      } else {
+        _vm->regs->regs[_inst->operand1] = op;
+      }
+    }
+    _vm->regs->regs[R0] = _vm->regs->regs[R0] + 8;
+  } else {
+    uint32_t op = read_mem32(_vm->mem, _vm->regs->regs[R0]);
+    if (_inst->is_imm) {
+      if (_inst->op1_indirect) {
+        write_mem32(_vm->mem,
+            _vm->regs->regs[_inst->operand1] + _inst->imm, op);
+      } else {
+        _vm->regs->regs[_inst->operand1] = op + (uint32_t)_inst->imm;
+      }
+    } else {
+      if (_inst->op1_indirect) {
+        write_mem32(_vm->mem,
+            _vm->regs->regs[_inst->operand1], op);
+      } else {
+        _vm->regs->regs[_inst->operand1] = op;
+      }
+    }
+    _vm->regs->regs[R0] = _vm->regs->regs[R0] + 4;
+  }
+
+  return _vm;
+}
+
+/*FIXME: is POP identical with POPn? */
+static vm *exec_popn(vm *_vm, inst *_inst) {
+  if (_inst->is_64op) {
     int64_t op = read_mem64(_vm->mem, _vm->regs->regs[R0]);
     if (_inst->is_imm) {
       if (_inst->op1_indirect) {
@@ -256,6 +299,9 @@ vm *exec_op(vm *_vm, inst *_inst) {
   switch (_inst->opcode) {
     case POP:
       exec_pop(_vm, _inst);
+      goto done_inc;
+    case POPn:
+      exec_popn(_vm, _inst);
       goto done_inc;
     case PUSH:
       exec_push(_vm, _inst);
