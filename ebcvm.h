@@ -9,6 +9,12 @@
 typedef enum reg {
   IP = 0,
   FLAGS,
+  RV2,
+  RV3,
+  RV4,
+  RV5,
+  RV6,
+  RV7,
   R0,
   R1,
   R2,
@@ -20,7 +26,7 @@ typedef enum reg {
 } reg;
 
 typedef struct regs {
-  uint64_t regs[10];
+  uint64_t regs[14];
 } regs;
 
 typedef struct mem {
@@ -51,6 +57,7 @@ typedef enum opcode {
   DIVU,
   MODU,
   RET,
+  STORESP,
 } opcode;
 
 typedef struct inst {

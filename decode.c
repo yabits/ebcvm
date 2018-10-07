@@ -1,7 +1,8 @@
 #include "ebcvm.h"
 
 static opcode decode_opcode(uint8_t);
-static reg decode_operand(uint8_t);
+static reg decode_gp_reg(uint8_t);
+static reg decode_dd_reg(uint8_t);
 
 opcode ops[] = {
   NOP, /* 0x00 */
@@ -36,17 +37,39 @@ opcode ops[] = {
   NOP, /* 0x1d */
   NOP, /* 0x1e */
   NOP, /* 0x1f */
+  NOP, /* 0x20 */
+  NOP, /* 0x21 */
+  NOP, /* 0x22 */
+  NOP, /* 0x23 */
+  NOP, /* 0x24 */
+  NOP, /* 0x25 */
+  NOP, /* 0x26 */
+  NOP, /* 0x27 */
+  NOP, /* 0x28 */
+  NOP, /* 0x29 */
+  STORESP, /* 0x2a */
+  NOP, /* 0x2b */
+  NOP, /* 0x2c */
+  NOP, /* 0x2d */
+  NOP, /* 0x2e */
+  NOP, /* 0x2f */
 };
 
 static opcode decode_opcode(uint8_t _opcode) {
   return ops[_opcode & 0x3f];
 }
 
-static reg decode_operand(uint8_t operand) {
+static reg decode_gp_reg(uint8_t operand) {
   if (operand > 0x07)
-    error("failed to decode operand");
-  /* XXX: R0 is 2 in reg */
-  return operand + 2;
+    error("failed to decode general purpose register");
+  /* XXX: R0 is at 8 in reg*/
+  return operand + 8;
+}
+
+static reg decode_dd_reg(uint8_t operand) {
+  if (operand > 0x02)
+    error("failed to decode general purpose register");
+  return operand + 0;
 }
 
 inst *decode_op(uint64_t op) {
@@ -69,14 +92,17 @@ inst *decode_op(uint64_t op) {
   else
     _inst->op2_indirect = false;
 
-  _inst->operand2 = decode_operand((op & 0x7000) >> 12);
+  if (_inst->opcode == STORESP)
+    _inst->operand2 = decode_dd_reg((op & 0x7000) >> 12);
+  else
+    _inst->operand2 = decode_gp_reg((op & 0x7000) >> 12);
 
   if (op & 0x4000)
     _inst->op1_indirect = true;
   else
     _inst->op1_indirect = false;
 
-  _inst->operand1 = decode_operand((op & 0x0700) >> 8);
+  _inst->operand1 = decode_gp_reg((op & 0x0700) >> 8);
 
   if (_inst->is_imm)
     _inst->imm = ((op & 0xffff0000) >> 16);
