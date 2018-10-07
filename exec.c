@@ -138,6 +138,51 @@ static vm *exec_push(vm *_vm, inst *_inst) {
   return _vm;
 }
 
+/*FIXME: is PUSH identical with PUSHn? */
+static vm *exec_pushn(vm *_vm, inst *_inst) {
+  if (_inst->is_64op) {
+    int64_t op;
+    if (_inst->is_imm) {
+      if (_inst->op1_indirect) {
+        op = read_mem64(_vm->mem,
+            _vm->regs->regs[_inst->operand1] + _inst->imm);
+      } else {
+        op = _vm->regs->regs[_inst->operand1] + _inst->imm;
+      }
+    } else {
+      if (_inst->op1_indirect) {
+        op = read_mem64(_vm->mem,
+            _vm->regs->regs[_inst->operand1]);
+      } else {
+        op = _vm->regs->regs[_inst->operand1];
+      }
+    }
+    _vm->regs->regs[R0] = _vm->regs->regs[R0] - 8;
+    write_mem64(_vm->mem, _vm->regs->regs[R0], op);
+  } else {
+    int32_t op;
+    if (_inst->is_imm) {
+      if (_inst->op1_indirect) {
+        op = read_mem32(_vm->mem,
+            _vm->regs->regs[_inst->operand1] + _inst->imm);
+      } else {
+        op = _vm->regs->regs[_inst->operand1] + _inst->imm;
+      }
+    } else {
+      if (_inst->op1_indirect) {
+        op = read_mem32(_vm->mem,
+            _vm->regs->regs[_inst->operand1]);
+      } else {
+        op = _vm->regs->regs[_inst->operand1];
+      }
+    }
+    _vm->regs->regs[R0] = _vm->regs->regs[R0] - 4;
+    write_mem32(_vm->mem, _vm->regs->regs[R0], op);
+  }
+
+  return _vm;
+}
+
 static vm *exec_ret(vm *_vm, inst *_inst) {
   _vm->regs->regs[IP] = read_mem64(_vm->mem, _vm->regs->regs[R0]);
   _vm->regs->regs[R0] = _vm->regs->regs[R0] + 16;
@@ -169,6 +214,9 @@ vm *exec_op(vm *_vm, inst *_inst) {
   switch (_inst->opcode) {
     case PUSH:
       exec_push(_vm, _inst);
+      goto done_inc;
+    case PUSHn:
+      exec_pushn(_vm, _inst);
       goto done_inc;
     case RET:
       exec_ret(_vm, _inst);

@@ -53,6 +53,22 @@ opcode ops[] = {
   NOP, /* 0x2d */
   NOP, /* 0x2e */
   NOP, /* 0x2f */
+  NOP, /* 0x30 */
+  NOP, /* 0x31 */
+  NOP, /* 0x32 */
+  NOP, /* 0x33 */
+  NOP, /* 0x34 */
+  PUSHn, /* 0x35 */
+  NOP, /* 0x36 */
+  NOP, /* 0x37 */
+  NOP, /* 0x38 */
+  NOP, /* 0x39 */
+  NOP, /* 0x3a */
+  NOP, /* 0x3b */
+  NOP, /* 0x3c */
+  NOP, /* 0x3d */
+  NOP, /* 0x3e */
+  NOP, /* 0x3f */
 };
 
 static opcode decode_opcode(uint8_t _opcode) {
