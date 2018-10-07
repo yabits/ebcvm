@@ -47,7 +47,7 @@ opcode ops[] = {
   NOP, /* 0x26 */
   NOP, /* 0x27 */
   MOVqq, /* 0x28 */
-  NOP, /* 0x29 */
+  LOADSP, /* 0x29 */
   STORESP, /* 0x2a */
   PUSH,/* 0x2b */
   POP, /* 0x2c */
@@ -191,16 +191,19 @@ inst *decode_op(uint8_t *op) {
     _inst->op2_indirect = false;
 
   if (_inst->opcode == STORESP)
-    _inst->operand2 = decode_dd_reg((op[1] & 0x70));
+    _inst->operand2 = decode_dd_reg(op[1] & 0x70);
   else
     _inst->operand2 = decode_gp_reg(op[1] & 0x70);
 
-  if (op[1] & 0x40)
+  if (op[1] & 0x08)
     _inst->op1_indirect = true;
   else
     _inst->op1_indirect = false;
 
-  _inst->operand1 = decode_gp_reg(op[1] & 0x07);
+  if (_inst->opcode == LOADSP)
+    _inst->operand1 = decode_dd_reg(op[1] & 0x07);
+  else
+    _inst->operand1 = decode_gp_reg(op[1] & 0x07);
 
   free(op);
 

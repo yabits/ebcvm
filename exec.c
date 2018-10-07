@@ -357,6 +357,21 @@ static vm *exec_ret(vm *_vm, inst *_inst) {
   return _vm;
 }
 
+static vm *exec_loadsp(vm *_vm, inst *_inst) {
+  if (_inst->operand1 <= RV2 && _inst->operand1 >= RV7)
+    error("invalid instruction");
+
+  if (_inst->operand1 != FLAGS)
+    error("invalid instruction");
+
+  if (_inst->operand1 == FLAGS) {
+    /* FIXME: save reserved bits 2..63 */
+    _vm->regs->regs[_inst->operand1] = _vm->regs->regs[_inst->operand2];
+  }
+
+  return _vm;
+}
+
 static vm *exec_storesp(vm *_vm, inst *_inst) {
   _vm->regs->regs[_inst->operand1] = _vm->regs->regs[_inst->operand2];
 
@@ -404,6 +419,9 @@ vm *exec_op(vm *_vm, inst *_inst) {
     case RET:
       exec_ret(_vm, _inst);
       goto done_free;
+    case LOADSP:
+      exec_loadsp(_vm, _inst);
+      goto done_inc;
     case STORESP:
       exec_storesp(_vm, _inst);
       goto done_inc;

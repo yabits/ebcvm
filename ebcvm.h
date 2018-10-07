@@ -70,6 +70,7 @@ typedef enum opcode {
   PUSH,
   PUSHn,
   RET,
+  LOADSP,
   STORESP,
 } opcode;
 
