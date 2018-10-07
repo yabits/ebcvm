@@ -48,7 +48,7 @@ opcode ops[] = {
   NOP, /* 0x28 */
   NOP, /* 0x29 */
   STORESP, /* 0x2a */
-  NOP, /* 0x2b */
+  PUSH,/* 0x2b */
   NOP, /* 0x2c */
   NOP, /* 0x2d */
   NOP, /* 0x2e */

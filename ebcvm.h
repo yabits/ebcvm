@@ -53,9 +53,10 @@ typedef enum opcode {
   SHR,
   NEG,
   NOT,
-  MULU = 0x10,
+  MULU,
   DIVU,
   MODU,
+  PUSH,
   RET,
   STORESP,
 } opcode;

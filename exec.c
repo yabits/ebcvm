@@ -14,7 +14,7 @@ static op##bits *read_op##bits(vm *_vm, inst *_inst) {  \
   _op##bits->op2val = _vm->regs->regs[_inst->operand2]; \
   if (_inst->op2_indirect)                              \
     _op##bits->op2 = read_mem##bits(_vm->mem,           \
-                  _op##bits->op2val + _inst->imm * 2);  \
+                  _op##bits->op2val + _inst->imm);      \
   else                                                  \
     _op##bits->op2 = _op##bits->op2val + _inst->imm;    \
   _op##bits->op1val = _vm->regs->regs[_inst->operand1]; \
@@ -94,6 +94,50 @@ arith_op arith_ops[] = {
   exec_modu,
 };
 
+static vm *exec_push(vm *_vm, inst *_inst) {
+  if (_inst->is_64op) {
+    uint64_t op;
+    _vm->regs->regs[R0] = _vm->regs->regs[R0] - 8;
+    if (_inst->is_imm) {
+      if (_inst->op1_indirect) {
+        op = read_mem64(_vm->mem,
+            _vm->regs->regs[_inst->operand1] + _inst->imm);
+      } else {
+        op = _vm->regs->regs[_inst->operand1] + _inst->imm;
+      }
+    } else {
+      if (_inst->op1_indirect) {
+        op = read_mem64(_vm->mem,
+            _vm->regs->regs[_inst->operand1]);
+      } else {
+        op = _vm->regs->regs[_inst->operand1];
+      }
+    }
+    write_mem64(_vm->mem, _vm->regs->regs[R0], op);
+  } else {
+    uint32_t op;
+    _vm->regs->regs[R0] = _vm->regs->regs[R0] - 4;
+    if (_inst->is_imm) {
+      if (_inst->op1_indirect) {
+        op = read_mem32(_vm->mem,
+            _vm->regs->regs[_inst->operand1] + _inst->imm);
+      } else {
+        op = _vm->regs->regs[_inst->operand1] + _inst->imm;
+      }
+    } else {
+      if (_inst->op1_indirect) {
+        op = read_mem32(_vm->mem,
+            _vm->regs->regs[_inst->operand1]);
+      } else {
+        op = _vm->regs->regs[_inst->operand1];
+      }
+    }
+    write_mem32(_vm->mem, _vm->regs->regs[R0], op);
+  }
+
+  return _vm;
+}
+
 static vm *exec_ret(vm *_vm, inst *_inst) {
   _vm->regs->regs[IP] = read_mem64(_vm->mem, _vm->regs->regs[R0]);
   _vm->regs->regs[R0] = _vm->regs->regs[R0] + 16;
@@ -120,24 +164,28 @@ static vm *inc_ip(vm *_vm) {
 vm *exec_op(vm *_vm, inst *_inst) {
   if (_inst->opcode >= ADD && _inst->opcode <= MODU) {
     arith_ops[_inst->opcode](_vm, _inst);
-    inc_ip(_vm);
-    goto done;
+    goto done_inc;
   }
   switch (_inst->opcode) {
+    case PUSH:
+      exec_push(_vm, _inst);
+      goto done_inc;
     case RET:
       exec_ret(_vm, _inst);
-      break;
+      goto done_free;
     case STORESP:
       exec_storesp(_vm, _inst);
-      inc_ip(_vm);
-      break;
+      goto done_inc;
     default:
       exec_nop(_vm, _inst);
-      inc_ip(_vm);
+      goto done_inc;
       /* do nothing */
   }
 
-done:
+done_inc:
+  inc_ip(_vm);
+
+done_free:
   free(_inst);
   return _vm;
 }
