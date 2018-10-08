@@ -176,6 +176,40 @@ static vm *exec_mov(vm *_vm, inst *_inst) {
   return _vm;
 }
 
+static vm *exec_movi(vm *_vm, inst *_inst) {
+  uint64_t op1;
+  if (_inst->op1_indirect) {
+    if (_inst->is_opt_idx) {
+      op1 = read_mem64(_vm->mem,
+          _vm->regs->regs[_inst->operand1] + _inst->opt_idx);
+    } else {
+      op1 = read_mem64(_vm->mem,
+          _vm->regs->regs[_inst->operand1]);
+    }
+  } else {
+    if (_inst->is_opt_idx)
+      error("invalid instruction");
+    else
+      op1 = _vm->regs->regs[_inst->operand1];
+  }
+
+  switch (_inst->imm_len) {
+    case 2:
+      write_mem16(_vm->mem, op1, (uint16_t)_inst->imm_data);
+      break;
+    case 4:
+      write_mem32(_vm->mem, op1, (uint32_t)_inst->imm_data);
+      break;
+    case 8:
+      write_mem64(_vm->mem, op1, (uint64_t)_inst->imm_data);
+      break;
+    default:
+      error("invalid instruction");
+  }
+
+  return _vm;
+}
+
 static vm *exec_pop(vm *_vm, inst *_inst) {
   if (_inst->is_64op) {
     uint64_t op = read_mem64(_vm->mem, _vm->regs->regs[R0]);
@@ -404,6 +438,10 @@ vm *exec_op(vm *_vm, inst *_inst) {
     case MOVqd:
     case MOVqq:
       exec_mov(_vm, _inst);
+      goto done_inc;
+    case MOVI:
+      exec_movi(_vm, _inst);
+      goto done_inc;
     case POP:
       exec_pop(_vm, _inst);
       goto done_inc;

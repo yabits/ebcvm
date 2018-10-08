@@ -4,6 +4,7 @@ static opcode decode_opcode(uint8_t);
 static reg decode_gp_reg(uint8_t);
 static reg decode_dd_reg(uint8_t);
 static inst *decode_mov(inst *, uint8_t *);
+static inst *decode_movi(inst *, uint8_t *);
 
 opcode ops[] = {
   NOP, /* 0x00 */
@@ -61,7 +62,7 @@ opcode ops[] = {
   NOP, /* 0x34 */
   PUSHn, /* 0x35 */
   POPn,/* 0x36 */
-  NOP, /* 0x37 */
+  MOVI,/* 0x37 */
   NOP, /* 0x38 */
   NOP, /* 0x39 */
   NOP, /* 0x3a */
@@ -160,6 +161,63 @@ fail:
   return NULL;
 }
 
+static inst *decode_movi(inst *_inst, uint8_t *op) {
+  if (!_inst || !op)
+    goto fail;
+
+  switch (op[0] & 0xc0) {
+    case 1:
+      _inst->imm_len = 2;
+      break;
+    case 2:
+      _inst->imm_len = 4;
+      break;
+    case 3:
+      _inst->imm_len = 8;
+      break;
+    default:
+      goto fail;
+  }
+
+  if (op[1] & 0x40)
+    _inst->is_opt_idx = true;
+  else
+    _inst->is_opt_idx = false;
+
+  switch (op[1] & 0x30) {
+    case 0:
+      _inst->mov_len = 1;
+      break;
+    case 1:
+      _inst->mov_len = 2;
+      break;
+    case 2:
+      _inst->mov_len = 4;
+      break;
+    case 3:
+      _inst->mov_len = 8;
+      break;
+    default:
+      goto fail;
+  }
+
+  int i = 2;
+  if (_inst->is_opt_idx) {
+    _inst->opt_idx = ((uint16_t)op[i] << 0) + ((uint16_t)op[i + 1] << 8);
+    i += 2;
+  }
+
+  _inst->imm_data = 0x00;
+  for (int k = 0; k < _inst->imm_len; k++)
+    _inst->imm_data += (uint64_t)op[i + k] << (8 * k);
+
+  return _inst;
+
+fail:
+  error("faield to decode MOVI");
+  return NULL;
+}
+
 inst *decode_op(uint8_t *op) {
   if (!op)
     goto fail;
@@ -172,6 +230,8 @@ inst *decode_op(uint8_t *op) {
 
   if (_inst->opcode >= MOVbw && _inst->opcode <= MOVqq) {
     _inst = decode_mov(_inst, op);
+  } else if (_inst->opcode == MOVI) {
+    _inst = decode_movi(_inst, op);
   } else {
     if (op[0] & 0x80)
       _inst->is_imm = true;
