@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define MAJOR_VERSION 0x0001
+#define MINOR_VERSION 0x0000
 #define MEM_SIZE 1024
 
 typedef enum reg {
@@ -26,7 +28,7 @@ typedef enum reg {
 } reg;
 
 typedef struct regs {
-  uint64_t regs[14];
+  uint64_t regs[16];
 } regs;
 
 typedef struct mem {
@@ -37,10 +39,11 @@ typedef struct mem {
 typedef struct vm {
   regs *regs;
   mem *mem;
+  uint32_t compiler_version;
 } vm;
 
 typedef enum opcode {
-  NOP = 0x00,
+  BREAK = 0x00,
   JMP,
   JMP8,
   CMPeq,
@@ -92,6 +95,7 @@ typedef enum opcode {
   RET,
   LOADSP,
   STORESP,
+  NOP,
 } opcode;
 
 typedef struct inst {
@@ -101,6 +105,10 @@ typedef struct inst {
   bool op1_indirect;
   reg operand1;
   union {
+    /* BREAK */
+    struct {
+      uint8_t break_code;
+    };
     /* JMP and JMP8 */
     struct {
       bool is_jmp_imm;

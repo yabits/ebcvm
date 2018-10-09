@@ -96,6 +96,31 @@ arith_op arith_ops[] = {
   exec_modu,
 };
 
+static vm *exec_break(vm *_vm, inst *_inst) {
+  switch (_inst->break_code) {
+    case 1:
+      _vm->regs->regs[R7] = (MAJOR_VERSION << 16) + MINOR_VERSION;
+      break;
+    case 3:
+      /* FIXME: debug breakpoint */
+      error("debug breakpoint");
+      break;
+    case 4:
+      /* FIXME: system call */
+      break;
+    case 5:
+      /* FIXME: create thunk */
+      break;
+    case 6:
+      _vm->compiler_version = _vm->regs->regs[R7];
+      break;
+    default:
+      error("bad break exception");
+  }
+
+  return _vm;
+}
+
 static vm *exec_jmp(vm *_vm, inst *_inst) {
   bool do_jmp = false;
   if (_inst->is_jmp64) {
@@ -740,6 +765,9 @@ vm *exec_op(vm *_vm, inst *_inst) {
     goto done_inc;
   }
   switch (_inst->opcode) {
+    case BREAK:
+      exec_break(_vm, _inst);
+      goto done_inc;
     case JMP:
       exec_jmp(_vm, _inst);
       goto done_free;

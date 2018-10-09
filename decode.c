@@ -10,7 +10,7 @@ static inst *decode_mov(inst *, uint8_t *);
 static inst *decode_movi(inst *, uint8_t *);
 
 opcode ops[] = {
-  NOP,     /* 0x00 */
+  BREAK,   /* 0x00 */
   JMP,     /* 0x01 */
   JMP8,    /* 0x02 */
   NOP,     /* 0x03 */
@@ -318,7 +318,10 @@ inst *decode_op(uint8_t *op) {
 
   _inst->opcode = decode_opcode(op[0] & 0x3f);
 
-  if (_inst->opcode == JMP) {
+  if (_inst->opcode == BREAK) {
+    _inst->break_code = op[1];
+    goto done;
+  } else if (_inst->opcode == JMP) {
     _inst = decode_jmp(_inst, op);
   } else if (_inst->opcode == JMP8) {
     _inst = decode_jmp8(_inst, op);
@@ -363,8 +366,8 @@ inst *decode_op(uint8_t *op) {
   else
     _inst->operand1 = decode_gp_reg(op[1] & 0x07);
 
+done:
   free(op);
-
   return _inst;
 
 fail:
