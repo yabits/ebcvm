@@ -5,6 +5,7 @@ static reg decode_gp_reg(uint8_t);
 static reg decode_dd_reg(uint8_t);
 static inst *decode_jmp(inst *, uint8_t *);
 static inst *decode_jmp8(inst *, uint8_t *);
+static inst *decode_cmpi(inst *, uint8_t *);
 static inst *decode_mov(inst *, uint8_t *);
 static inst *decode_movi(inst *, uint8_t *);
 
@@ -54,11 +55,11 @@ opcode ops[] = {
   STORESP, /* 0x2a */
   PUSH,    /* 0x2b */
   POP,     /* 0x2c */
-  NOP,     /* 0x2d */
-  NOP,     /* 0x2e */
-  NOP,     /* 0x2f */
-  NOP,     /* 0x30 */
-  NOP,     /* 0x31 */
+  CMPIeq,  /* 0x2d */
+  CMPIlte, /* 0x2e */
+  CMPIgte, /* 0x2f */
+  CMPIulte,/* 0x30 */
+  CMPIugte,/* 0x31 */
   MOVnw,   /* 0x32 */
   MOVnd,   /* 0x33 */
   NOP,     /* 0x34 */
@@ -130,6 +131,31 @@ static inst *decode_jmp8(inst *_inst, uint8_t *op) {
 
 fail:
   error("failed to decode JMP8");
+  return NULL;
+}
+
+static inst *decode_cmpi(inst *_inst, uint8_t *op) {
+  if (!_inst || !op)
+    goto fail;
+
+  _inst->is_opt_idx = (op[1] & 0x10) ? true : false;
+  _inst->imm_len    = (op[0] & 0x80) ? 4 : 2;
+  _inst->mov_len    = (op[0] & 0x40) ? 8 : 4;
+
+  int i = 2;
+  if (_inst->is_opt_idx) {
+    _inst->opt_idx = ((uint16_t)op[i] << 0) + ((uint16_t)op[i + 1] << 8);
+    i += 2;
+  }
+
+  _inst->imm_data = 0x00;
+  for (int k = 0; k < _inst->imm_len; k++)
+    _inst->imm_data += (uint64_t)op[i + k] << (8 * k);
+
+  return _inst;
+
+fail:
+  error("failed to decode CMPI");
   return NULL;
 }
 
@@ -296,6 +322,8 @@ inst *decode_op(uint8_t *op) {
     _inst = decode_jmp(_inst, op);
   } else if (_inst->opcode == JMP8) {
     _inst = decode_jmp8(_inst, op);
+  } else if (_inst->opcode >= CMPIeq && _inst->opcode <= CMPIugte) {
+    _inst = decode_cmpi(_inst, op);
   } else if (_inst->opcode >= MOVbw && _inst->opcode <= MOVqq) {
     _inst = decode_mov(_inst, op);
   } else if (_inst->opcode >= MOVI && _inst->opcode <= MOVREL) {

@@ -213,6 +213,70 @@ static vm *exec_cmp(vm *_vm, inst *_inst) {
   return _vm;
 }
 
+static vm *exec_cmpi(vm *_vm, inst *_inst) {
+  int64_t op1, op2;
+  if (_inst->mov_len == 8) {
+    if (_inst->op1_indirect) {
+      if (_inst->is_opt_idx) {
+        op1 = read_mem64(_vm->mem,
+            _vm->regs->regs[_inst->operand1] + _inst->opt_idx);
+      } else {
+        op1 = read_mem64(_vm->mem,
+            _vm->regs->regs[_inst->operand1]);
+      }
+    } else {
+      if (_inst->is_opt_idx)
+        error("invalid instruction");
+      else
+        op1 = _vm->regs->regs[_inst->operand1];
+    }
+    op2 = _inst->imm_data;
+  } else if (_inst->mov_len == 4) {
+    if (_inst->op1_indirect) {
+      if (_inst->is_opt_idx) {
+        op1 = (int32_t)read_mem32(_vm->mem,
+            _vm->regs->regs[_inst->operand1] + _inst->opt_idx);
+      } else {
+        op1 = (int32_t)read_mem32(_vm->mem,
+            _vm->regs->regs[_inst->operand1]);
+      }
+    } else {
+      if (_inst->is_opt_idx)
+        error("invalid instruction");
+      else
+        op1 = (int32_t)_vm->regs->regs[_inst->operand1];
+    }
+    op2 = (int32_t)_inst->imm_data;
+  }
+
+  switch (_inst->opcode) {
+    case CMPIeq:
+      if ((int64_t)op1 == (int64_t)op2)
+        _vm->regs->regs[FLAGS] |= 0x01;
+      break;
+    case CMPIlte:
+      if ((int64_t)op1 <= (int64_t)op2)
+        _vm->regs->regs[FLAGS] |= 0x01;
+      break;
+    case CMPIgte:
+      if ((int64_t)op1 >= (int64_t)op2)
+        _vm->regs->regs[FLAGS] |= 0x01;
+      break;
+    case CMPIulte:
+      if ((uint64_t)op1 <= (uint64_t)op2)
+        _vm->regs->regs[FLAGS] |= 0x01;
+      break;
+    case CMPIugte:
+      if ((uint64_t)op1 >= (uint64_t)op2)
+        _vm->regs->regs[FLAGS] |= 0x01;
+      break;
+    default:
+      error("invalid instruction");
+  }
+
+  return _vm;
+}
+
 static vm *exec_mov(vm *_vm, inst *_inst) {
   uint64_t op;
   if (_inst->op2_indirect) {
@@ -674,6 +738,13 @@ vm *exec_op(vm *_vm, inst *_inst) {
     case CMPulte:
     case CMPugte:
       exec_cmp(_vm, _inst);
+      goto done_inc;
+    case CMPIeq:
+    case CMPIlte:
+    case CMPIgte:
+    case CMPIulte:
+    case CMPIugte:
+      exec_cmpi(_vm, _inst);
       goto done_inc;
     case MOVbw:
     case MOVww:

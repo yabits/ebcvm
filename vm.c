@@ -4,6 +4,7 @@ static void init_regs(regs *);
 static uint8_t *maybe_fetch_opts(vm *, uint8_t *, size_t);
 static uint8_t *maybe_fetch_imms(vm *, uint8_t *);
 static uint8_t *maybe_fetch_jmp_imms(vm *, uint8_t *);
+static uint8_t *maybe_fetch_cmpi_imms(vm *, uint8_t *);
 static uint8_t *fetch_op(vm *);
 
 static void init_regs(regs *_regs) {
@@ -111,6 +112,31 @@ fail:
   return NULL;
 }
 
+static uint8_t *maybe_fetch_cmpi_imms(vm *_vm, uint8_t *op) {
+  if (!op)
+    goto fail;
+  uint64_t ip = _vm->regs->regs[IP];
+  int i = 2;
+  if (op[1] & 0x10) {
+    op = realloc(op, sizeof(uint8_t) * (2 + i));
+    if (!op)
+      goto fail;
+    op[2] = read_mem8(_vm->mem, ip + 2);
+    op[3] = read_mem8(_vm->mem, ip + 3);
+    i += 2;
+  }
+
+  size_t imm_len = (op[0] & 0x80) ? 4 : 2;
+  for (int k = 0; k < imm_len; k++)
+    op[i + k] = read_mem8(_vm->mem, ip + i + k);
+
+  return op;
+
+fail:
+  error("failed to fetch cmpi imms");
+  return NULL;
+}
+
 static uint8_t *fetch_op(vm *_vm) {
   uint8_t *op = malloc(sizeof(uint8_t) * 2);
   if (!op)
@@ -121,6 +147,9 @@ static uint8_t *fetch_op(vm *_vm) {
   if ((op[0] & 0x3f) == 0x01) {
     /* XXX: JMP */
     op = maybe_fetch_jmp_imms(_vm, op);
+  } else if ((op[0] & 0x3f) >= 0x2d && (op[0] & 0x3f) <= 0x31) {
+    /* XXX: CMPI */
+    op = maybe_fetch_cmpi_imms(_vm, op);
   } else if ((op[0] & 0x3f) >= 0x1d && (op[0] & 0x3f) <= 0x1f) {
     /* XXX: MOVbw to MOVqw */
     op = maybe_fetch_opts(_vm, op, 2);

@@ -48,6 +48,11 @@ typedef enum opcode {
   CMPgte,
   CMPulte,
   CMPugte,
+  CMPIeq,
+  CMPIlte,
+  CMPIgte,
+  CMPIulte,
+  CMPIugte,
   ADD,
   SUB,
   MUL,
@@ -119,7 +124,7 @@ typedef struct inst {
       uint64_t op1_idx;
       uint64_t op2_idx;
     };
-    /* MOVI, MOVIn, and MOVREL */
+    /* MOVI, MOVIn, MOVREL, and CMPI */
     struct {
       bool is_opt_idx;
       size_t imm_len;
