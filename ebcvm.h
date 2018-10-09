@@ -85,11 +85,13 @@ typedef struct inst {
   bool op1_indirect;
   reg operand1;
   union {
+    /* arithmetic ops */
     struct {
       bool is_imm;
       bool is_64op;
       uint16_t imm;
     };
+    /* MOV and MOVn */
     struct {
       size_t op_len;
       bool is_op1_idx;
@@ -98,6 +100,7 @@ typedef struct inst {
       uint64_t op1_idx;
       uint64_t op2_idx;
     };
+    /* MOVI and MOVIn */
     struct {
       bool is_opt_idx;
       size_t imm_len;

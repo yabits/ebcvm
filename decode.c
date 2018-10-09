@@ -7,70 +7,70 @@ static inst *decode_mov(inst *, uint8_t *);
 static inst *decode_movi(inst *, uint8_t *);
 
 opcode ops[] = {
-  NOP, /* 0x00 */
-  NOP, /* 0x01 */
-  NOP, /* 0x02 */
-  NOP, /* 0x03 */
-  RET, /* 0x04 */
-  NOP, /* 0x05 */
-  NOP, /* 0x06 */
-  NOP, /* 0x07 */
-  NOP, /* 0x08 */
-  NOP, /* 0x09 */
-  NOT, /* 0x0a */
-  NEG, /* 0x0b */
-  ADD, /* 0x0c */
-  SUB, /* 0x0d */
-  MUL, /* 0x0e */
-  MULU,/* 0x0f */
-  DIV, /* 0x10 */
-  DIVU,/* 0x11 */
-  MOD, /* 0x12 */
-  MODU,/* 0x13 */
-  AND, /* 0x14 */
-  OR,  /* 0x15 */
-  XOR, /* 0x16 */
-  SHL, /* 0x17 */
-  SHR, /* 0x18 */
-  NOP, /* 0x19 */
-  NOP, /* 0x1a */
-  NOP, /* 0x1b */
-  NOP, /* 0x1c */
-  MOVbw, /* 0x1d */
-  MOVww, /* 0x1e */
-  MOVdw, /* 0x1f */
-  MOVqw, /* 0x20 */
-  MOVbd, /* 0x21 */
-  MOVwd, /* 0x22 */
-  MOVdd, /* 0x23 */
-  MOVqd, /* 0x24 */
-  NOP, /* 0x25 */
-  NOP, /* 0x26 */
-  NOP, /* 0x27 */
-  MOVqq, /* 0x28 */
-  LOADSP, /* 0x29 */
+  NOP,     /* 0x00 */
+  NOP,     /* 0x01 */
+  NOP,     /* 0x02 */
+  NOP,     /* 0x03 */
+  RET,     /* 0x04 */
+  NOP,     /* 0x05 */
+  NOP,     /* 0x06 */
+  NOP,     /* 0x07 */
+  NOP,     /* 0x08 */
+  NOP,     /* 0x09 */
+  NOT,     /* 0x0a */
+  NEG,     /* 0x0b */
+  ADD,     /* 0x0c */
+  SUB,     /* 0x0d */
+  MUL,     /* 0x0e */
+  MULU,    /* 0x0f */
+  DIV,     /* 0x10 */
+  DIVU,    /* 0x11 */
+  MOD,     /* 0x12 */
+  MODU,    /* 0x13 */
+  AND,     /* 0x14 */
+  OR,      /* 0x15 */
+  XOR,     /* 0x16 */
+  SHL,     /* 0x17 */
+  SHR,     /* 0x18 */
+  NOP,     /* 0x19 */
+  NOP,     /* 0x1a */
+  NOP,     /* 0x1b */
+  NOP,     /* 0x1c */
+  MOVbw,   /* 0x1d */
+  MOVww,   /* 0x1e */
+  MOVdw,   /* 0x1f */
+  MOVqw,   /* 0x20 */
+  MOVbd,   /* 0x21 */
+  MOVwd,   /* 0x22 */
+  MOVdd,   /* 0x23 */
+  MOVqd,   /* 0x24 */
+  NOP,     /* 0x25 */
+  NOP,     /* 0x26 */
+  NOP,     /* 0x27 */
+  MOVqq,   /* 0x28 */
+  LOADSP,  /* 0x29 */
   STORESP, /* 0x2a */
-  PUSH,/* 0x2b */
-  POP, /* 0x2c */
-  NOP, /* 0x2d */
-  NOP, /* 0x2e */
-  NOP, /* 0x2f */
-  NOP, /* 0x30 */
-  NOP, /* 0x31 */
-  MOVnw, /* 0x32 */
-  MOVnd, /* 0x33 */
-  NOP, /* 0x34 */
-  PUSHn, /* 0x35 */
-  POPn,/* 0x36 */
-  MOVI,/* 0x37 */
-  MOVIn,/* 0x38 */
-  NOP, /* 0x39 */
-  NOP, /* 0x3a */
-  NOP, /* 0x3b */
-  NOP, /* 0x3c */
-  NOP, /* 0x3d */
-  NOP, /* 0x3e */
-  NOP, /* 0x3f */
+  PUSH,    /* 0x2b */
+  POP,     /* 0x2c */
+  NOP,     /* 0x2d */
+  NOP,     /* 0x2e */
+  NOP,     /* 0x2f */
+  NOP,     /* 0x30 */
+  NOP,     /* 0x31 */
+  MOVnw,   /* 0x32 */
+  MOVnd,   /* 0x33 */
+  NOP,     /* 0x34 */
+  PUSHn,   /* 0x35 */
+  POPn,    /* 0x36 */
+  MOVI,    /* 0x37 */
+  MOVIn,   /* 0x38 */
+  NOP,     /* 0x39 */
+  NOP,     /* 0x3a */
+  NOP,     /* 0x3b */
+  NOP,     /* 0x3c */
+  NOP,     /* 0x3d */
+  NOP,     /* 0x3e */
+  NOP,     /* 0x3f */
 };
 
 static opcode decode_opcode(uint8_t _opcode) {
