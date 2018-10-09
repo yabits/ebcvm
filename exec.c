@@ -153,6 +153,21 @@ static vm *exec_jmp(vm *_vm, inst *_inst) {
   return _vm;
 }
 
+static vm *exec_jmp8(vm *_vm, inst *_inst) {
+  bool do_jmp = false;
+  if (_inst->is_cond) {
+    if (_inst->is_cs && (_vm->regs->regs[IP] & 0x01))
+      do_jmp = true;
+    else if (!_inst->is_cs && !(_vm->regs->regs[IP] & 0x01))
+      do_jmp = true;
+  } else
+    do_jmp = true;
+  if (do_jmp)
+    _vm->regs->regs[IP] += 2 + (int8_t)_inst->jmp_imm * 2;
+
+  return _vm;
+}
+
 static vm *exec_mov(vm *_vm, inst *_inst) {
   uint64_t op;
   if (_inst->op2_indirect) {
@@ -604,6 +619,9 @@ vm *exec_op(vm *_vm, inst *_inst) {
   switch (_inst->opcode) {
     case JMP:
       exec_jmp(_vm, _inst);
+      goto done_free;
+    case JMP8:
+      exec_jmp8(_vm, _inst);
       goto done_free;
     case MOVbw:
     case MOVww:

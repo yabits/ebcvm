@@ -42,6 +42,7 @@ typedef struct vm {
 typedef enum opcode {
   NOP = 0x00,
   JMP,
+  JMP8,
   ADD,
   SUB,
   MUL,
@@ -89,7 +90,7 @@ typedef struct inst {
   bool op1_indirect;
   reg operand1;
   union {
-    /* JMP */
+    /* JMP and JMP8 */
     struct {
       bool is_jmp_imm;
       bool is_jmp64;

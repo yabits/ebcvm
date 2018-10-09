@@ -4,13 +4,14 @@ static opcode decode_opcode(uint8_t);
 static reg decode_gp_reg(uint8_t);
 static reg decode_dd_reg(uint8_t);
 static inst *decode_jmp(inst *, uint8_t *);
+static inst *decode_jmp8(inst *, uint8_t *);
 static inst *decode_mov(inst *, uint8_t *);
 static inst *decode_movi(inst *, uint8_t *);
 
 opcode ops[] = {
   NOP,     /* 0x00 */
   JMP,     /* 0x01 */
-  NOP,     /* 0x02 */
+  JMP8,    /* 0x02 */
   NOP,     /* 0x03 */
   RET,     /* 0x04 */
   NOP,     /* 0x05 */
@@ -112,6 +113,23 @@ static inst *decode_jmp(inst *_inst, uint8_t *op) {
 
 fail:
   error("failed to decode JMP");
+  return NULL;
+}
+
+static inst *decode_jmp8(inst *_inst, uint8_t *op) {
+  if (!_inst || !op)
+    goto fail;
+
+  _inst->is_jmp_imm = true;
+  _inst->is_cond    = (op[0] & 0x80) ? true : false;
+  _inst->is_cs      = (op[0] & 0x40) ? true : false;
+
+  _inst->jmp_imm = op[1];
+
+  return _inst;
+
+fail:
+  error("failed to decode JMP8");
   return NULL;
 }
 
@@ -276,6 +294,8 @@ inst *decode_op(uint8_t *op) {
 
   if (_inst->opcode == JMP) {
     _inst = decode_jmp(_inst, op);
+  } else if (_inst->opcode == JMP8) {
+    _inst = decode_jmp8(_inst, op);
   } else if (_inst->opcode >= MOVbw && _inst->opcode <= MOVqq) {
     _inst = decode_mov(_inst, op);
   } else if (_inst->opcode >= MOVI && _inst->opcode <= MOVREL) {
