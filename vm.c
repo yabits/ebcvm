@@ -99,16 +99,17 @@ static uint8_t *fetch_op(vm *_vm) {
   uint64_t ip = _vm->regs->regs[IP];
   op[0] = read_mem8(_vm->mem, ip + 0);
   op[1] = read_mem8(_vm->mem, ip + 1);
-  /* XXX: MOVbw to MOVqw */
   if ((op[0] & 0x3f) >= 0x1d && (op[0] & 0x3f) <= 0x1f) {
+    /* XXX: MOVbw to MOVqw */
     op = maybe_fetch_opts(_vm, op, 2);
-  /* XXX: MOVbd to MOVqd */
   } else if ((op[0] & 0x3f) >= 0x21 && (op[0] & 0x3f) <= 0x24) {
+    /* XXX: MOVbd to MOVqd */
     op = maybe_fetch_opts(_vm, op, 4);
-  /* XXX: MOVqq */
   } else if ((op[0] & 0x3f) == 0x28) {
+    /* XXX: MOVqq */
     op = maybe_fetch_opts(_vm, op, 8);
-  } else if ((op[0] & 0x3f) == 0x37) {
+  } else if ((op[0] & 0x3f) == 0x37 || (op[0] & 0x3f) == 0x38) {
+    /* XXX: MOVI or MOVIn */
     op = maybe_fetch_imms(_vm, op);
   } else if (op[0] & 0x80){
     op = realloc(op, sizeof(uint8_t) * 4);

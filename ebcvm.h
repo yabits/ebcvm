@@ -66,6 +66,7 @@ typedef enum opcode {
   MOVqd,
   MOVqq,
   MOVI,
+  MOVIn,
   POP,
   POPn,
   PUSH,

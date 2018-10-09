@@ -210,6 +210,24 @@ static vm *exec_movi(vm *_vm, inst *_inst) {
   return _vm;
 }
 
+static vm *exec_movin(vm *_vm, inst *_inst) {
+  uint64_t op1;
+  if (_inst->op1_indirect) {
+    if (_inst->is_opt_idx)
+      op1 = _vm->regs->regs[_inst->operand2] + _inst->opt_idx;
+    else
+      op1 = _vm->regs->regs[_inst->operand2];
+    write_mem64(_vm->mem, op1, _inst->imm_data);
+  } else {
+    if (_inst->is_opt_idx)
+      error("invalid instruction");
+    else
+      _vm->regs->regs[_inst->operand1] = _inst->imm_data;
+  }
+
+  return _vm;
+}
+
 static vm *exec_pop(vm *_vm, inst *_inst) {
   if (_inst->is_64op) {
     uint64_t op = read_mem64(_vm->mem, _vm->regs->regs[R0]);
@@ -441,6 +459,9 @@ vm *exec_op(vm *_vm, inst *_inst) {
       goto done_inc;
     case MOVI:
       exec_movi(_vm, _inst);
+      goto done_inc;
+    case MOVIn:
+      exec_movin(_vm, _inst);
       goto done_inc;
     case POP:
       exec_pop(_vm, _inst);

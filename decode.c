@@ -63,7 +63,7 @@ opcode ops[] = {
   PUSHn, /* 0x35 */
   POPn,/* 0x36 */
   MOVI,/* 0x37 */
-  NOP, /* 0x38 */
+  MOVIn,/* 0x38 */
   NOP, /* 0x39 */
   NOP, /* 0x3a */
   NOP, /* 0x3b */
@@ -184,21 +184,23 @@ static inst *decode_movi(inst *_inst, uint8_t *op) {
   else
     _inst->is_opt_idx = false;
 
-  switch (op[1] & 0x30) {
-    case 0:
-      _inst->mov_len = 1;
-      break;
-    case 1:
-      _inst->mov_len = 2;
-      break;
-    case 2:
-      _inst->mov_len = 4;
-      break;
-    case 3:
-      _inst->mov_len = 8;
-      break;
-    default:
-      goto fail;
+  if (_inst->opcode == MOVI) {
+    switch (op[1] & 0x30) {
+      case 0:
+        _inst->mov_len = 1;
+        break;
+      case 1:
+        _inst->mov_len = 2;
+        break;
+      case 2:
+        _inst->mov_len = 4;
+        break;
+      case 3:
+        _inst->mov_len = 8;
+        break;
+      default:
+        goto fail;
+    }
   }
 
   int i = 2;
@@ -230,7 +232,7 @@ inst *decode_op(uint8_t *op) {
 
   if (_inst->opcode >= MOVbw && _inst->opcode <= MOVqq) {
     _inst = decode_mov(_inst, op);
-  } else if (_inst->opcode == MOVI) {
+  } else if (_inst->opcode == MOVI || _inst->opcode == MOVIn) {
     _inst = decode_movi(_inst, op);
   } else {
     if (op[0] & 0x80)
