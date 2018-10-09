@@ -727,6 +727,18 @@ vm *exec_op(vm *_vm, inst *_inst) {
     arith_ops[_inst->opcode](_vm, _inst);
     goto done_inc;
   }
+  if (_inst->opcode >= CMPeq && _inst->opcode <= CMPugte) {
+    exec_cmp(_vm, _inst);
+    goto done_inc;
+  }
+  if (_inst->opcode >= CMPIeq && _inst->opcode <= CMPIugte) {
+    exec_cmpi(_vm, _inst);
+    goto done_inc;
+  }
+  if (_inst->opcode >= MOVbw && _inst->opcode <= MOVqq) {
+    exec_mov(_vm, _inst);
+    goto done_inc;
+  }
   switch (_inst->opcode) {
     case JMP:
       exec_jmp(_vm, _inst);
@@ -734,31 +746,6 @@ vm *exec_op(vm *_vm, inst *_inst) {
     case JMP8:
       exec_jmp8(_vm, _inst);
       goto done_free;
-    case CMPeq:
-    case CMPlte:
-    case CMPgte:
-    case CMPulte:
-    case CMPugte:
-      exec_cmp(_vm, _inst);
-      goto done_inc;
-    case CMPIeq:
-    case CMPIlte:
-    case CMPIgte:
-    case CMPIulte:
-    case CMPIugte:
-      exec_cmpi(_vm, _inst);
-      goto done_inc;
-    case MOVbw:
-    case MOVww:
-    case MOVdw:
-    case MOVqw:
-    case MOVbd:
-    case MOVwd:
-    case MOVdd:
-    case MOVqd:
-    case MOVqq:
-      exec_mov(_vm, _inst);
-      goto done_inc;
     case MOVI:
       exec_movi(_vm, _inst);
       goto done_inc;
