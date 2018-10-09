@@ -43,6 +43,11 @@ typedef enum opcode {
   NOP = 0x00,
   JMP,
   JMP8,
+  CMPeq,
+  CMPlte,
+  CMPgte,
+  CMPulte,
+  CMPugte,
   ADD,
   SUB,
   MUL,
@@ -99,7 +104,7 @@ typedef struct inst {
       bool is_rel;
       uint64_t jmp_imm;
     };
-    /* arithmetic ops */
+    /* arithmetic ops and CMP */
     struct {
       bool is_imm;
       bool is_64op;

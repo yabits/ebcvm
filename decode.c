@@ -14,11 +14,11 @@ opcode ops[] = {
   JMP8,    /* 0x02 */
   NOP,     /* 0x03 */
   RET,     /* 0x04 */
-  NOP,     /* 0x05 */
-  NOP,     /* 0x06 */
-  NOP,     /* 0x07 */
-  NOP,     /* 0x08 */
-  NOP,     /* 0x09 */
+  CMPeq,   /* 0x05 */
+  CMPlte,  /* 0x06 */
+  CMPgte,  /* 0x07 */
+  CMPulte, /* 0x08 */
+  CMPugte, /* 0x09 */
   NOT,     /* 0x0a */
   NEG,     /* 0x0b */
   ADD,     /* 0x0c */

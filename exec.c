@@ -168,6 +168,51 @@ static vm *exec_jmp8(vm *_vm, inst *_inst) {
   return _vm;
 }
 
+static vm *exec_cmp(vm *_vm, inst *_inst) {
+  uint64_t op2;
+  if (_inst->op2_indirect) {
+    if (_inst->is_imm) {
+      op2 = read_mem64(_vm->mem,
+          _vm->regs->regs[_inst->operand2] + _inst->imm);
+    } else {
+      op2 = read_mem64(_vm->mem,
+          _vm->regs->regs[_inst->operand2]);
+    }
+  } else {
+    if (_inst->is_imm)
+      op2 = _vm->regs->regs[_inst->operand2] + _inst->imm;
+    else
+      op2 = _vm->regs->regs[_inst->operand2];
+  }
+  uint64_t op1 = _vm->regs->regs[_inst->operand1];
+  switch (_inst->opcode) {
+    case CMPeq:
+      if ((int64_t)op1 == (int64_t)op2)
+        _vm->regs->regs[FLAGS] |= 0x01;
+      break;
+    case CMPlte:
+      if ((int64_t)op1 <= (int64_t)op2)
+        _vm->regs->regs[FLAGS] |= 0x01;
+      break;
+    case CMPgte:
+      if ((int64_t)op1 >= (int64_t)op2)
+        _vm->regs->regs[FLAGS] |= 0x01;
+      break;
+    case CMPulte:
+      if ((uint64_t)op1 <= (uint64_t)op2)
+        _vm->regs->regs[FLAGS] |= 0x01;
+      break;
+    case CMPugte:
+      if ((uint64_t)op1 >= (uint64_t)op2)
+        _vm->regs->regs[FLAGS] |= 0x01;
+      break;
+    default:
+      error("invalid instruction");
+  }
+
+  return _vm;
+}
+
 static vm *exec_mov(vm *_vm, inst *_inst) {
   uint64_t op;
   if (_inst->op2_indirect) {
@@ -623,6 +668,13 @@ vm *exec_op(vm *_vm, inst *_inst) {
     case JMP8:
       exec_jmp8(_vm, _inst);
       goto done_free;
+    case CMPeq:
+    case CMPlte:
+    case CMPgte:
+    case CMPulte:
+    case CMPugte:
+      exec_cmp(_vm, _inst);
+      goto done_inc;
     case MOVbw:
     case MOVww:
     case MOVdw:
