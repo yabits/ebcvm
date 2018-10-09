@@ -44,8 +44,8 @@ opcode ops[] = {
   MOVwd,   /* 0x22 */
   MOVdd,   /* 0x23 */
   MOVqd,   /* 0x24 */
-  NOP,     /* 0x25 */
-  NOP,     /* 0x26 */
+  MOVsnw,  /* 0x25 */
+  MOVsnd,  /* 0x26 */
   NOP,     /* 0x27 */
   MOVqq,   /* 0x28 */
   LOADSP,  /* 0x29 */
@@ -129,11 +129,13 @@ static inst *decode_mov(inst *_inst, uint8_t *op) {
     case MOVww:
     case MOVwd:
     case MOVnw:
+    case MOVsnw:
       _inst->op_len = 2;
       break;
     case MOVdw:
     case MOVdd:
     case MOVnd:
+    case MOVsnd:
       _inst->op_len = 4;
       break;
     case MOVqw:
@@ -152,6 +154,7 @@ static inst *decode_mov(inst *_inst, uint8_t *op) {
     case MOVdw:
     case MOVqw:
     case MOVnw:
+    case MOVsnw:
       _inst = decode_mov_idx(_inst, op, 2);
       break;
     case MOVbd:
@@ -159,6 +162,7 @@ static inst *decode_mov(inst *_inst, uint8_t *op) {
     case MOVdd:
     case MOVqd:
     case MOVnd:
+    case MOVsnd:
       _inst = decode_mov_idx(_inst, op, 4);
       break;
     case MOVqq:
@@ -249,7 +253,7 @@ inst *decode_op(uint8_t *op) {
     _inst = decode_mov(_inst, op);
   } else if (_inst->opcode >= MOVI && _inst->opcode <= MOVREL) {
     _inst = decode_movi(_inst, op);
-  } else if (_inst->opcode == MOVnw || _inst->opcode == MOVnd) {
+  } else if (_inst->opcode >= MOVnw && _inst->opcode <= MOVsnd) {
     _inst = decode_mov(_inst, op);
   } else {
     if (op[0] & 0x80)

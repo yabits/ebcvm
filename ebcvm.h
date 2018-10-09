@@ -70,6 +70,8 @@ typedef enum opcode {
   MOVREL,
   MOVnw,
   MOVnd,
+  MOVsnw,
+  MOVsnd,
   POP,
   POPn,
   PUSH,
@@ -92,7 +94,7 @@ typedef struct inst {
       bool is_64op;
       uint16_t imm;
     };
-    /* MOV and MOVn */
+    /* MOV, MOVn, and MOVsn */
     struct {
       size_t op_len;
       bool is_op1_idx;

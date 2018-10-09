@@ -111,11 +111,11 @@ static uint8_t *fetch_op(vm *_vm) {
   } else if ((op[0] & 0x3f) >= 0x37 && (op[0] & 0x3f) <= 0x39) {
     /* XXX: MOVI, MOVIn, or MOVREL */
     op = maybe_fetch_imms(_vm, op);
-  } else if ((op[0] & 0x3f) == 0x32) {
-    /* XXX: MOVnw */
+  } else if ((op[0] & 0x3f) == 0x32 || (op[0] & 0x3f) == 0x25) {
+    /* XXX: MOVnw or MOVsnw */
     op = maybe_fetch_opts(_vm, op, 2);
-  } else if ((op[0] & 0x3f) == 0x33) {
-    /* XXX: MOVnd */
+  } else if ((op[0] & 0x3f) == 0x33 || (op[0] & 0x3f) == 0x26) {
+    /* XXX: MOVnd or MOVsnw */
     op = maybe_fetch_opts(_vm, op, 4);
   } else if (op[0] & 0x80){
     op = realloc(op, sizeof(uint8_t) * 4);
