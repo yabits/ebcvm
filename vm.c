@@ -3,6 +3,7 @@
 static void init_regs(regs *);
 static uint8_t *maybe_fetch_opts(vm *, uint8_t *, size_t);
 static uint8_t *maybe_fetch_imms(vm *, uint8_t *);
+static uint8_t *maybe_fetch_jmp_imms(vm *, uint8_t *);
 static uint8_t *fetch_op(vm *);
 
 static void init_regs(regs *_regs) {
@@ -92,6 +93,24 @@ fail:
   return NULL;
 }
 
+static uint8_t *maybe_fetch_jmp_imms(vm *_vm, uint8_t *op) {
+  if (!op)
+    goto fail;
+  if (op[0] & 0x80) {
+    int i = 2;
+    uint64_t ip = _vm->regs->regs[IP];
+    int imm_len = op[0] & 0x40 ? 8 : 4;
+    for (int k = 0; k < imm_len; k++)
+      op[i + k] = read_mem8(_vm->mem, ip + i + k);
+  }
+
+  return op;
+
+fail:
+  error("failed to fetch jmp imms");
+  return NULL;
+}
+
 static uint8_t *fetch_op(vm *_vm) {
   uint8_t *op = malloc(sizeof(uint8_t) * 2);
   if (!op)
@@ -99,7 +118,10 @@ static uint8_t *fetch_op(vm *_vm) {
   uint64_t ip = _vm->regs->regs[IP];
   op[0] = read_mem8(_vm->mem, ip + 0);
   op[1] = read_mem8(_vm->mem, ip + 1);
-  if ((op[0] & 0x3f) >= 0x1d && (op[0] & 0x3f) <= 0x1f) {
+  if ((op[0] & 0x3f) == 0x01) {
+    /* XXX: JMP */
+    op = maybe_fetch_jmp_imms(_vm, op);
+  } else if ((op[0] & 0x3f) >= 0x1d && (op[0] & 0x3f) <= 0x1f) {
     /* XXX: MOVbw to MOVqw */
     op = maybe_fetch_opts(_vm, op, 2);
   } else if ((op[0] & 0x3f) >= 0x21 && (op[0] & 0x3f) <= 0x24) {

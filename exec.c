@@ -94,6 +94,65 @@ arith_op arith_ops[] = {
   exec_modu,
 };
 
+static vm *exec_jmp(vm *_vm, inst *_inst) {
+  bool do_jmp = false;
+  if (_inst->is_jmp64) {
+    if (!_inst->jmp_imm)
+      error("invalid instruction");
+    if (_inst->is_cond) {
+      if (_inst->is_cs && (_vm->regs->regs[IP] & 0x01))
+        do_jmp = true;
+      else if (!_inst->is_cs && !(_vm->regs->regs[IP] & 0x01))
+        do_jmp = true;
+    } else
+      do_jmp = true;
+    if (do_jmp) {
+      if (_inst->jmp_imm % 2)
+        error("alignemnt check");
+      if (_inst->is_rel) {
+        /* XXX: JMP64 only supports immediate */
+        _vm->regs->regs[IP] += 10 + _inst->jmp_imm;
+      } else
+        _vm->regs->regs[IP] = _inst->jmp_imm;
+    }
+  } else {
+    if (_inst->is_cond) {
+      if (_inst->is_cs && (_vm->regs->regs[IP] & 0x01))
+        do_jmp = true;
+      else if (!_inst->is_cs && !(_vm->regs->regs[IP] & 0x01))
+        do_jmp = true;
+    } else
+      do_jmp = true;
+    if (do_jmp) {
+      uint64_t op1;
+      if (_inst->op1_indirect) {
+        if (_inst->is_jmp_imm) {
+          op1 = read_mem64(_vm->mem,
+              _vm->regs->regs[_inst->operand1] + _inst->jmp_imm);
+        } else
+          op1 = read_mem64(_vm->mem,
+              _vm->regs->regs[_inst->operand1]);
+      } else {
+        if (_inst->operand1 == R0)
+          op1 = 0;
+        else
+          op1 = _vm->regs->regs[_inst->operand1];
+        if (_inst->is_jmp_imm)
+          op1 += _inst->jmp_imm;
+      }
+      if (op1 % 2)
+        error("alignemnt check");
+      if (_inst->is_rel) {
+        size_t inst_len = _inst->is_jmp_imm ? 6 : 2;
+        _vm->regs->regs[IP] += inst_len + op1;
+      } else
+        _vm->regs->regs[IP] = op1;
+    }
+  }
+
+  return _vm;
+}
+
 static vm *exec_mov(vm *_vm, inst *_inst) {
   uint64_t op;
   if (_inst->op2_indirect) {
@@ -543,6 +602,9 @@ vm *exec_op(vm *_vm, inst *_inst) {
     goto done_inc;
   }
   switch (_inst->opcode) {
+    case JMP:
+      exec_jmp(_vm, _inst);
+      goto done_free;
     case MOVbw:
     case MOVww:
     case MOVdw:

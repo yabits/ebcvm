@@ -41,6 +41,7 @@ typedef struct vm {
 
 typedef enum opcode {
   NOP = 0x00,
+  JMP,
   ADD,
   SUB,
   MUL,
@@ -88,6 +89,15 @@ typedef struct inst {
   bool op1_indirect;
   reg operand1;
   union {
+    /* JMP */
+    struct {
+      bool is_jmp_imm;
+      bool is_jmp64;
+      bool is_cond;
+      bool is_cs; /* jump if Flags.C is set/clear */
+      bool is_rel;
+      uint64_t jmp_imm;
+    };
     /* arithmetic ops */
     struct {
       bool is_imm;

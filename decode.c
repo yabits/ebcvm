@@ -3,12 +3,13 @@
 static opcode decode_opcode(uint8_t);
 static reg decode_gp_reg(uint8_t);
 static reg decode_dd_reg(uint8_t);
+static inst *decode_jmp(inst *, uint8_t *);
 static inst *decode_mov(inst *, uint8_t *);
 static inst *decode_movi(inst *, uint8_t *);
 
 opcode ops[] = {
   NOP,     /* 0x00 */
-  NOP,     /* 0x01 */
+  JMP,     /* 0x01 */
   NOP,     /* 0x02 */
   NOP,     /* 0x03 */
   RET,     /* 0x04 */
@@ -88,6 +89,30 @@ static reg decode_dd_reg(uint8_t operand) {
   if (operand > 0x02)
     error("failed to decode general purpose register");
   return operand + 0;
+}
+
+static inst *decode_jmp(inst *_inst, uint8_t *op) {
+  if (!_inst || !op)
+    goto fail;
+
+  _inst->is_jmp_imm = (op[0] & 0x80) ? true : false;
+  _inst->is_jmp64   = (op[0] & 0x40) ? true : false;
+  _inst->is_cond    = (op[1] & 0x80) ? true : false;
+  _inst->is_cs      = (op[1] & 0x40) ? true : false;
+  _inst->is_rel     = (op[1] & 0x10) ? true : false;
+
+  if (_inst->is_jmp_imm) {
+    _inst->jmp_imm = 0x00;
+    int imm_len = _inst->is_jmp64 ? 8 : 4;
+    for (int k = 0; k < imm_len; k++)
+      _inst->jmp_imm += ((uint64_t)op[2 + k] << (k * 8));
+  }
+
+  return _inst;
+
+fail:
+  error("failed to decode JMP");
+  return NULL;
 }
 
 static inst *decode_mov_idx(inst *_inst, uint8_t *op, size_t idx_len) {
@@ -249,7 +274,9 @@ inst *decode_op(uint8_t *op) {
 
   _inst->opcode = decode_opcode(op[0] & 0x3f);
 
-  if (_inst->opcode >= MOVbw && _inst->opcode <= MOVqq) {
+  if (_inst->opcode == JMP) {
+    _inst = decode_jmp(_inst, op);
+  } else if (_inst->opcode >= MOVbw && _inst->opcode <= MOVqq) {
     _inst = decode_mov(_inst, op);
   } else if (_inst->opcode >= MOVI && _inst->opcode <= MOVREL) {
     _inst = decode_movi(_inst, op);
