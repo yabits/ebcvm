@@ -35,7 +35,7 @@ opcode ops[] = {
   XOR,     /* 0x16 */
   SHL,     /* 0x17 */
   SHR,     /* 0x18 */
-  NOP,     /* 0x19 */
+  ASHR,    /* 0x19 */
   NOP,     /* 0x1a */
   NOP,     /* 0x1b */
   NOP,     /* 0x1c */

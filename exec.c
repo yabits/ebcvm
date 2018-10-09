@@ -65,8 +65,9 @@ EXEC_OP(int64_t, mod, op1 % op2);
 EXEC_OP(int64_t, and, op1 & op2);
 EXEC_OP(int64_t, or,  op1 | op2);
 EXEC_OP(int64_t, xor, op1 ^ op2);
-EXEC_OP(int64_t, shl, op1 << op2);
-EXEC_OP(int64_t, shr, op1 >> op2);
+EXEC_OP(uint64_t, shl, op1 << op2);
+EXEC_OP(uint64_t, shr, op1 >> op2);
+EXEC_OP(int64_t, ashr, op1 >> op2);
 EXEC_OP(int64_t, neg, -1 * op2);
 EXEC_OP(int64_t, not, ~op2);
 EXEC_OP(uint64_t, mulu, op1 * op2);
@@ -87,6 +88,7 @@ arith_op arith_ops[] = {
   exec_xor,
   exec_shl,
   exec_shr,
+  exec_ashr,
   exec_neg,
   exec_not,
   exec_mulu,

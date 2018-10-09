@@ -63,6 +63,7 @@ typedef enum opcode {
   XOR,
   SHL,
   SHR,
+  ASHR,
   NEG,
   NOT,
   MULU,
