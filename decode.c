@@ -57,8 +57,8 @@ opcode ops[] = {
   NOP, /* 0x2f */
   NOP, /* 0x30 */
   NOP, /* 0x31 */
-  NOP, /* 0x32 */
-  NOP, /* 0x33 */
+  MOVnw, /* 0x32 */
+  MOVnd, /* 0x33 */
   NOP, /* 0x34 */
   PUSHn, /* 0x35 */
   POPn,/* 0x36 */
@@ -111,9 +111,6 @@ static inst *decode_mov(inst *_inst, uint8_t *op) {
   if (!_inst || !op)
     goto fail;
 
-  if (_inst->opcode >= MOVbw && _inst->opcode <= MOVqq)
-    goto fail;
-
   if (op[0] & 0x80)
     _inst->is_op1_idx = true;
   else
@@ -131,10 +128,12 @@ static inst *decode_mov(inst *_inst, uint8_t *op) {
       break;
     case MOVww:
     case MOVwd:
+    case MOVnw:
       _inst->op_len = 2;
       break;
     case MOVdw:
     case MOVdd:
+    case MOVnd:
       _inst->op_len = 4;
       break;
     case MOVqw:
@@ -147,14 +146,30 @@ static inst *decode_mov(inst *_inst, uint8_t *op) {
       /* do nothing */
   }
 
-  if (_inst->opcode >= MOVbw && _inst->opcode <= MOVqw)
-    _inst = decode_mov_idx(_inst, op, 2);
-  else if (_inst->opcode >= MOVbd && _inst->opcode <= MOVqd)
-    _inst = decode_mov_idx(_inst, op, 4);
-  else if (_inst->opcode == MOVqq)
-    _inst = decode_mov_idx(_inst, op, 8);
+  switch (_inst->opcode) {
+    case MOVbw:
+    case MOVww:
+    case MOVdw:
+    case MOVqw:
+    case MOVnw:
+      _inst = decode_mov_idx(_inst, op, 2);
+      break;
+    case MOVbd:
+    case MOVwd:
+    case MOVdd:
+    case MOVqd:
+    case MOVnd:
+      _inst = decode_mov_idx(_inst, op, 4);
+      break;
+    case MOVqq:
+      _inst = decode_mov_idx(_inst, op, 8);
+      break;
+    default:
+      ;
+      /* do nothing */
+  }
 
-    return _inst;
+  return _inst;
 
 fail:
   error("failed to decode MOV");
@@ -234,6 +249,8 @@ inst *decode_op(uint8_t *op) {
     _inst = decode_mov(_inst, op);
   } else if (_inst->opcode == MOVI || _inst->opcode == MOVIn) {
     _inst = decode_movi(_inst, op);
+  } else if (_inst->opcode == MOVnw || _inst->opcode == MOVnd) {
+    _inst = decode_mov(_inst, op);
   } else {
     if (op[0] & 0x80)
       _inst->is_imm = true;

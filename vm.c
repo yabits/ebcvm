@@ -111,6 +111,12 @@ static uint8_t *fetch_op(vm *_vm) {
   } else if ((op[0] & 0x3f) == 0x37 || (op[0] & 0x3f) == 0x38) {
     /* XXX: MOVI or MOVIn */
     op = maybe_fetch_imms(_vm, op);
+  } else if ((op[0] & 0x3f) == 0x32) {
+    /* XXX: MOVnw */
+    op = maybe_fetch_opts(_vm, op, 2);
+  } else if ((op[0] & 0x3f) == 0x33) {
+    /* XXX: MOVnd */
+    op = maybe_fetch_opts(_vm, op, 4);
   } else if (op[0] & 0x80){
     op = realloc(op, sizeof(uint8_t) * 4);
     if (!op)

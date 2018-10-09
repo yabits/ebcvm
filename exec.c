@@ -224,6 +224,42 @@ static vm *exec_movin(vm *_vm, inst *_inst) {
   return _vm;
 }
 
+static vm *exec_movn(vm *_vm, inst *_inst) {
+  uint64_t op2;
+  if (_inst->op2_indirect) {
+    if (_inst->is_op2_idx) {
+      op2 = read_mem64(_vm->mem,
+          _vm->regs->regs[_inst->operand2] + _inst->op2_idx);
+    } else {
+      op2 = read_mem64(_vm->mem,
+          _vm->regs->regs[_inst->operand2]);
+    }
+  } else {
+    if (_inst->is_op2_idx)
+      op2 = _vm->regs->regs[_inst->operand2] + _inst->op2_idx;
+    else
+      op2 = _vm->regs->regs[_inst->operand2];
+  }
+  if (_inst->op1_indirect) {
+    uint64_t op1;
+    if (_inst->is_op1_idx) {
+      op1 = read_mem64(_vm->mem,
+          _vm->regs->regs[_inst->operand1] + _inst->op1_idx);
+    } else {
+      op1 = read_mem64(_vm->mem,
+          _vm->regs->regs[_inst->operand1]);
+    }
+    write_mem64(_vm->mem, op1, op2);
+  } else {
+    if (_inst->is_op1_idx)
+      error("invalid instruction");
+    else
+      _vm->regs->regs[_inst->operand1] = op2;
+  }
+
+  return _vm;
+}
+
 static vm *exec_pop(vm *_vm, inst *_inst) {
   if (_inst->is_64op) {
     uint64_t op = read_mem64(_vm->mem, _vm->regs->regs[R0]);
@@ -458,6 +494,10 @@ vm *exec_op(vm *_vm, inst *_inst) {
       goto done_inc;
     case MOVIn:
       exec_movin(_vm, _inst);
+      goto done_inc;
+    case MOVnd:
+    case MOVnw:
+      exec_movn(_vm, _inst);
       goto done_inc;
     case POP:
       exec_pop(_vm, _inst);
