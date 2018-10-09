@@ -64,7 +64,7 @@ opcode ops[] = {
   POPn,    /* 0x36 */
   MOVI,    /* 0x37 */
   MOVIn,   /* 0x38 */
-  NOP,     /* 0x39 */
+  MOVREL,  /* 0x39 */
   NOP,     /* 0x3a */
   NOP,     /* 0x3b */
   NOP,     /* 0x3c */
@@ -247,7 +247,7 @@ inst *decode_op(uint8_t *op) {
 
   if (_inst->opcode >= MOVbw && _inst->opcode <= MOVqq) {
     _inst = decode_mov(_inst, op);
-  } else if (_inst->opcode == MOVI || _inst->opcode == MOVIn) {
+  } else if (_inst->opcode >= MOVI && _inst->opcode <= MOVREL) {
     _inst = decode_movi(_inst, op);
   } else if (_inst->opcode == MOVnw || _inst->opcode == MOVnd) {
     _inst = decode_mov(_inst, op);

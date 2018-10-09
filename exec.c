@@ -224,6 +224,34 @@ static vm *exec_movin(vm *_vm, inst *_inst) {
   return _vm;
 }
 
+static vm *exec_movrel(vm *_vm, inst *_inst) {
+  size_t inst_len = 2;
+  if (_inst->is_opt_idx)
+    inst_len += 2;
+  inst_len += _inst->imm_len;
+
+  uint64_t op2 = read_mem64(_vm->mem,
+      _vm->regs->regs[IP] + inst_len + _inst->imm_data);
+  if (_inst->op1_indirect) {
+    uint64_t op1;
+    if (_inst->is_opt_idx) {
+      op1 = read_mem64(_vm->mem,
+          _vm->regs->regs[_inst->operand1] + _inst->opt_idx);
+    } else {
+      op1 = read_mem64(_vm->mem,
+          _vm->regs->regs[_inst->operand1]);
+    }
+    write_mem64(_vm->mem, op1, op2);
+  } else {
+    if (_inst->is_opt_idx)
+      error("invalid instruction");
+    else
+      _vm->regs->regs[_inst->operand1] = op2;
+  }
+
+  return _vm;
+}
+
 static vm *exec_movn(vm *_vm, inst *_inst) {
   uint64_t op2;
   if (_inst->op2_indirect) {
@@ -494,6 +522,9 @@ vm *exec_op(vm *_vm, inst *_inst) {
       goto done_inc;
     case MOVIn:
       exec_movin(_vm, _inst);
+      goto done_inc;
+    case MOVREL:
+      exec_movrel(_vm, _inst);
       goto done_inc;
     case MOVnd:
     case MOVnw:

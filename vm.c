@@ -108,8 +108,8 @@ static uint8_t *fetch_op(vm *_vm) {
   } else if ((op[0] & 0x3f) == 0x28) {
     /* XXX: MOVqq */
     op = maybe_fetch_opts(_vm, op, 8);
-  } else if ((op[0] & 0x3f) == 0x37 || (op[0] & 0x3f) == 0x38) {
-    /* XXX: MOVI or MOVIn */
+  } else if ((op[0] & 0x3f) >= 0x37 && (op[0] & 0x3f) <= 0x39) {
+    /* XXX: MOVI, MOVIn, or MOVREL */
     op = maybe_fetch_imms(_vm, op);
   } else if ((op[0] & 0x3f) == 0x32) {
     /* XXX: MOVnw */
