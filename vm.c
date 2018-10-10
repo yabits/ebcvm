@@ -1,16 +1,18 @@
 #include "ebcvm.h"
 
-static void init_regs(regs *);
+static regs *init_regs(void);
 static uint8_t *maybe_fetch_opts(vm *, uint8_t *, size_t);
 static uint8_t *maybe_fetch_imms(vm *, uint8_t *);
 static uint8_t *maybe_fetch_jmp_imms(vm *, uint8_t *);
 static uint8_t *maybe_fetch_cmpi_imms(vm *, uint8_t *);
 static uint8_t *fetch_op(vm *);
 
-static void init_regs(regs *_regs) {
-  _regs = malloc(sizeof(regs));
+static regs *init_regs() {
+  regs *_regs = malloc(sizeof(regs));
   for (int i = 0; i < 10; i++)
     _regs->regs[i] = 0x0;
+
+  return _regs;
 }
 
 static uint8_t *maybe_fetch_opts(vm *_vm, uint8_t *op, size_t bytes) {
@@ -184,8 +186,8 @@ fail:
 
 vm *init_vm() {
   vm *_vm = malloc(sizeof(vm));
-  init_regs(_vm->regs);
-  init_mem(_vm->mem);
+  _vm->regs = init_regs();
+  _vm->mem = init_mem();
   return _vm;
 }
 

@@ -156,7 +156,7 @@ inst *decode_op(uint8_t *);
 vm *exec_op(vm *, inst *);
 
 /* mem.c */
-void init_mem(mem *);
+mem *init_mem(void);
 uint8_t read_mem8(mem *, size_t);
 uint16_t read_mem16(mem *, size_t);
 uint32_t read_mem32(mem *, size_t);
