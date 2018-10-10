@@ -234,6 +234,71 @@ static vm *exec_call(vm *_vm, inst *_inst) {
   return _vm;
 }
 
+static vm *exec_extnd(vm *_vm, inst *_inst) {
+  int64_t op2;
+  if (_inst->opcode == EXTNDB) {
+    if (_inst->op2_indirect) {
+      if (_inst->is_imm) {
+        op2 = (int8_t)read_mem8(_vm->mem,
+            _vm->regs->regs[_inst->operand2] + _inst->imm);
+      } else {
+        op2 = (int8_t)read_mem8(_vm->mem,
+            _vm->regs->regs[_inst->operand2]);
+      }
+    } else {
+      if (_inst->is_imm)
+        op2 = (int8_t)(_vm->regs->regs[_inst->operand2] + _inst->imm);
+      else
+        op2 = (int8_t)(_vm->regs->regs[_inst->operand2]);
+    }
+  } else if (_inst->opcode == EXTNDW) {
+    if (_inst->op2_indirect) {
+      if (_inst->is_imm) {
+        op2 = (int16_t)read_mem16(_vm->mem,
+            _vm->regs->regs[_inst->operand2] + _inst->imm);
+      } else {
+        op2 = (int16_t)read_mem16(_vm->mem,
+            _vm->regs->regs[_inst->operand2]);
+      }
+    } else {
+      if (_inst->is_imm)
+        op2 = (int16_t)(_vm->regs->regs[_inst->operand2] + _inst->imm);
+      else
+        op2 = (int16_t)(_vm->regs->regs[_inst->operand2]);
+    }
+  } else if (_inst->opcode == EXTNDD) {
+    if (_inst->op2_indirect) {
+      if (_inst->is_imm) {
+        op2 = (int32_t)read_mem32(_vm->mem,
+            _vm->regs->regs[_inst->operand2] + _inst->imm);
+      } else {
+        op2 = (int32_t)read_mem32(_vm->mem,
+            _vm->regs->regs[_inst->operand2]);
+      }
+    } else {
+      if (_inst->is_imm)
+        op2 = (int32_t)(_vm->regs->regs[_inst->operand2] + _inst->imm);
+      else
+        op2 = (int32_t)(_vm->regs->regs[_inst->operand2]);
+    }
+  } else
+    error("invalid instruction");
+
+  if (_inst->is_64op) {
+    if (_inst->op1_indirect)
+      write_mem64(_vm->mem, _vm->regs->regs[_inst->operand1], (int64_t)op2);
+    else
+      _vm->regs->regs[_inst->operand1] = (int64_t)op2;
+  } else {
+    if (_inst->op1_indirect)
+      write_mem32(_vm->mem, _vm->regs->regs[_inst->operand1], (int32_t)op2);
+    else
+      _vm->regs->regs[_inst->operand1] = (int32_t)op2;
+  }
+
+  return _vm;
+}
+
 static vm *exec_cmp(vm *_vm, inst *_inst) {
   uint64_t op2;
   if (_inst->op2_indirect) {
@@ -816,6 +881,11 @@ vm *exec_op(vm *_vm, inst *_inst) {
     case CALL:
       exec_call(_vm, _inst);
       goto done_free;
+    case EXTNDB:
+    case EXTNDD:
+    case EXTNDW:
+      exec_extnd(_vm, _inst);
+      goto done_inc;
     case MOVI:
       exec_movi(_vm, _inst);
       goto done_inc;

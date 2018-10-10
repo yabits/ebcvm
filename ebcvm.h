@@ -73,6 +73,9 @@ typedef enum opcode {
   MULU,
   DIVU,
   MODU,
+  EXTNDB,
+  EXTNDD,
+  EXTNDW,
   MOVbw,
   MOVww,
   MOVdw,
@@ -120,7 +123,7 @@ typedef struct inst {
       bool is_rel;
       uint64_t jmp_imm;
     };
-    /* arithmetic ops and CMP */
+    /* arithmetic ops, CMP, and EXTND* */
     struct {
       bool is_imm;
       bool is_64op;

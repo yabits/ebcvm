@@ -36,9 +36,9 @@ opcode ops[] = {
   SHL,     /* 0x17 */
   SHR,     /* 0x18 */
   ASHR,    /* 0x19 */
-  NOP,     /* 0x1a */
-  NOP,     /* 0x1b */
-  NOP,     /* 0x1c */
+  EXTNDB,  /* 0x1a */
+  EXTNDW,  /* 0x1b */
+  EXTNDD,  /* 0x1c */
   MOVbw,   /* 0x1d */
   MOVww,   /* 0x1e */
   MOVdw,   /* 0x1f */
