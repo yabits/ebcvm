@@ -144,8 +144,8 @@ static uint8_t *fetch_op(vm *_vm) {
   uint64_t ip = _vm->regs->regs[IP];
   op[0] = read_mem8(_vm->mem, ip + 0);
   op[1] = read_mem8(_vm->mem, ip + 1);
-  if ((op[0] & 0x3f) == 0x01) {
-    /* XXX: JMP */
+  if ((op[0] & 0x3f) == 0x01 || (op[0] & 0x3f) == 0x03) {
+    /* XXX: CALL or JMP */
     op = maybe_fetch_jmp_imms(_vm, op);
   } else if ((op[0] & 0x3f) >= 0x2d && (op[0] & 0x3f) <= 0x31) {
     /* XXX: CMPI */

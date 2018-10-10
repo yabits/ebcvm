@@ -195,6 +195,45 @@ static vm *exec_jmp8(vm *_vm, inst *_inst) {
   return _vm;
 }
 
+static vm *exec_call(vm *_vm, inst *_inst) {
+  _vm->regs->regs[R0] -= 8;
+
+  /* XXX: PUSH64 return address */
+  _vm->regs->regs[R0] -= 8;
+  write_mem64(_vm->mem,
+      _vm->regs->regs[R0], _vm->regs->regs[IP] + 0x80);
+
+  if (_inst->is_jmp64) {
+    if (_inst->is_native)
+      ; /* FIXME: call to native code */
+    else
+      _vm->regs->regs[IP] = _inst->jmp_imm;
+  } else {
+    uint64_t op;
+    size_t inst_len = _inst->is_jmp_imm ? 6 : 2;
+    if (_inst->operand1 != R0) {
+      if (_inst->op1_indirect)
+        op = read_mem64(_vm->mem, _vm->regs->regs[_inst->operand1]);
+      else
+        op = _inst->operand1;
+    } else
+      op = (uint32_t)_inst->jmp_imm;
+    if (_inst->is_native) {
+      if (_inst->is_rel)
+        ; /* FIXME: call to native code IP + op */
+      else
+        ; /* FIXME: call to native code op */
+    } else {
+      if (_inst->is_rel)
+        _vm->regs->regs[IP] += op + inst_len;
+      else
+        _vm->regs->regs[IP] = op;
+    }
+  }
+
+  return _vm;
+}
+
 static vm *exec_cmp(vm *_vm, inst *_inst) {
   uint64_t op2;
   if (_inst->op2_indirect) {
@@ -773,6 +812,9 @@ vm *exec_op(vm *_vm, inst *_inst) {
       goto done_free;
     case JMP8:
       exec_jmp8(_vm, _inst);
+      goto done_free;
+    case CALL:
+      exec_call(_vm, _inst);
       goto done_free;
     case MOVI:
       exec_movi(_vm, _inst);

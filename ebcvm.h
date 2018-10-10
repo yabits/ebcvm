@@ -46,6 +46,7 @@ typedef enum opcode {
   BREAK = 0x00,
   JMP,
   JMP8,
+  CALL,
   CMPeq,
   CMPlte,
   CMPgte,
@@ -109,12 +110,13 @@ typedef struct inst {
     struct {
       uint8_t break_code;
     };
-    /* JMP and JMP8 */
+    /* CALL, JMP, and JMP8 */
     struct {
       bool is_jmp_imm;
       bool is_jmp64;
       bool is_cond;
       bool is_cs; /* jump if Flags.C is set/clear */
+      bool is_native; /* call to EBC/native code */
       bool is_rel;
       uint64_t jmp_imm;
     };

@@ -13,7 +13,7 @@ opcode ops[] = {
   BREAK,   /* 0x00 */
   JMP,     /* 0x01 */
   JMP8,    /* 0x02 */
-  NOP,     /* 0x03 */
+  CALL,    /* 0x03 */
   RET,     /* 0x04 */
   CMPeq,   /* 0x05 */
   CMPlte,  /* 0x06 */
@@ -100,7 +100,10 @@ static inst *decode_jmp(inst *_inst, uint8_t *op) {
   _inst->is_jmp_imm = (op[0] & 0x80) ? true : false;
   _inst->is_jmp64   = (op[0] & 0x40) ? true : false;
   _inst->is_cond    = (op[1] & 0x80) ? true : false;
-  _inst->is_cs      = (op[1] & 0x40) ? true : false;
+  if (_inst->opcode == JMP)
+    _inst->is_cs    = (op[1] & 0x40) ? true : false;
+  else if (_inst->opcode == CALL)
+    _inst->is_native= (op[1] & 0x20) ? true : false;
   _inst->is_rel     = (op[1] & 0x10) ? true : false;
 
   if (_inst->is_jmp_imm) {
@@ -321,7 +324,7 @@ inst *decode_op(uint8_t *op) {
   if (_inst->opcode == BREAK) {
     _inst->break_code = op[1];
     goto done;
-  } else if (_inst->opcode == JMP) {
+  } else if (_inst->opcode == JMP || _inst->opcode == CALL) {
     _inst = decode_jmp(_inst, op);
   } else if (_inst->opcode == JMP8) {
     _inst = decode_jmp8(_inst, op);
