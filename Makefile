@@ -1,6 +1,8 @@
-CFLAGS=-Wall -std=c11 -g -O0
+CFLAGS=-Wall -std=c11 -I. -g -O0
 SRCS=$(wildcard *.c)
 OBJS=$(SRCS:.c=.o)
+TESTS=$(wildcard test/*.c)
+TOBJS=$(TESTS:.c=.o)
 TARGET=ebcvm
 
 $(TARGET): $(OBJS)
@@ -8,7 +10,10 @@ $(TARGET): $(OBJS)
 
 $(OBJS): $(TARGET).h
 
-clean:
-	rm -f $(TARGET) *.o
+test: $(OBJS) $(TOBJS)
+	./test.sh
 
-.PHONY: clean
+clean:
+	rm -f $(TARGET) *.o test/*.o
+
+.PHONY: test clean
