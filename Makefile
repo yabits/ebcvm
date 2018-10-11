@@ -14,6 +14,6 @@ test: $(OBJS) $(TOBJS)
 	./test.sh
 
 clean:
-	rm -f $(TARGET) *.o test/*.o
+	rm -f $(TARGET) *.o test/*.o test/*.exe
 
 .PHONY: test clean
