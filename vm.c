@@ -195,5 +195,9 @@ vm *step_inst(vm *_vm) {
   uint8_t *op = fetch_op(_vm);
   inst *_inst = decode_op(op);
   _vm = exec_op(_vm, _inst);
+
+  free(op);
+  free(_inst);
+
   return _vm;
 }

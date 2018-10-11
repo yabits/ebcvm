@@ -370,7 +370,6 @@ inst *decode_op(uint8_t *op) {
     _inst->operand1 = decode_gp_reg(op[1] & 0x07);
 
 done:
-  free(op);
   return _inst;
 
 fail:

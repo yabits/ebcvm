@@ -874,13 +874,13 @@ vm *exec_op(vm *_vm, inst *_inst) {
       goto done_inc;
     case JMP:
       exec_jmp(_vm, _inst);
-      goto done_free;
+      goto done_ret;
     case JMP8:
       exec_jmp8(_vm, _inst);
-      goto done_free;
+      goto done_ret;
     case CALL:
       exec_call(_vm, _inst);
-      goto done_free;
+      goto done_ret;
     case EXTNDB:
     case EXTNDD:
     case EXTNDW:
@@ -917,7 +917,7 @@ vm *exec_op(vm *_vm, inst *_inst) {
       goto done_inc;
     case RET:
       exec_ret(_vm, _inst);
-      goto done_free;
+      goto done_ret;
     case LOADSP:
       exec_loadsp(_vm, _inst);
       goto done_inc;
@@ -933,7 +933,6 @@ vm *exec_op(vm *_vm, inst *_inst) {
 done_inc:
   inc_ip(_vm);
 
-done_free:
-  free(_inst);
+done_ret:
   return _vm;
 }
