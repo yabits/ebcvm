@@ -51,7 +51,6 @@ static void op2_test(uint8_t *op) {
     op[1] &= ~(0x7 << 4);
     op[1] |= op2 << 4;
     _inst = decode_op(op);
-    printf("%d %d\n", _inst->operand2, ops[op2]);
     assert(_inst->operand2 == ops[op2]);
     free(_inst);
   }
