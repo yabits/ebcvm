@@ -107,6 +107,20 @@ static void arith_test(uint8_t _op, opcode _opcode) {
 
 int main() {
   arith_test(0x0c, ADD);
+  arith_test(0x0d, SUB);
+  arith_test(0x0e, MUL);
+  arith_test(0x0f, MULU);
+  arith_test(0x10, DIV);
+  arith_test(0x11, DIVU);
+
+  arith_test(0x14, AND);
+  arith_test(0x15, OR);
+  arith_test(0x16, XOR);
+  arith_test(0x17, SHL);
+  arith_test(0x18, SHR);
+  arith_test(0x19, ASHR);
+  arith_test(0x0b, NEG);
+  arith_test(0x0a, NOT);
 
   return 0;
 }
