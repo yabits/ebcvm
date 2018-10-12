@@ -5,4 +5,6 @@ void error(const char *format, ...) {
   va_start(ap, format);
   vfprintf(stderr, format, ap);
   va_end(ap);
+
+  exit(1);
 }
