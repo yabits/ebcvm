@@ -355,9 +355,9 @@ inst *decode_op(uint8_t *op) {
     _inst->op2_indirect = false;
 
   if (_inst->opcode == STORESP)
-    _inst->operand2 = decode_dd_reg(op[1] & 0x70);
+    _inst->operand2 = decode_dd_reg((op[1] & 0x70) >> 4);
   else
-    _inst->operand2 = decode_gp_reg(op[1] & 0x70);
+    _inst->operand2 = decode_gp_reg((op[1] & 0x70) >> 4);
 
   if (op[1] & 0x08)
     _inst->op1_indirect = true;
