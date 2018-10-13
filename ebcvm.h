@@ -132,7 +132,7 @@ typedef struct inst {
     };
     /* MOV, MOVn, and MOVsn */
     struct {
-      size_t op_len;
+      size_t op_len; /* size of the data move */
       bool is_op1_idx;
       bool is_op2_idx;
       size_t idx_len;
