@@ -123,7 +123,8 @@ typedef struct inst {
       bool is_rel;
       uint64_t jmp_imm;
     };
-    /* arithmetic ops, CMP, and EXTND* */
+    /* arithmetic ops, CMP, EXTND*,
+     * LOADSP, STORESP, POP, POPn, PUSH, PUSHn */
     struct {
       bool is_imm;
       bool is_64op;
@@ -131,7 +132,7 @@ typedef struct inst {
     };
     /* MOV, MOVn, and MOVsn */
     struct {
-      size_t op_len;
+      size_t op_len; /* size of the data move */
       bool is_op1_idx;
       bool is_op2_idx;
       size_t idx_len;

@@ -88,8 +88,9 @@ static reg decode_gp_reg(uint8_t operand) {
 }
 
 static reg decode_dd_reg(uint8_t operand) {
-  if (operand > 0x02)
-    error("failed to decode general purpose register");
+  /* XXX: allow reserved resigters */
+  if (operand > 0x07)
+    error("failed to decode dedicated register");
   return operand + 0;
 }
 
@@ -168,12 +169,12 @@ static inst *decode_mov_idx(inst *_inst, uint8_t *op, size_t idx_len) {
   _inst->op2_idx = 0x00;
   if (_inst->is_op1_idx) {
     for (int k = 0; k < idx_len; k++)
-      _inst->op1_idx += ((uint64_t)op[k + 2] << (k * 8));
+      _inst->op1_idx += ((uint64_t)op[2 + k] << (k * 8));
   }
   if (_inst->is_op2_idx) {
     int i = _inst->is_op1_idx ? idx_len + 2 : 2;
-    for (int k = i; k < i + idx_len; k++)
-      _inst->op2_idx += ((uint64_t)op[k + 2] << (k * 8));
+    for (int k = 0; k < idx_len; k++)
+      _inst->op2_idx += ((uint64_t)op[i + k] << (k * 8));
   }
 
   return _inst;
@@ -256,7 +257,11 @@ static inst *decode_movi(inst *_inst, uint8_t *op) {
   if (!_inst || !op)
     goto fail;
 
-  switch (op[0] & 0xc0) {
+  switch ((op[0] & 0xc0) >> 6) {
+    case 0:
+      /* Reserved */
+      _inst->imm_len = 0;
+      break;
     case 1:
       _inst->imm_len = 2;
       break;
@@ -276,7 +281,7 @@ static inst *decode_movi(inst *_inst, uint8_t *op) {
     _inst->is_opt_idx = false;
 
   if (_inst->opcode == MOVI) {
-    switch (op[1] & 0x30) {
+    switch ((op[1] & 0x30) >> 4) {
       case 0:
         _inst->mov_len = 1;
         break;
@@ -307,7 +312,7 @@ static inst *decode_movi(inst *_inst, uint8_t *op) {
   return _inst;
 
 fail:
-  error("faield to decode MOVI");
+  error("failed to decode MOVI");
   return NULL;
 }
 
