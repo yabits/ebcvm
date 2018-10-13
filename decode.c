@@ -169,12 +169,12 @@ static inst *decode_mov_idx(inst *_inst, uint8_t *op, size_t idx_len) {
   _inst->op2_idx = 0x00;
   if (_inst->is_op1_idx) {
     for (int k = 0; k < idx_len; k++)
-      _inst->op1_idx += ((uint64_t)op[k + 2] << (k * 8));
+      _inst->op1_idx += ((uint64_t)op[2 + k] << (k * 8));
   }
   if (_inst->is_op2_idx) {
     int i = _inst->is_op1_idx ? idx_len + 2 : 2;
-    for (int k = i; k < i + idx_len; k++)
-      _inst->op2_idx += ((uint64_t)op[k + 2] << (k * 8));
+    for (int k = 0; k < idx_len; k++)
+      _inst->op2_idx += ((uint64_t)op[i + k] << (k * 8));
   }
 
   return _inst;
