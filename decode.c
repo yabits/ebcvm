@@ -257,7 +257,11 @@ static inst *decode_movi(inst *_inst, uint8_t *op) {
   if (!_inst || !op)
     goto fail;
 
-  switch (op[0] & 0xc0) {
+  switch ((op[0] & 0xc0) >> 6) {
+    case 0:
+      /* Reserved */
+      _inst->imm_len = 0;
+      break;
     case 1:
       _inst->imm_len = 2;
       break;
@@ -277,7 +281,7 @@ static inst *decode_movi(inst *_inst, uint8_t *op) {
     _inst->is_opt_idx = false;
 
   if (_inst->opcode == MOVI) {
-    switch (op[1] & 0x30) {
+    switch ((op[1] & 0x30) >> 4) {
       case 0:
         _inst->mov_len = 1;
         break;
@@ -308,7 +312,7 @@ static inst *decode_movi(inst *_inst, uint8_t *op) {
   return _inst;
 
 fail:
-  error("faield to decode MOVI");
+  error("failed to decode MOVI");
   return NULL;
 }
 
