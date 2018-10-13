@@ -1,29 +1,46 @@
 #include "ebcvm.h"
 
-#define OP(bits)          \
-typedef struct op##bits { \
-  uint##bits##_t op1;     \
-  uint##bits##_t op2;     \
-  uint64_t op1val;        \
-  uint64_t op2val;        \
+#define DECODE_INDEX(bits)                                          \
+static int##bits##_t decode_index##bits(uint##bits##_t index) {     \
+  uint##bits##_t mask;                                              \
+  uint8_t b = sizeof(uint##bits##_t) * 8;                           \
+  bool s = index >> (b - 1) ? true : false;                         \
+  uint8_t a = ((index >> (b - 4)) & 0x70);                          \
+  mask = 0x00;                                                      \
+  for (int i = a; i < b - 4; i++)                                   \
+    mask |= 0x01 << i;                                              \
+  uint##bits##_t c = (index & mask) >> a;                           \
+  mask = 0x00;                                                      \
+  for (int i = 0; i < a; i++)                                       \
+    mask |= 0x01 << i;                                              \
+  uint##bits##_t n = (index & mask) >> 0;                           \
+  return (c + n * ARCH_BYTES) * (s ? -1 : 1);                       \
+}
+
+#define OP(bits)                                                    \
+typedef struct op##bits {                                           \
+  uint##bits##_t op1;                                               \
+  uint##bits##_t op2;                                               \
+  uint64_t op1val;                                                  \
+  uint64_t op2val;                                                  \
 } op##bits;
 
-#define READ_OP(bits)                                   \
-static op##bits *read_op##bits(vm *_vm, inst *_inst) {  \
-  op##bits *_op##bits = malloc(sizeof(op##bits));       \
-  _op##bits->op2val = _vm->regs->regs[_inst->operand2]; \
-  if (_inst->op2_indirect)                              \
-    _op##bits->op2 = read_mem##bits(_vm->mem,           \
-                  _op##bits->op2val + _inst->imm);      \
-  else                                                  \
-    _op##bits->op2 = _op##bits->op2val + _inst->imm;    \
-  _op##bits->op1val = _vm->regs->regs[_inst->operand1]; \
-  if (_inst->op1_indirect)                              \
-    _op##bits->op1 = read_mem##bits(_vm->mem,           \
-                  _op##bits->op1val);                   \
-  else                                                  \
-    _op##bits->op1 = _op##bits->op1val;                 \
-  return _op##bits;                                     \
+#define READ_OP(bits)                                               \
+static op##bits *read_op##bits(vm *_vm, inst *_inst) {              \
+  op##bits *_op##bits = malloc(sizeof(op##bits));                   \
+  _op##bits->op2val = _vm->regs->regs[_inst->operand2];             \
+  if (_inst->op2_indirect)                                          \
+    _op##bits->op2 = read_mem##bits(_vm->mem,                       \
+                  _op##bits->op2val + decode_index16(_inst->imm));  \
+  else                                                              \
+    _op##bits->op2 = _op##bits->op2val + _inst->imm;                \
+  _op##bits->op1val = _vm->regs->regs[_inst->operand1];             \
+  if (_inst->op1_indirect)                                          \
+    _op##bits->op1 = read_mem##bits(_vm->mem,                       \
+                  _op##bits->op1val);                               \
+  else                                                              \
+    _op##bits->op1 = _op##bits->op1val;                             \
+  return _op##bits;                                                 \
 }
 
 #define EXEC_OP(type, name, op)                                     \
@@ -50,6 +67,10 @@ static vm *exec_##name(vm *_vm, inst *_inst) {                      \
   }                                                                 \
   return _vm;                                                       \
 }
+
+DECODE_INDEX(16);
+DECODE_INDEX(32);
+DECODE_INDEX(64);
 
 OP(32);
 OP(64);
