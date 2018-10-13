@@ -123,7 +123,8 @@ typedef struct inst {
       bool is_rel;
       uint64_t jmp_imm;
     };
-    /* arithmetic ops, CMP, and EXTND* */
+    /* arithmetic ops, CMP, EXTND*,
+     * LOADSP, STORESP, POP, POPn, PUSH, PUSHn */
     struct {
       bool is_imm;
       bool is_64op;
