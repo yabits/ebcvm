@@ -88,8 +88,9 @@ static reg decode_gp_reg(uint8_t operand) {
 }
 
 static reg decode_dd_reg(uint8_t operand) {
-  if (operand > 0x02)
-    error("failed to decode general purpose register");
+  /* XXX: allow reserved resigters */
+  if (operand > 0x07)
+    error("failed to decode dedicated register");
   return operand + 0;
 }
 
