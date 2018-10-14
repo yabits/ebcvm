@@ -160,6 +160,7 @@ vm *exec_op(vm *, inst *);
 
 /* mem.c */
 mem *init_mem(void);
+void fini_mem(mem *);
 uint8_t read_mem8(mem *, size_t);
 uint16_t read_mem16(mem *, size_t);
 uint32_t read_mem32(mem *, size_t);
@@ -171,6 +172,7 @@ void write_mem64(mem *, size_t, uint64_t);
 
 /* vm.c */
 vm *init_vm(void);
+void fini_vm(vm *);
 vm *step_inst(vm *);
 
 /* util.c */

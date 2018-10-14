@@ -8,6 +8,11 @@ mem *init_mem() {
   return _mem;
 }
 
+void fini_mem(mem *_mem) {
+  free(_mem->body);
+  free(_mem);
+}
+
 uint8_t read_mem8(mem *_mem, size_t idx) {
   if (idx > _mem->size)
     error("out of memory");

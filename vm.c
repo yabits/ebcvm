@@ -191,6 +191,12 @@ vm *init_vm() {
   return _vm;
 }
 
+void fini_vm(vm *_vm) {
+  free(_vm->regs);
+  fini_mem(_vm->mem);
+  free(_vm);
+}
+
 vm *step_inst(vm *_vm) {
   uint8_t *op = fetch_op(_vm);
   inst *_inst = decode_op(op);
