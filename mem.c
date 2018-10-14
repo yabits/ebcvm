@@ -2,8 +2,8 @@
 
 mem *init_mem() {
   mem *_mem = (mem *)malloc(sizeof(mem));
-  _mem->body = (uint8_t *)malloc(sizeof(uint8_t) * 1024);
-  _mem->size = 1024;
+  _mem->body = (uint8_t *)malloc(sizeof(uint8_t) * MEM_SIZE);
+  _mem->size = MEM_SIZE;
 
   return _mem;
 }
