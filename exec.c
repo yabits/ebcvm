@@ -807,9 +807,10 @@ static vm *exec_pushn(vm *_vm, inst *_inst) {
     if (_inst->is_imm) {
       if (_inst->op1_indirect) {
         op = read_mem64(_vm->mem,
-            _vm->regs->regs[_inst->operand1] + _inst->imm);
+            _vm->regs->regs[_inst->operand1]
+            + decode_index16(_inst->imm));
       } else {
-        op = _vm->regs->regs[_inst->operand1] + _inst->imm;
+        op = _vm->regs->regs[_inst->operand1] + (int64_t)_inst->imm;
       }
     } else {
       if (_inst->op1_indirect) {
@@ -819,16 +820,17 @@ static vm *exec_pushn(vm *_vm, inst *_inst) {
         op = _vm->regs->regs[_inst->operand1];
       }
     }
-    _vm->regs->regs[R0] = _vm->regs->regs[R0] - 8;
+    _vm->regs->regs[R0] = _vm->regs->regs[R0] - ARCH_BYTES;
     write_mem64(_vm->mem, _vm->regs->regs[R0], op);
   } else {
     int32_t op;
     if (_inst->is_imm) {
       if (_inst->op1_indirect) {
         op = read_mem32(_vm->mem,
-            _vm->regs->regs[_inst->operand1] + _inst->imm);
+            _vm->regs->regs[_inst->operand1]
+            + decode_index16(_inst->imm));
       } else {
-        op = _vm->regs->regs[_inst->operand1] + _inst->imm;
+        op = _vm->regs->regs[_inst->operand1] + (int32_t)_inst->imm;
       }
     } else {
       if (_inst->op1_indirect) {
@@ -838,7 +840,7 @@ static vm *exec_pushn(vm *_vm, inst *_inst) {
         op = _vm->regs->regs[_inst->operand1];
       }
     }
-    _vm->regs->regs[R0] = _vm->regs->regs[R0] - 4;
+    _vm->regs->regs[R0] = _vm->regs->regs[R0] - ARCH_BYTES;
     write_mem32(_vm->mem, _vm->regs->regs[R0], op);
   }
 
