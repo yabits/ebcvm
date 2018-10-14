@@ -716,7 +716,8 @@ static vm *exec_popn(vm *_vm, inst *_inst) {
     if (_inst->is_imm) {
       if (_inst->op1_indirect) {
         write_mem64(_vm->mem,
-            _vm->regs->regs[_inst->operand1] + _inst->imm, op);
+            _vm->regs->regs[_inst->operand1]
+            + decode_index16(_inst->imm), op);
       } else {
         _vm->regs->regs[_inst->operand1] = op + (int64_t)_inst->imm;
       }
@@ -728,13 +729,14 @@ static vm *exec_popn(vm *_vm, inst *_inst) {
         _vm->regs->regs[_inst->operand1] = op;
       }
     }
-    _vm->regs->regs[R0] = _vm->regs->regs[R0] + 8;
+    _vm->regs->regs[R0] = _vm->regs->regs[R0] + ARCH_BYTES;
   } else {
     int32_t op = read_mem32(_vm->mem, _vm->regs->regs[R0]);
     if (_inst->is_imm) {
       if (_inst->op1_indirect) {
         write_mem32(_vm->mem,
-            _vm->regs->regs[_inst->operand1] + _inst->imm, op);
+            _vm->regs->regs[_inst->operand1]
+            + decode_index16(_inst->imm), op);
       } else {
         _vm->regs->regs[_inst->operand1] = op + (int32_t)_inst->imm;
       }
@@ -746,7 +748,7 @@ static vm *exec_popn(vm *_vm, inst *_inst) {
         _vm->regs->regs[_inst->operand1] = op;
       }
     }
-    _vm->regs->regs[R0] = _vm->regs->regs[R0] + 4;
+    _vm->regs->regs[R0] = _vm->regs->regs[R0] + ARCH_BYTES;
   }
 
   return _vm;
