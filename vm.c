@@ -9,8 +9,8 @@ static uint8_t *fetch_op(vm *);
 
 static regs *init_regs() {
   regs *_regs = malloc(sizeof(regs));
-  for (int i = 0; i < 10; i++)
-    _regs->regs[i] = 0x0;
+  for (int i = 0; i < 16; i++)
+    _regs->regs[i] = 0x00000000000000000;
 
   return _regs;
 }
