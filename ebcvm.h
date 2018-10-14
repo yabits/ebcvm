@@ -104,6 +104,7 @@ typedef enum opcode {
 } opcode;
 
 typedef struct inst {
+  size_t inst_len;
   opcode opcode;
   bool op2_indirect;
   reg operand2;

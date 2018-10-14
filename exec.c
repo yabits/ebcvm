@@ -864,11 +864,13 @@ static vm *exec_storesp(vm *_vm, inst *_inst) {
 
 static vm *exec_nop(vm *_vm, inst *_inst) {
   /* do nothing */
+
   return _vm;
 }
 
-static vm *inc_ip(vm *_vm) {
-  _vm->regs->regs[IP]++;
+static vm *inc_ip(vm *_vm, inst *_inst) {
+  _vm->regs->regs[IP] += _inst->inst_len;
+
   return _vm;
 }
 
@@ -952,7 +954,7 @@ vm *exec_op(vm *_vm, inst *_inst) {
   }
 
 done_inc:
-  inc_ip(_vm);
+  inc_ip(_vm, _inst);
 
 done_ret:
   return _vm;
