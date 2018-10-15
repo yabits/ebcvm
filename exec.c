@@ -77,6 +77,7 @@ static vm *exec_##name(vm *_vm, inst *_inst) {                      \
 }
 
 DECODE_INDEX(16);
+DECODE_INDEX(32);
 
 OP(32);
 OP(64);
@@ -153,9 +154,9 @@ static vm *exec_jmp(vm *_vm, inst *_inst) {
     if (!_inst->jmp_imm)
       error("invalid instruction");
     if (_inst->is_cond) {
-      if (_inst->is_cs && (_vm->regs->regs[IP] & 0x01))
+      if (_inst->is_cs && (_vm->regs->regs[FLAGS] & 0x01))
         do_jmp = true;
-      else if (!_inst->is_cs && !(_vm->regs->regs[IP] & 0x01))
+      else if (!_inst->is_cs && !(_vm->regs->regs[FLAGS] & 0x01))
         do_jmp = true;
     } else
       do_jmp = true;
@@ -170,9 +171,9 @@ static vm *exec_jmp(vm *_vm, inst *_inst) {
     }
   } else {
     if (_inst->is_cond) {
-      if (_inst->is_cs && (_vm->regs->regs[IP] & 0x01))
+      if (_inst->is_cs && (_vm->regs->regs[FLAGS] & 0x01))
         do_jmp = true;
-      else if (!_inst->is_cs && !(_vm->regs->regs[IP] & 0x01))
+      else if (!_inst->is_cs && !(_vm->regs->regs[FLAGS] & 0x01))
         do_jmp = true;
     } else
       do_jmp = true;
@@ -180,10 +181,11 @@ static vm *exec_jmp(vm *_vm, inst *_inst) {
       uint64_t op1;
       if (_inst->op1_indirect) {
         if (_inst->is_jmp_imm) {
-          op1 = read_mem64(_vm->mem,
-              _vm->regs->regs[_inst->operand1] + _inst->jmp_imm);
+          op1 = read_mem32(_vm->mem,
+              _vm->regs->regs[_inst->operand1]
+              + decode_index32((uint32_t)_inst->jmp_imm));
         } else
-          op1 = read_mem64(_vm->mem,
+          op1 = read_mem32(_vm->mem,
               _vm->regs->regs[_inst->operand1]);
       } else {
         if (_inst->operand1 == R0)
