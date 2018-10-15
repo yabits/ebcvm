@@ -211,9 +211,9 @@ static vm *exec_jmp(vm *_vm, inst *_inst) {
 static vm *exec_jmp8(vm *_vm, inst *_inst) {
   bool do_jmp = false;
   if (_inst->is_cond) {
-    if (_inst->is_cs && (_vm->regs->regs[IP] & 0x01))
+    if (_inst->is_cs && (_vm->regs->regs[FLAGS] & 0x01))
       do_jmp = true;
-    else if (!_inst->is_cs && !(_vm->regs->regs[IP] & 0x01))
+    else if (!_inst->is_cs && !(_vm->regs->regs[FLAGS] & 0x01))
       do_jmp = true;
   } else
     do_jmp = true;
