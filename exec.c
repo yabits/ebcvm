@@ -328,45 +328,110 @@ static vm *exec_extnd(vm *_vm, inst *_inst) {
 }
 
 static vm *exec_cmp(vm *_vm, inst *_inst) {
-  uint64_t op2;
-  if (_inst->op2_indirect) {
-    if (_inst->is_imm) {
-      op2 = read_mem64(_vm->mem,
-          _vm->regs->regs[_inst->operand2] + _inst->imm);
+  if (_inst->is_64op) {
+    uint64_t op2;
+    if (_inst->op2_indirect) {
+      if (_inst->is_imm) {
+        op2 = read_mem64(_vm->mem,
+            _vm->regs->regs[_inst->operand2]
+            + decode_index16(_inst->imm));
+      } else {
+        op2 = read_mem64(_vm->mem,
+            _vm->regs->regs[_inst->operand2]);
+      }
     } else {
-      op2 = read_mem64(_vm->mem,
-          _vm->regs->regs[_inst->operand2]);
+      if (_inst->is_imm)
+        op2 = _vm->regs->regs[_inst->operand2] + _inst->imm;
+      else
+        op2 = _vm->regs->regs[_inst->operand2];
+    }
+    uint64_t op1 = _vm->regs->regs[_inst->operand1];
+    switch (_inst->opcode) {
+      case CMPeq:
+        if ((int64_t)op1 == (int64_t)op2)
+          _vm->regs->regs[FLAGS] |= 0x01;
+        else
+          _vm->regs->regs[FLAGS] &= ~0x01;
+        break;
+      case CMPlte:
+        if ((int64_t)op1 <= (int64_t)op2)
+          _vm->regs->regs[FLAGS] |= 0x01;
+        else
+          _vm->regs->regs[FLAGS] &= ~0x01;
+        break;
+      case CMPgte:
+        if ((int64_t)op1 >= (int64_t)op2)
+          _vm->regs->regs[FLAGS] |= 0x01;
+        else
+          _vm->regs->regs[FLAGS] &= ~0x01;
+        break;
+      case CMPulte:
+        if ((uint64_t)op1 <= (uint64_t)op2)
+          _vm->regs->regs[FLAGS] |= 0x01;
+        else
+          _vm->regs->regs[FLAGS] &= ~0x01;
+        break;
+      case CMPugte:
+        if ((uint64_t)op1 >= (uint64_t)op2)
+          _vm->regs->regs[FLAGS] |= 0x01;
+        else
+          _vm->regs->regs[FLAGS] &= ~0x01;
+        break;
+      default:
+        error("invalid instruction");
     }
   } else {
-    if (_inst->is_imm)
-      op2 = _vm->regs->regs[_inst->operand2] + _inst->imm;
-    else
-      op2 = _vm->regs->regs[_inst->operand2];
-  }
-  uint64_t op1 = _vm->regs->regs[_inst->operand1];
-  switch (_inst->opcode) {
-    case CMPeq:
-      if ((int64_t)op1 == (int64_t)op2)
-        _vm->regs->regs[FLAGS] |= 0x01;
-      break;
-    case CMPlte:
-      if ((int64_t)op1 <= (int64_t)op2)
-        _vm->regs->regs[FLAGS] |= 0x01;
-      break;
-    case CMPgte:
-      if ((int64_t)op1 >= (int64_t)op2)
-        _vm->regs->regs[FLAGS] |= 0x01;
-      break;
-    case CMPulte:
-      if ((uint64_t)op1 <= (uint64_t)op2)
-        _vm->regs->regs[FLAGS] |= 0x01;
-      break;
-    case CMPugte:
-      if ((uint64_t)op1 >= (uint64_t)op2)
-        _vm->regs->regs[FLAGS] |= 0x01;
-      break;
-    default:
-      error("invalid instruction");
+    uint32_t op2;
+    if (_inst->op2_indirect) {
+      if (_inst->is_imm) {
+        op2 = read_mem32(_vm->mem,
+            _vm->regs->regs[_inst->operand2]
+            + decode_index16(_inst->imm));
+      } else {
+        op2 = read_mem32(_vm->mem,
+            _vm->regs->regs[_inst->operand2]);
+      }
+    } else {
+      if (_inst->is_imm)
+        op2 = _vm->regs->regs[_inst->operand2] + _inst->imm;
+      else
+        op2 = _vm->regs->regs[_inst->operand2];
+    }
+    uint32_t op1 = _vm->regs->regs[_inst->operand1];
+    switch (_inst->opcode) {
+      case CMPeq:
+        if ((int32_t)op1 == (int32_t)op2)
+          _vm->regs->regs[FLAGS] |= 0x01;
+        else
+          _vm->regs->regs[FLAGS] &= ~0x01;
+        break;
+      case CMPlte:
+        if ((int32_t)op1 <= (int32_t)op2)
+          _vm->regs->regs[FLAGS] |= 0x01;
+        else
+          _vm->regs->regs[FLAGS] &= ~0x01;
+        break;
+      case CMPgte:
+        if ((int32_t)op1 >= (int32_t)op2)
+          _vm->regs->regs[FLAGS] |= 0x01;
+        else
+          _vm->regs->regs[FLAGS] &= ~0x01;
+        break;
+      case CMPulte:
+        if ((uint32_t)op1 <= (uint32_t)op2)
+          _vm->regs->regs[FLAGS] |= 0x01;
+        else
+          _vm->regs->regs[FLAGS] &= ~0x01;
+        break;
+      case CMPugte:
+        if ((uint32_t)op1 >= (uint32_t)op2)
+          _vm->regs->regs[FLAGS] |= 0x01;
+        else
+          _vm->regs->regs[FLAGS] &= ~0x01;
+        break;
+      default:
+        error("invalid instruction");
+    }
   }
 
   return _vm;
