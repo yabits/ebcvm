@@ -280,64 +280,72 @@ static vm *exec_call(vm *_vm, inst *_inst) {
 }
 
 static vm *exec_extnd(vm *_vm, inst *_inst) {
-  int64_t op2;
+  uint64_t op2;
   if (_inst->opcode == EXTNDB) {
     if (_inst->op2_indirect) {
       if (_inst->is_imm) {
-        op2 = (int8_t)read_mem8(_vm->mem,
-            _vm->regs->regs[_inst->operand2] + _inst->imm);
+        op2 = (uint8_t)read_mem8(_vm->mem,
+            _vm->regs->regs[_inst->operand2]
+                + decode_index16(_inst->imm));
       } else {
-        op2 = (int8_t)read_mem8(_vm->mem,
+        op2 = (uint8_t)read_mem8(_vm->mem,
             _vm->regs->regs[_inst->operand2]);
       }
     } else {
-      if (_inst->is_imm)
-        op2 = (int8_t)(_vm->regs->regs[_inst->operand2] + _inst->imm);
-      else
-        op2 = (int8_t)(_vm->regs->regs[_inst->operand2]);
+      if (_inst->is_imm) {
+        op2 = (uint8_t)_vm->regs->regs[_inst->operand2];
+        op2 += (int16_t)_inst->imm;
+      } else
+        op2 = (uint8_t)(_vm->regs->regs[_inst->operand2]);
     }
   } else if (_inst->opcode == EXTNDW) {
     if (_inst->op2_indirect) {
       if (_inst->is_imm) {
-        op2 = (int16_t)read_mem16(_vm->mem,
-            _vm->regs->regs[_inst->operand2] + _inst->imm);
+        op2 = (uint16_t)read_mem16(_vm->mem,
+            _vm->regs->regs[_inst->operand2]
+                + decode_index16(_inst->imm));
       } else {
-        op2 = (int16_t)read_mem16(_vm->mem,
+        op2 = (uint16_t)read_mem16(_vm->mem,
             _vm->regs->regs[_inst->operand2]);
       }
     } else {
-      if (_inst->is_imm)
-        op2 = (int16_t)(_vm->regs->regs[_inst->operand2] + _inst->imm);
-      else
-        op2 = (int16_t)(_vm->regs->regs[_inst->operand2]);
+      if (_inst->is_imm) {
+        op2 = (uint16_t)_vm->regs->regs[_inst->operand2];
+        op2 += (int16_t)_inst->imm;
+      } else
+        op2 = (uint16_t)(_vm->regs->regs[_inst->operand2]);
     }
   } else if (_inst->opcode == EXTNDD) {
     if (_inst->op2_indirect) {
       if (_inst->is_imm) {
-        op2 = (int32_t)read_mem32(_vm->mem,
-            _vm->regs->regs[_inst->operand2] + _inst->imm);
+        op2 = (uint32_t)read_mem32(_vm->mem,
+            _vm->regs->regs[_inst->operand2]
+                + decode_index16(_inst->imm));
       } else {
-        op2 = (int32_t)read_mem32(_vm->mem,
+        op2 = (uint32_t)read_mem32(_vm->mem,
             _vm->regs->regs[_inst->operand2]);
       }
     } else {
-      if (_inst->is_imm)
-        op2 = (int32_t)(_vm->regs->regs[_inst->operand2] + _inst->imm);
-      else
-        op2 = (int32_t)(_vm->regs->regs[_inst->operand2]);
+      if (_inst->is_imm) {
+        op2 = (uint32_t)_vm->regs->regs[_inst->operand2];
+        op2 += (int16_t)_inst->imm;
+      } else
+        op2 = (uint32_t)(_vm->regs->regs[_inst->operand2]);
     }
   } else
     error("invalid instruction");
 
   if (_inst->is_64op) {
-    if (_inst->op1_indirect)
-      write_mem64(_vm->mem, _vm->regs->regs[_inst->operand1], (int64_t)op2);
-    else
+    if (_inst->op1_indirect) {
+      write_mem64(_vm->mem,
+          _vm->regs->regs[_inst->operand1], (int64_t)op2);
+    } else
       _vm->regs->regs[_inst->operand1] = (int64_t)op2;
   } else {
-    if (_inst->op1_indirect)
-      write_mem32(_vm->mem, _vm->regs->regs[_inst->operand1], (int32_t)op2);
-    else
+    if (_inst->op1_indirect) {
+      write_mem32(_vm->mem,
+          _vm->regs->regs[_inst->operand1], (int32_t)op2);
+    } else
       _vm->regs->regs[_inst->operand1] = (int32_t)op2;
   }
 
