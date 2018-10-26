@@ -226,26 +226,43 @@ static vm *exec_jmp8(vm *_vm, inst *_inst) {
 static vm *exec_call(vm *_vm, inst *_inst) {
   _vm->regs->regs[R0] -= 8;
 
+  size_t inst_len = _inst->is_jmp64 ? 10 : (_inst->is_jmp_imm ? 6 : 2);
   /* XXX: PUSH64 return address */
   _vm->regs->regs[R0] -= 8;
   write_mem64(_vm->mem,
-      _vm->regs->regs[R0], _vm->regs->regs[IP] + 0x80);
+      _vm->regs->regs[R0], _vm->regs->regs[IP] + inst_len);
 
   if (_inst->is_jmp64) {
     if (_inst->is_native)
       ; /* FIXME: call to native code */
     else
-      _vm->regs->regs[IP] = _inst->jmp_imm;
-  } else {
-    uint64_t op;
-    size_t inst_len = _inst->is_jmp_imm ? 6 : 2;
-    if (_inst->operand1 != R0) {
-      if (_inst->op1_indirect)
-        op = read_mem64(_vm->mem, _vm->regs->regs[_inst->operand1]);
+      if (_inst->is_jmp_imm)
+        _vm->regs->regs[IP] = (uint64_t)_inst->jmp_imm;
       else
-        op = _inst->operand1;
+        error("invalid instruction");
+  } else {
+    uint32_t op;
+    if (_inst->operand1 != R0) {
+      if (_inst->op1_indirect) {
+        if (_inst->is_jmp_imm) {
+          op = read_mem32(_vm->mem,
+              _vm->regs->regs[_inst->operand1]
+              + decode_index32(_inst->jmp_imm));
+        } else {
+          op = read_mem32(_vm->mem,
+              _vm->regs->regs[_inst->operand1]);
+        }
+      } else {
+        if (_inst->is_jmp_imm)
+          op = _vm->regs->regs[_inst->operand1] + _inst->jmp_imm;
+        else
+          op = _vm->regs->regs[_inst->operand1];
+      }
     } else
-      op = (uint32_t)_inst->jmp_imm;
+      if (_inst->is_jmp_imm)
+        op = (uint32_t)_inst->jmp_imm;
+      else
+        error("invalid instruction");
     if (_inst->is_native) {
       if (_inst->is_rel)
         ; /* FIXME: call to native code IP + op */
@@ -253,9 +270,9 @@ static vm *exec_call(vm *_vm, inst *_inst) {
         ; /* FIXME: call to native code op */
     } else {
       if (_inst->is_rel)
-        _vm->regs->regs[IP] += op + inst_len;
+        _vm->regs->regs[IP] += (uint64_t)op + inst_len;
       else
-        _vm->regs->regs[IP] = op;
+        _vm->regs->regs[IP] = (uint64_t)op;
     }
   }
 
