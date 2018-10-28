@@ -78,6 +78,7 @@ static vm *exec_##name(vm *_vm, inst *_inst) {                      \
 
 DECODE_INDEX(16);
 DECODE_INDEX(32);
+DECODE_INDEX(64);
 
 OP(32);
 OP(64);
@@ -587,50 +588,17 @@ static vm *exec_cmpi(vm *_vm, inst *_inst) {
 static vm *exec_mov(vm *_vm, inst *_inst) {
   uint64_t op;
   if (_inst->op2_indirect) {
-    switch (_inst->op_len) {
-      case 1:
-        op = read_mem8(_vm->mem, _vm->regs->regs[_inst->operand2]);
-        break;
-      case 2:
-        op = read_mem16(_vm->mem, _vm->regs->regs[_inst->operand2]);
-        break;
-      case 4:
-        op = read_mem32(_vm->mem, _vm->regs->regs[_inst->operand2]);
-        break;
-      case 8:
-        op = read_mem64(_vm->mem, _vm->regs->regs[_inst->operand2]);
-        break;
-      default:
-        error("invalid instruction");
-    }
-  } else
-    op = _vm->regs->regs[_inst->operand2];
-
-  if (_inst->is_op2_idx)
-    op += _inst->op2_idx;
-
-  if (_inst->op1_indirect) {
-    if (_inst->is_op1_idx) {
-      switch (_inst->op_len) {
-        case 1:
-          write_mem8(_vm->mem,
-              _vm->regs->regs[_inst->operand1] + _inst->op1_idx,
-              (uint8_t)op);
-          break;
+    uint64_t op2_addr = _vm->regs->regs[_inst->operand2];
+    if (_inst->is_op2_idx) {
+      switch (_inst->idx_len) {
         case 2:
-          write_mem16(_vm->mem,
-              _vm->regs->regs[_inst->operand1] + _inst->op1_idx,
-              (uint16_t)op);
+          op2_addr += decode_index16(_inst->op2_idx);
           break;
         case 4:
-          write_mem32(_vm->mem,
-              _vm->regs->regs[_inst->operand1] + _inst->op1_idx,
-              (uint32_t)op);
+          op2_addr += decode_index32(_inst->op2_idx);
           break;
         case 8:
-          write_mem64(_vm->mem,
-              _vm->regs->regs[_inst->operand1] + _inst->op1_idx,
-              (uint64_t)op);
+          op2_addr += decode_index64(_inst->op2_idx);
           break;
         default:
           error("invalid instruction");
@@ -638,20 +606,72 @@ static vm *exec_mov(vm *_vm, inst *_inst) {
     }
     switch (_inst->op_len) {
       case 1:
-        write_mem8(_vm->mem,
-            _vm->regs->regs[_inst->operand1], (uint8_t)op);
+        op = read_mem8(_vm->mem, op2_addr);
         break;
       case 2:
-        write_mem16(_vm->mem,
-            _vm->regs->regs[_inst->operand1], (uint16_t)op);
+        op = read_mem16(_vm->mem, op2_addr);
         break;
       case 4:
-        write_mem32(_vm->mem,
-            _vm->regs->regs[_inst->operand1], (uint32_t)op);
+        op = read_mem32(_vm->mem, op2_addr);
         break;
       case 8:
-        write_mem64(_vm->mem,
-            _vm->regs->regs[_inst->operand1], (uint64_t)op);
+        op = read_mem64(_vm->mem, op2_addr);
+        break;
+      default:
+        error("invalid instruction");
+    }
+  } else {
+    if (_inst->is_op2_idx)
+      error("invalid instruction");
+    else {
+      switch (_inst->op_len) {
+        case 1:
+          op = (uint8_t)_vm->regs->regs[_inst->operand2];
+          break;
+        case 2:
+          op = (uint16_t)_vm->regs->regs[_inst->operand2];
+          break;
+        case 4:
+          op = (uint32_t)_vm->regs->regs[_inst->operand2];
+          break;
+        case 8:
+          op = (uint64_t)_vm->regs->regs[_inst->operand2];
+          break;
+        default:
+          error("invalid instruction");
+      }
+    }
+  }
+
+  if (_inst->op1_indirect) {
+    uint64_t op1_addr = _vm->regs->regs[_inst->operand1];
+    if (_inst->is_op1_idx) {
+      switch (_inst->idx_len) {
+        case 2:
+          op1_addr += decode_index16(_inst->op1_idx);
+          break;
+        case 4:
+          op1_addr += decode_index32(_inst->op1_idx);
+          break;
+        case 8:
+          op1_addr += decode_index64(_inst->op1_idx);
+          break;
+        default:
+          error("invalid instruction");
+      }
+    }
+    switch (_inst->op_len) {
+      case 1:
+        write_mem8(_vm->mem, op1_addr, (uint8_t)op);
+        break;
+      case 2:
+        write_mem16(_vm->mem, op1_addr, (uint16_t)op);
+        break;
+      case 4:
+        write_mem32(_vm->mem, op1_addr, (uint32_t)op);
+        break;
+      case 8:
+        write_mem64(_vm->mem, op1_addr, (uint64_t)op);
         break;
       default:
         error("invalid instruction");
