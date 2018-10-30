@@ -734,18 +734,30 @@ static vm *exec_movi(vm *_vm, inst *_inst) {
 }
 
 static vm *exec_movin(vm *_vm, inst *_inst) {
-  uint64_t op1;
+  uint64_t op2;
+  switch (_inst->imm_len) {
+    case 2:
+      op2 = decode_index16(_inst->imm_data);
+      break;
+    case 4:
+      op2 = decode_index32(_inst->imm_data);
+      break;
+    case 8:
+      op2 = decode_index64(_inst->imm_data);
+      break;
+    default:
+      error("invalid instruction");
+  }
   if (_inst->op1_indirect) {
+    uint64_t op1 = _vm->regs->regs[_inst->operand1];
     if (_inst->is_opt_idx)
-      op1 = _vm->regs->regs[_inst->operand2] + _inst->opt_idx;
-    else
-      op1 = _vm->regs->regs[_inst->operand2];
-    write_mem64(_vm->mem, op1, _inst->imm_data);
+      op1 += decode_index16(_inst->opt_idx);
+    write_mem64(_vm->mem, op1, op2);
   } else {
     if (_inst->is_opt_idx)
       error("invalid instruction");
     else
-      _vm->regs->regs[_inst->operand1] = _inst->imm_data;
+      _vm->regs->regs[_inst->operand1] = op2;
   }
 
   return _vm;
