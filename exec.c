@@ -687,21 +687,22 @@ static vm *exec_mov(vm *_vm, inst *_inst) {
 }
 
 static vm *exec_movi(vm *_vm, inst *_inst) {
-  uint64_t op1;
   if (_inst->op1_indirect) {
+    uint64_t op = _vm->regs->regs[_inst->operand1];
     if (_inst->is_opt_idx)
-      op1 = _vm->regs->regs[_inst->operand1] + _inst->opt_idx;
-    else
-      op1 = _vm->regs->regs[_inst->operand1];
-    switch (_inst->imm_len) {
+      op += decode_index16(_inst->opt_idx);
+    switch (_inst->mov_len) {
+      case 1:
+        write_mem8(_vm->mem, op, (uint8_t)_inst->imm_data);
+        break;
       case 2:
-        write_mem16(_vm->mem, op1, (uint16_t)_inst->imm_data);
+        write_mem16(_vm->mem, op, (uint16_t)_inst->imm_data);
         break;
       case 4:
-        write_mem32(_vm->mem, op1, (uint32_t)_inst->imm_data);
+        write_mem32(_vm->mem, op, (uint32_t)_inst->imm_data);
         break;
       case 8:
-        write_mem64(_vm->mem, op1, (uint64_t)_inst->imm_data);
+        write_mem64(_vm->mem, op, (uint64_t)_inst->imm_data);
         break;
       default:
         error("invalid instruction");
@@ -709,8 +710,24 @@ static vm *exec_movi(vm *_vm, inst *_inst) {
   } else {
     if (_inst->is_opt_idx)
       error("invalid instruction");
-    else
-      _vm->regs->regs[_inst->operand1] = _inst->imm_data;
+    else {
+      switch (_inst->mov_len) {
+        case 1:
+          _vm->regs->regs[_inst->operand1] = (uint8_t)_inst->imm_data;
+          break;
+        case 2:
+          _vm->regs->regs[_inst->operand1] = (uint16_t)_inst->imm_data;
+          break;
+        case 4:
+          _vm->regs->regs[_inst->operand1] = (uint32_t)_inst->imm_data;
+          break;
+        case 8:
+          _vm->regs->regs[_inst->operand1] = (uint64_t)_inst->imm_data;
+          break;
+        default:
+          error("invalid instruction");
+      }
+    }
   }
 
   return _vm;
