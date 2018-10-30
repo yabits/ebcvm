@@ -6,6 +6,7 @@
 
 #define MAJOR_VERSION 0x0001
 #define MINOR_VERSION 0x0000
+#define ARCH_BYTES 8
 #define MEM_SIZE 1024
 
 typedef enum reg {
@@ -103,6 +104,7 @@ typedef enum opcode {
 } opcode;
 
 typedef struct inst {
+  size_t inst_len;
   opcode opcode;
   bool op2_indirect;
   reg operand2;
@@ -158,6 +160,7 @@ vm *exec_op(vm *, inst *);
 
 /* mem.c */
 mem *init_mem(void);
+void fini_mem(mem *);
 uint8_t read_mem8(mem *, size_t);
 uint16_t read_mem16(mem *, size_t);
 uint32_t read_mem32(mem *, size_t);
@@ -169,6 +172,7 @@ void write_mem64(mem *, size_t, uint64_t);
 
 /* vm.c */
 vm *init_vm(void);
+void fini_vm(vm *);
 vm *step_inst(vm *);
 
 /* util.c */

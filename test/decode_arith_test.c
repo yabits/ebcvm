@@ -112,6 +112,8 @@ int main() {
   arith_test(0x0f, MULU);
   arith_test(0x10, DIV);
   arith_test(0x11, DIVU);
+  arith_test(0x12, MOD);
+  arith_test(0x13, MODU);
 
   arith_test(0x14, AND);
   arith_test(0x15, OR);

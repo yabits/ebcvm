@@ -1,39 +1,62 @@
 #include "ebcvm.h"
 
-#define OP(bits)          \
-typedef struct op##bits { \
-  uint##bits##_t op1;     \
-  uint##bits##_t op2;     \
-  uint64_t op1val;        \
-  uint64_t op2val;        \
+#define DECODE_INDEX(bits)                                          \
+static int##bits##_t decode_index##bits(uint##bits##_t index) {     \
+  uint##bits##_t mask;                                              \
+  uint8_t b = sizeof(uint##bits##_t) * 8;                           \
+  bool s = index >> (b - 1) ? true : false;                         \
+  uint8_t a = ((index >> (b - 4)) & 0x07) * sizeof(uint##bits##_t); \
+  mask = 0x00;                                                      \
+  for (int i = a; i < b - 4; i++)                                   \
+    mask |= 0x01 << i;                                              \
+  uint##bits##_t c = (index & mask) >> a;                           \
+  mask = 0x00;                                                      \
+  for (int i = 0; i < a; i++)                                       \
+    mask |= 0x01 << i;                                              \
+  uint##bits##_t n = (index & mask) >> 0;                           \
+  return (c + n * ARCH_BYTES) * (s ? -1 : 1);                       \
+}
+
+#define OP(bits)                                                    \
+typedef struct op##bits {                                           \
+  uint##bits##_t op1;                                               \
+  uint##bits##_t op2;                                               \
+  uint64_t op1val;                                                  \
+  uint64_t op2val;                                                  \
 } op##bits;
 
-#define READ_OP(bits)                                   \
-static op##bits *read_op##bits(vm *_vm, inst *_inst) {  \
-  op##bits *_op##bits = malloc(sizeof(op##bits));       \
-  _op##bits->op2val = _vm->regs->regs[_inst->operand2]; \
-  if (_inst->op2_indirect)                              \
-    _op##bits->op2 = read_mem##bits(_vm->mem,           \
-                  _op##bits->op2val + _inst->imm);      \
-  else                                                  \
-    _op##bits->op2 = _op##bits->op2val + _inst->imm;    \
-  _op##bits->op1val = _vm->regs->regs[_inst->operand1]; \
-  if (_inst->op1_indirect)                              \
-    _op##bits->op1 = read_mem##bits(_vm->mem,           \
-                  _op##bits->op1val);                   \
-  else                                                  \
-    _op##bits->op1 = _op##bits->op1val;                 \
-  return _op##bits;                                     \
+#define READ_OP(bits)                                               \
+static op##bits *read_op##bits(vm *_vm, inst *_inst) {              \
+  op##bits *_op##bits = malloc(sizeof(op##bits));                   \
+  _op##bits->op2val = _vm->regs->regs[_inst->operand2];             \
+  if (_inst->op2_indirect) {                                        \
+    if (_inst->is_imm) {                                            \
+      _op##bits->op2 = read_mem##bits(_vm->mem,                     \
+                  _op##bits->op2val + decode_index16(_inst->imm));  \
+    } else                                                          \
+      _op##bits->op2 = read_mem##bits(_vm->mem, _op##bits->op2val); \
+  } else {                                                          \
+    if (_inst->is_imm)                                              \
+      _op##bits->op2 = _op##bits->op2val + _inst->imm;              \
+    else                                                            \
+      _op##bits->op2 = _op##bits->op2val;                           \
+  }                                                                 \
+  _op##bits->op1val = _vm->regs->regs[_inst->operand1];             \
+  if (_inst->op1_indirect)                                          \
+    _op##bits->op1 = read_mem##bits(_vm->mem, _op##bits->op1val);   \
+  else                                                              \
+    _op##bits->op1 = _op##bits->op1val;                             \
+  return _op##bits;                                                 \
 }
 
 #define EXEC_OP(type, name, op)                                     \
-static type _##name(type op1, type op2) {                           \
+static type op_##name(type op1, type op2) {                         \
   return op;                                                        \
 }                                                                   \
 static vm *exec_##name(vm *_vm, inst *_inst) {                      \
   if (_inst->is_64op) {                                             \
     op64 *_op64 = read_op64(_vm, _inst);                            \
-    type _op = _##name(_op64->op1, _op64->op2);                     \
+    type _op = op_##name(_op64->op1, _op64->op2);                   \
     if (_inst->op1_indirect)                                        \
       write_mem64(_vm->mem, _op64->op1val, _op);                    \
     else                                                            \
@@ -41,15 +64,21 @@ static vm *exec_##name(vm *_vm, inst *_inst) {                      \
     free(_op64);                                                    \
   } else {                                                          \
     op32 *_op32 = read_op32(_vm, _inst);                            \
-    type _op = (type)_##name(_op32->op1, _op32->op2);               \
+    type _op = op_##name(_op32->op1, _op32->op2);                   \
     if (_inst->op1_indirect)                                        \
       write_mem32(_vm->mem, _op32->op1val, _op);                    \
-    else                                                            \
-      _vm->regs->regs[_inst->operand1] = (uint64_t)0x00 << 32 & _op;\
+    else {                                                          \
+      _vm->regs->regs[_inst->operand1] = _op;                       \
+      _vm->regs->regs[_inst->operand1] &= ~0xffffffff00000000;      \
+    }                                                               \
     free(_op32);                                                    \
   }                                                                 \
   return _vm;                                                       \
 }
+
+DECODE_INDEX(16);
+DECODE_INDEX(32);
+DECODE_INDEX(64);
 
 OP(32);
 OP(64);
@@ -57,7 +86,7 @@ OP(64);
 READ_OP(32);
 READ_OP(64);
 
-EXEC_OP(int64_t, add, (op1 + op2));
+EXEC_OP(int64_t, add, op1 + op2);
 EXEC_OP(int64_t, sub, op1 - op2);
 EXEC_OP(int64_t, mul, op1 * op2);
 EXEC_OP(int64_t, div, op1 / op2);
@@ -77,7 +106,6 @@ EXEC_OP(uint64_t, modu, op1 % op2);
 typedef vm *(*arith_op)(vm *, inst *);
 
 arith_op arith_ops[] = {
-  NULL,
   exec_add,
   exec_sub,
   exec_mul,
@@ -127,9 +155,9 @@ static vm *exec_jmp(vm *_vm, inst *_inst) {
     if (!_inst->jmp_imm)
       error("invalid instruction");
     if (_inst->is_cond) {
-      if (_inst->is_cs && (_vm->regs->regs[IP] & 0x01))
+      if (_inst->is_cs && (_vm->regs->regs[FLAGS] & 0x01))
         do_jmp = true;
-      else if (!_inst->is_cs && !(_vm->regs->regs[IP] & 0x01))
+      else if (!_inst->is_cs && !(_vm->regs->regs[FLAGS] & 0x01))
         do_jmp = true;
     } else
       do_jmp = true;
@@ -144,9 +172,9 @@ static vm *exec_jmp(vm *_vm, inst *_inst) {
     }
   } else {
     if (_inst->is_cond) {
-      if (_inst->is_cs && (_vm->regs->regs[IP] & 0x01))
+      if (_inst->is_cs && (_vm->regs->regs[FLAGS] & 0x01))
         do_jmp = true;
-      else if (!_inst->is_cs && !(_vm->regs->regs[IP] & 0x01))
+      else if (!_inst->is_cs && !(_vm->regs->regs[FLAGS] & 0x01))
         do_jmp = true;
     } else
       do_jmp = true;
@@ -154,10 +182,11 @@ static vm *exec_jmp(vm *_vm, inst *_inst) {
       uint64_t op1;
       if (_inst->op1_indirect) {
         if (_inst->is_jmp_imm) {
-          op1 = read_mem64(_vm->mem,
-              _vm->regs->regs[_inst->operand1] + _inst->jmp_imm);
+          op1 = read_mem32(_vm->mem,
+              _vm->regs->regs[_inst->operand1]
+              + decode_index32((uint32_t)_inst->jmp_imm));
         } else
-          op1 = read_mem64(_vm->mem,
+          op1 = read_mem32(_vm->mem,
               _vm->regs->regs[_inst->operand1]);
       } else {
         if (_inst->operand1 == R0)
@@ -183,9 +212,9 @@ static vm *exec_jmp(vm *_vm, inst *_inst) {
 static vm *exec_jmp8(vm *_vm, inst *_inst) {
   bool do_jmp = false;
   if (_inst->is_cond) {
-    if (_inst->is_cs && (_vm->regs->regs[IP] & 0x01))
+    if (_inst->is_cs && (_vm->regs->regs[FLAGS] & 0x01))
       do_jmp = true;
-    else if (!_inst->is_cs && !(_vm->regs->regs[IP] & 0x01))
+    else if (!_inst->is_cs && !(_vm->regs->regs[FLAGS] & 0x01))
       do_jmp = true;
   } else
     do_jmp = true;
@@ -198,26 +227,43 @@ static vm *exec_jmp8(vm *_vm, inst *_inst) {
 static vm *exec_call(vm *_vm, inst *_inst) {
   _vm->regs->regs[R0] -= 8;
 
+  size_t inst_len = _inst->is_jmp64 ? 10 : (_inst->is_jmp_imm ? 6 : 2);
   /* XXX: PUSH64 return address */
   _vm->regs->regs[R0] -= 8;
   write_mem64(_vm->mem,
-      _vm->regs->regs[R0], _vm->regs->regs[IP] + 0x80);
+      _vm->regs->regs[R0], _vm->regs->regs[IP] + inst_len);
 
   if (_inst->is_jmp64) {
     if (_inst->is_native)
       ; /* FIXME: call to native code */
     else
-      _vm->regs->regs[IP] = _inst->jmp_imm;
-  } else {
-    uint64_t op;
-    size_t inst_len = _inst->is_jmp_imm ? 6 : 2;
-    if (_inst->operand1 != R0) {
-      if (_inst->op1_indirect)
-        op = read_mem64(_vm->mem, _vm->regs->regs[_inst->operand1]);
+      if (_inst->is_jmp_imm)
+        _vm->regs->regs[IP] = (uint64_t)_inst->jmp_imm;
       else
-        op = _inst->operand1;
+        error("invalid instruction");
+  } else {
+    uint32_t op;
+    if (_inst->operand1 != R0) {
+      if (_inst->op1_indirect) {
+        if (_inst->is_jmp_imm) {
+          op = read_mem32(_vm->mem,
+              _vm->regs->regs[_inst->operand1]
+              + decode_index32(_inst->jmp_imm));
+        } else {
+          op = read_mem32(_vm->mem,
+              _vm->regs->regs[_inst->operand1]);
+        }
+      } else {
+        if (_inst->is_jmp_imm)
+          op = _vm->regs->regs[_inst->operand1] + _inst->jmp_imm;
+        else
+          op = _vm->regs->regs[_inst->operand1];
+      }
     } else
-      op = (uint32_t)_inst->jmp_imm;
+      if (_inst->is_jmp_imm)
+        op = (uint32_t)_inst->jmp_imm;
+      else
+        error("invalid instruction");
     if (_inst->is_native) {
       if (_inst->is_rel)
         ; /* FIXME: call to native code IP + op */
@@ -225,9 +271,9 @@ static vm *exec_call(vm *_vm, inst *_inst) {
         ; /* FIXME: call to native code op */
     } else {
       if (_inst->is_rel)
-        _vm->regs->regs[IP] += op + inst_len;
+        _vm->regs->regs[IP] += (uint64_t)op + inst_len;
       else
-        _vm->regs->regs[IP] = op;
+        _vm->regs->regs[IP] = (uint64_t)op;
     }
   }
 
@@ -235,64 +281,72 @@ static vm *exec_call(vm *_vm, inst *_inst) {
 }
 
 static vm *exec_extnd(vm *_vm, inst *_inst) {
-  int64_t op2;
+  uint64_t op2;
   if (_inst->opcode == EXTNDB) {
     if (_inst->op2_indirect) {
       if (_inst->is_imm) {
-        op2 = (int8_t)read_mem8(_vm->mem,
-            _vm->regs->regs[_inst->operand2] + _inst->imm);
+        op2 = (uint8_t)read_mem8(_vm->mem,
+            _vm->regs->regs[_inst->operand2]
+                + decode_index16(_inst->imm));
       } else {
-        op2 = (int8_t)read_mem8(_vm->mem,
+        op2 = (uint8_t)read_mem8(_vm->mem,
             _vm->regs->regs[_inst->operand2]);
       }
     } else {
-      if (_inst->is_imm)
-        op2 = (int8_t)(_vm->regs->regs[_inst->operand2] + _inst->imm);
-      else
-        op2 = (int8_t)(_vm->regs->regs[_inst->operand2]);
+      if (_inst->is_imm) {
+        op2 = (uint8_t)_vm->regs->regs[_inst->operand2];
+        op2 += (int16_t)_inst->imm;
+      } else
+        op2 = (uint8_t)(_vm->regs->regs[_inst->operand2]);
     }
   } else if (_inst->opcode == EXTNDW) {
     if (_inst->op2_indirect) {
       if (_inst->is_imm) {
-        op2 = (int16_t)read_mem16(_vm->mem,
-            _vm->regs->regs[_inst->operand2] + _inst->imm);
+        op2 = (uint16_t)read_mem16(_vm->mem,
+            _vm->regs->regs[_inst->operand2]
+                + decode_index16(_inst->imm));
       } else {
-        op2 = (int16_t)read_mem16(_vm->mem,
+        op2 = (uint16_t)read_mem16(_vm->mem,
             _vm->regs->regs[_inst->operand2]);
       }
     } else {
-      if (_inst->is_imm)
-        op2 = (int16_t)(_vm->regs->regs[_inst->operand2] + _inst->imm);
-      else
-        op2 = (int16_t)(_vm->regs->regs[_inst->operand2]);
+      if (_inst->is_imm) {
+        op2 = (uint16_t)_vm->regs->regs[_inst->operand2];
+        op2 += (int16_t)_inst->imm;
+      } else
+        op2 = (uint16_t)(_vm->regs->regs[_inst->operand2]);
     }
   } else if (_inst->opcode == EXTNDD) {
     if (_inst->op2_indirect) {
       if (_inst->is_imm) {
-        op2 = (int32_t)read_mem32(_vm->mem,
-            _vm->regs->regs[_inst->operand2] + _inst->imm);
+        op2 = (uint32_t)read_mem32(_vm->mem,
+            _vm->regs->regs[_inst->operand2]
+                + decode_index16(_inst->imm));
       } else {
-        op2 = (int32_t)read_mem32(_vm->mem,
+        op2 = (uint32_t)read_mem32(_vm->mem,
             _vm->regs->regs[_inst->operand2]);
       }
     } else {
-      if (_inst->is_imm)
-        op2 = (int32_t)(_vm->regs->regs[_inst->operand2] + _inst->imm);
-      else
-        op2 = (int32_t)(_vm->regs->regs[_inst->operand2]);
+      if (_inst->is_imm) {
+        op2 = (uint32_t)_vm->regs->regs[_inst->operand2];
+        op2 += (int16_t)_inst->imm;
+      } else
+        op2 = (uint32_t)(_vm->regs->regs[_inst->operand2]);
     }
   } else
     error("invalid instruction");
 
   if (_inst->is_64op) {
-    if (_inst->op1_indirect)
-      write_mem64(_vm->mem, _vm->regs->regs[_inst->operand1], (int64_t)op2);
-    else
+    if (_inst->op1_indirect) {
+      write_mem64(_vm->mem,
+          _vm->regs->regs[_inst->operand1], (int64_t)op2);
+    } else
       _vm->regs->regs[_inst->operand1] = (int64_t)op2;
   } else {
-    if (_inst->op1_indirect)
-      write_mem32(_vm->mem, _vm->regs->regs[_inst->operand1], (int32_t)op2);
-    else
+    if (_inst->op1_indirect) {
+      write_mem32(_vm->mem,
+          _vm->regs->regs[_inst->operand1], (int32_t)op2);
+    } else
       _vm->regs->regs[_inst->operand1] = (int32_t)op2;
   }
 
@@ -300,57 +354,123 @@ static vm *exec_extnd(vm *_vm, inst *_inst) {
 }
 
 static vm *exec_cmp(vm *_vm, inst *_inst) {
-  uint64_t op2;
-  if (_inst->op2_indirect) {
-    if (_inst->is_imm) {
-      op2 = read_mem64(_vm->mem,
-          _vm->regs->regs[_inst->operand2] + _inst->imm);
+  if (_inst->is_64op) {
+    uint64_t op2;
+    if (_inst->op2_indirect) {
+      if (_inst->is_imm) {
+        op2 = read_mem64(_vm->mem,
+            _vm->regs->regs[_inst->operand2]
+            + decode_index16(_inst->imm));
+      } else {
+        op2 = read_mem64(_vm->mem,
+            _vm->regs->regs[_inst->operand2]);
+      }
     } else {
-      op2 = read_mem64(_vm->mem,
-          _vm->regs->regs[_inst->operand2]);
+      if (_inst->is_imm)
+        op2 = _vm->regs->regs[_inst->operand2] + _inst->imm;
+      else
+        op2 = _vm->regs->regs[_inst->operand2];
+    }
+    uint64_t op1 = _vm->regs->regs[_inst->operand1];
+    switch (_inst->opcode) {
+      case CMPeq:
+        if ((int64_t)op1 == (int64_t)op2)
+          _vm->regs->regs[FLAGS] |= 0x01;
+        else
+          _vm->regs->regs[FLAGS] &= ~0x01;
+        break;
+      case CMPlte:
+        if ((int64_t)op1 <= (int64_t)op2)
+          _vm->regs->regs[FLAGS] |= 0x01;
+        else
+          _vm->regs->regs[FLAGS] &= ~0x01;
+        break;
+      case CMPgte:
+        if ((int64_t)op1 >= (int64_t)op2)
+          _vm->regs->regs[FLAGS] |= 0x01;
+        else
+          _vm->regs->regs[FLAGS] &= ~0x01;
+        break;
+      case CMPulte:
+        if ((uint64_t)op1 <= (uint64_t)op2)
+          _vm->regs->regs[FLAGS] |= 0x01;
+        else
+          _vm->regs->regs[FLAGS] &= ~0x01;
+        break;
+      case CMPugte:
+        if ((uint64_t)op1 >= (uint64_t)op2)
+          _vm->regs->regs[FLAGS] |= 0x01;
+        else
+          _vm->regs->regs[FLAGS] &= ~0x01;
+        break;
+      default:
+        error("invalid instruction");
     }
   } else {
-    if (_inst->is_imm)
-      op2 = _vm->regs->regs[_inst->operand2] + _inst->imm;
-    else
-      op2 = _vm->regs->regs[_inst->operand2];
-  }
-  uint64_t op1 = _vm->regs->regs[_inst->operand1];
-  switch (_inst->opcode) {
-    case CMPeq:
-      if ((int64_t)op1 == (int64_t)op2)
-        _vm->regs->regs[FLAGS] |= 0x01;
-      break;
-    case CMPlte:
-      if ((int64_t)op1 <= (int64_t)op2)
-        _vm->regs->regs[FLAGS] |= 0x01;
-      break;
-    case CMPgte:
-      if ((int64_t)op1 >= (int64_t)op2)
-        _vm->regs->regs[FLAGS] |= 0x01;
-      break;
-    case CMPulte:
-      if ((uint64_t)op1 <= (uint64_t)op2)
-        _vm->regs->regs[FLAGS] |= 0x01;
-      break;
-    case CMPugte:
-      if ((uint64_t)op1 >= (uint64_t)op2)
-        _vm->regs->regs[FLAGS] |= 0x01;
-      break;
-    default:
-      error("invalid instruction");
+    uint32_t op2;
+    if (_inst->op2_indirect) {
+      if (_inst->is_imm) {
+        op2 = read_mem32(_vm->mem,
+            _vm->regs->regs[_inst->operand2]
+            + decode_index16(_inst->imm));
+      } else {
+        op2 = read_mem32(_vm->mem,
+            _vm->regs->regs[_inst->operand2]);
+      }
+    } else {
+      if (_inst->is_imm)
+        op2 = _vm->regs->regs[_inst->operand2] + _inst->imm;
+      else
+        op2 = _vm->regs->regs[_inst->operand2];
+    }
+    uint32_t op1 = _vm->regs->regs[_inst->operand1];
+    switch (_inst->opcode) {
+      case CMPeq:
+        if ((int32_t)op1 == (int32_t)op2)
+          _vm->regs->regs[FLAGS] |= 0x01;
+        else
+          _vm->regs->regs[FLAGS] &= ~0x01;
+        break;
+      case CMPlte:
+        if ((int32_t)op1 <= (int32_t)op2)
+          _vm->regs->regs[FLAGS] |= 0x01;
+        else
+          _vm->regs->regs[FLAGS] &= ~0x01;
+        break;
+      case CMPgte:
+        if ((int32_t)op1 >= (int32_t)op2)
+          _vm->regs->regs[FLAGS] |= 0x01;
+        else
+          _vm->regs->regs[FLAGS] &= ~0x01;
+        break;
+      case CMPulte:
+        if ((uint32_t)op1 <= (uint32_t)op2)
+          _vm->regs->regs[FLAGS] |= 0x01;
+        else
+          _vm->regs->regs[FLAGS] &= ~0x01;
+        break;
+      case CMPugte:
+        if ((uint32_t)op1 >= (uint32_t)op2)
+          _vm->regs->regs[FLAGS] |= 0x01;
+        else
+          _vm->regs->regs[FLAGS] &= ~0x01;
+        break;
+      default:
+        error("invalid instruction");
+    }
   }
 
   return _vm;
 }
 
 static vm *exec_cmpi(vm *_vm, inst *_inst) {
-  int64_t op1, op2;
   if (_inst->mov_len == 8) {
+    uint64_t op1, op2;
     if (_inst->op1_indirect) {
       if (_inst->is_opt_idx) {
         op1 = read_mem64(_vm->mem,
-            _vm->regs->regs[_inst->operand1] + _inst->opt_idx);
+            _vm->regs->regs[_inst->operand1]
+            + decode_index16(_inst->opt_idx));
       } else {
         op1 = read_mem64(_vm->mem,
             _vm->regs->regs[_inst->operand1]);
@@ -361,12 +481,57 @@ static vm *exec_cmpi(vm *_vm, inst *_inst) {
       else
         op1 = _vm->regs->regs[_inst->operand1];
     }
-    op2 = _inst->imm_data;
+    op2 = (uint64_t)_inst->imm_data;
+    /*
+    if (_inst->imm_len == 2)
+      op2 = (int16_t)_inst->imm_data;
+    else if (_inst->imm_len == 4)
+      op2 = (int32_t)_inst->imm_data;
+    else
+      error("invalid instruction");
+    */
+
+    switch (_inst->opcode) {
+      case CMPIeq:
+        if ((int64_t)op1 == (int64_t)op2)
+          _vm->regs->regs[FLAGS] |= 0x01;
+        else
+          _vm->regs->regs[FLAGS] &= ~0x01;
+        break;
+      case CMPIlte:
+        if ((int64_t)op1 <= (int64_t)op2)
+          _vm->regs->regs[FLAGS] |= 0x01;
+        else
+          _vm->regs->regs[FLAGS] &= ~0x01;
+        break;
+      case CMPIgte:
+        if ((int64_t)op1 >= (int64_t)op2)
+          _vm->regs->regs[FLAGS] |= 0x01;
+        else
+          _vm->regs->regs[FLAGS] &= ~0x01;
+        break;
+      case CMPIulte:
+        if ((uint64_t)op1 <= (uint64_t)op2)
+          _vm->regs->regs[FLAGS] |= 0x01;
+        else
+          _vm->regs->regs[FLAGS] &= ~0x01;
+        break;
+      case CMPIugte:
+        if ((uint64_t)op1 >= (uint64_t)op2)
+          _vm->regs->regs[FLAGS] |= 0x01;
+        else
+          _vm->regs->regs[FLAGS] &= ~0x01;
+        break;
+      default:
+        error("invalid instruction");
+    }
   } else if (_inst->mov_len == 4) {
+    uint32_t op1, op2;
     if (_inst->op1_indirect) {
       if (_inst->is_opt_idx) {
         op1 = (int32_t)read_mem32(_vm->mem,
-            _vm->regs->regs[_inst->operand1] + _inst->opt_idx);
+            _vm->regs->regs[_inst->operand1]
+            + decode_index16(_inst->opt_idx));
       } else {
         op1 = (int32_t)read_mem32(_vm->mem,
             _vm->regs->regs[_inst->operand1]);
@@ -377,32 +542,44 @@ static vm *exec_cmpi(vm *_vm, inst *_inst) {
       else
         op1 = (int32_t)_vm->regs->regs[_inst->operand1];
     }
-    op2 = (int32_t)_inst->imm_data;
-  }
+    op2 = (uint32_t)_inst->imm_data;
 
-  switch (_inst->opcode) {
-    case CMPIeq:
-      if ((int64_t)op1 == (int64_t)op2)
-        _vm->regs->regs[FLAGS] |= 0x01;
-      break;
-    case CMPIlte:
-      if ((int64_t)op1 <= (int64_t)op2)
-        _vm->regs->regs[FLAGS] |= 0x01;
-      break;
-    case CMPIgte:
-      if ((int64_t)op1 >= (int64_t)op2)
-        _vm->regs->regs[FLAGS] |= 0x01;
-      break;
-    case CMPIulte:
-      if ((uint64_t)op1 <= (uint64_t)op2)
-        _vm->regs->regs[FLAGS] |= 0x01;
-      break;
-    case CMPIugte:
-      if ((uint64_t)op1 >= (uint64_t)op2)
-        _vm->regs->regs[FLAGS] |= 0x01;
-      break;
-    default:
-      error("invalid instruction");
+    switch (_inst->opcode) {
+      case CMPIeq:
+        if ((int32_t)op1 == (int32_t)op2)
+          _vm->regs->regs[FLAGS] |= 0x01;
+        else
+          _vm->regs->regs[FLAGS] &= ~0x01;
+        break;
+      case CMPIlte:
+        if ((int32_t)op1 <= (int32_t)op2)
+          _vm->regs->regs[FLAGS] |= 0x01;
+        else
+          _vm->regs->regs[FLAGS] &= ~0x01;
+        break;
+      case CMPIgte:
+        if ((int32_t)op1 >= (int32_t)op2)
+          _vm->regs->regs[FLAGS] |= 0x01;
+        else
+          _vm->regs->regs[FLAGS] &= ~0x01;
+        break;
+      case CMPIulte:
+        if ((uint32_t)op1 <= (uint32_t)op2)
+          _vm->regs->regs[FLAGS] |= 0x01;
+        else
+          _vm->regs->regs[FLAGS] &= ~0x01;
+        break;
+      case CMPIugte:
+        if ((uint32_t)op1 >= (uint32_t)op2)
+          _vm->regs->regs[FLAGS] |= 0x01;
+        else
+          _vm->regs->regs[FLAGS] &= ~0x01;
+        break;
+      default:
+        error("invalid instruction");
+    }
+  } else {
+    error("invalid instruction");
   }
 
   return _vm;
@@ -411,50 +588,17 @@ static vm *exec_cmpi(vm *_vm, inst *_inst) {
 static vm *exec_mov(vm *_vm, inst *_inst) {
   uint64_t op;
   if (_inst->op2_indirect) {
-    switch (_inst->op_len) {
-      case 1:
-        op = read_mem8(_vm->mem, _vm->regs->regs[_inst->operand2]);
-        break;
-      case 2:
-        op = read_mem16(_vm->mem, _vm->regs->regs[_inst->operand2]);
-        break;
-      case 4:
-        op = read_mem32(_vm->mem, _vm->regs->regs[_inst->operand2]);
-        break;
-      case 8:
-        op = read_mem64(_vm->mem, _vm->regs->regs[_inst->operand2]);
-        break;
-      default:
-        error("invalid instruction");
-    }
-  } else
-    op = _vm->regs->regs[_inst->operand2];
-
-  if (_inst->is_op2_idx)
-    op += _inst->op2_idx;
-
-  if (_inst->op1_indirect) {
-    if (_inst->is_op1_idx) {
-      switch (_inst->op_len) {
-        case 1:
-          write_mem8(_vm->mem,
-              _vm->regs->regs[_inst->operand1] + _inst->op1_idx,
-              (uint8_t)op);
-          break;
+    uint64_t op2_addr = _vm->regs->regs[_inst->operand2];
+    if (_inst->is_op2_idx) {
+      switch (_inst->idx_len) {
         case 2:
-          write_mem16(_vm->mem,
-              _vm->regs->regs[_inst->operand1] + _inst->op1_idx,
-              (uint16_t)op);
+          op2_addr += decode_index16(_inst->op2_idx);
           break;
         case 4:
-          write_mem32(_vm->mem,
-              _vm->regs->regs[_inst->operand1] + _inst->op1_idx,
-              (uint32_t)op);
+          op2_addr += decode_index32(_inst->op2_idx);
           break;
         case 8:
-          write_mem64(_vm->mem,
-              _vm->regs->regs[_inst->operand1] + _inst->op1_idx,
-              (uint64_t)op);
+          op2_addr += decode_index64(_inst->op2_idx);
           break;
         default:
           error("invalid instruction");
@@ -462,20 +606,72 @@ static vm *exec_mov(vm *_vm, inst *_inst) {
     }
     switch (_inst->op_len) {
       case 1:
-        write_mem8(_vm->mem,
-            _vm->regs->regs[_inst->operand1], (uint8_t)op);
+        op = read_mem8(_vm->mem, op2_addr);
         break;
       case 2:
-        write_mem16(_vm->mem,
-            _vm->regs->regs[_inst->operand1], (uint16_t)op);
+        op = read_mem16(_vm->mem, op2_addr);
         break;
       case 4:
-        write_mem32(_vm->mem,
-            _vm->regs->regs[_inst->operand1], (uint32_t)op);
+        op = read_mem32(_vm->mem, op2_addr);
         break;
       case 8:
-        write_mem64(_vm->mem,
-            _vm->regs->regs[_inst->operand1], (uint64_t)op);
+        op = read_mem64(_vm->mem, op2_addr);
+        break;
+      default:
+        error("invalid instruction");
+    }
+  } else {
+    if (_inst->is_op2_idx)
+      error("invalid instruction");
+    else {
+      switch (_inst->op_len) {
+        case 1:
+          op = (uint8_t)_vm->regs->regs[_inst->operand2];
+          break;
+        case 2:
+          op = (uint16_t)_vm->regs->regs[_inst->operand2];
+          break;
+        case 4:
+          op = (uint32_t)_vm->regs->regs[_inst->operand2];
+          break;
+        case 8:
+          op = (uint64_t)_vm->regs->regs[_inst->operand2];
+          break;
+        default:
+          error("invalid instruction");
+      }
+    }
+  }
+
+  if (_inst->op1_indirect) {
+    uint64_t op1_addr = _vm->regs->regs[_inst->operand1];
+    if (_inst->is_op1_idx) {
+      switch (_inst->idx_len) {
+        case 2:
+          op1_addr += decode_index16(_inst->op1_idx);
+          break;
+        case 4:
+          op1_addr += decode_index32(_inst->op1_idx);
+          break;
+        case 8:
+          op1_addr += decode_index64(_inst->op1_idx);
+          break;
+        default:
+          error("invalid instruction");
+      }
+    }
+    switch (_inst->op_len) {
+      case 1:
+        write_mem8(_vm->mem, op1_addr, (uint8_t)op);
+        break;
+      case 2:
+        write_mem16(_vm->mem, op1_addr, (uint16_t)op);
+        break;
+      case 4:
+        write_mem32(_vm->mem, op1_addr, (uint32_t)op);
+        break;
+      case 8:
+        write_mem64(_vm->mem, op1_addr, (uint64_t)op);
         break;
       default:
         error("invalid instruction");
@@ -491,21 +687,22 @@ static vm *exec_mov(vm *_vm, inst *_inst) {
 }
 
 static vm *exec_movi(vm *_vm, inst *_inst) {
-  uint64_t op1;
   if (_inst->op1_indirect) {
+    uint64_t op = _vm->regs->regs[_inst->operand1];
     if (_inst->is_opt_idx)
-      op1 = _vm->regs->regs[_inst->operand1] + _inst->opt_idx;
-    else
-      op1 = _vm->regs->regs[_inst->operand1];
-    switch (_inst->imm_len) {
+      op += decode_index16(_inst->opt_idx);
+    switch (_inst->mov_len) {
+      case 1:
+        write_mem8(_vm->mem, op, (uint8_t)_inst->imm_data);
+        break;
       case 2:
-        write_mem16(_vm->mem, op1, (uint16_t)_inst->imm_data);
+        write_mem16(_vm->mem, op, (uint16_t)_inst->imm_data);
         break;
       case 4:
-        write_mem32(_vm->mem, op1, (uint32_t)_inst->imm_data);
+        write_mem32(_vm->mem, op, (uint32_t)_inst->imm_data);
         break;
       case 8:
-        write_mem64(_vm->mem, op1, (uint64_t)_inst->imm_data);
+        write_mem64(_vm->mem, op, (uint64_t)_inst->imm_data);
         break;
       default:
         error("invalid instruction");
@@ -513,26 +710,54 @@ static vm *exec_movi(vm *_vm, inst *_inst) {
   } else {
     if (_inst->is_opt_idx)
       error("invalid instruction");
-    else
-      _vm->regs->regs[_inst->operand1] = _inst->imm_data;
+    else {
+      switch (_inst->mov_len) {
+        case 1:
+          _vm->regs->regs[_inst->operand1] = (uint8_t)_inst->imm_data;
+          break;
+        case 2:
+          _vm->regs->regs[_inst->operand1] = (uint16_t)_inst->imm_data;
+          break;
+        case 4:
+          _vm->regs->regs[_inst->operand1] = (uint32_t)_inst->imm_data;
+          break;
+        case 8:
+          _vm->regs->regs[_inst->operand1] = (uint64_t)_inst->imm_data;
+          break;
+        default:
+          error("invalid instruction");
+      }
+    }
   }
 
   return _vm;
 }
 
 static vm *exec_movin(vm *_vm, inst *_inst) {
-  uint64_t op1;
+  uint64_t op2;
+  switch (_inst->imm_len) {
+    case 2:
+      op2 = decode_index16(_inst->imm_data);
+      break;
+    case 4:
+      op2 = decode_index32(_inst->imm_data);
+      break;
+    case 8:
+      op2 = decode_index64(_inst->imm_data);
+      break;
+    default:
+      error("invalid instruction");
+  }
   if (_inst->op1_indirect) {
+    uint64_t op1 = _vm->regs->regs[_inst->operand1];
     if (_inst->is_opt_idx)
-      op1 = _vm->regs->regs[_inst->operand2] + _inst->opt_idx;
-    else
-      op1 = _vm->regs->regs[_inst->operand2];
-    write_mem64(_vm->mem, op1, _inst->imm_data);
+      op1 += decode_index16(_inst->opt_idx);
+    write_mem64(_vm->mem, op1, op2);
   } else {
     if (_inst->is_opt_idx)
       error("invalid instruction");
     else
-      _vm->regs->regs[_inst->operand1] = _inst->imm_data;
+      _vm->regs->regs[_inst->operand1] = op2;
   }
 
   return _vm;
@@ -547,15 +772,10 @@ static vm *exec_movrel(vm *_vm, inst *_inst) {
   uint64_t op2 = read_mem64(_vm->mem,
       _vm->regs->regs[IP] + inst_len + _inst->imm_data);
   if (_inst->op1_indirect) {
-    uint64_t op1;
-    if (_inst->is_opt_idx) {
-      op1 = read_mem64(_vm->mem,
-          _vm->regs->regs[_inst->operand1] + _inst->opt_idx);
-    } else {
-      op1 = read_mem64(_vm->mem,
-          _vm->regs->regs[_inst->operand1]);
-    }
-    write_mem64(_vm->mem, op1, op2);
+    uint64_t op1_addr = _vm->regs->regs[_inst->operand1];
+    if (_inst->is_opt_idx)
+      op1_addr += decode_index16(_inst->opt_idx);
+    write_mem64(_vm->mem, op1_addr, op2);
   } else {
     if (_inst->is_opt_idx)
       error("invalid instruction");
@@ -569,27 +789,49 @@ static vm *exec_movrel(vm *_vm, inst *_inst) {
 static vm *exec_movn(vm *_vm, inst *_inst) {
   uint64_t op2;
   if (_inst->op2_indirect) {
+    uint64_t op2_addr = _vm->regs->regs[_inst->operand2];
     if (_inst->is_op2_idx) {
-      op2 = read_mem64(_vm->mem,
-          _vm->regs->regs[_inst->operand2] + _inst->op2_idx);
-    } else {
-      op2 = read_mem64(_vm->mem,
-          _vm->regs->regs[_inst->operand2]);
+      switch (_inst->idx_len) {
+        case 2:
+          op2_addr += decode_index16(_inst->op2_idx);
+          break;
+        case 4:
+          op2_addr += decode_index32(_inst->op2_idx);
+          break;
+        default:
+          error("invalid instruction");
+      }
     }
+    op2 = read_mem64(_vm->mem, op2_addr);
   } else {
-    if (_inst->is_op2_idx)
-      op2 = _vm->regs->regs[_inst->operand2] + _inst->op2_idx;
-    else
-      op2 = _vm->regs->regs[_inst->operand2];
+    op2 = _vm->regs->regs[_inst->operand2];
+    if (_inst->is_op2_idx) {
+      switch (_inst->idx_len) {
+        case 2:
+          op2 += decode_index16(_inst->op2_idx);
+          break;
+        case 4:
+          op2 += decode_index32(_inst->op2_idx);
+          break;
+        default:
+          error("invalid instruction");
+      }
+    }
   }
+
   if (_inst->op1_indirect) {
-    uint64_t op1;
+    uint64_t op1 = _vm->regs->regs[_inst->operand1];
     if (_inst->is_op1_idx) {
-      op1 = read_mem64(_vm->mem,
-          _vm->regs->regs[_inst->operand1] + _inst->op1_idx);
-    } else {
-      op1 = read_mem64(_vm->mem,
-          _vm->regs->regs[_inst->operand1]);
+      switch (_inst->idx_len) {
+        case 2:
+          op1 += decode_index16(_inst->op1_idx);
+          break;
+        case 4:
+          op1 += decode_index32(_inst->op1_idx);
+          break;
+        default:
+          error("invalid instruction");
+      }
     }
     write_mem64(_vm->mem, op1, op2);
   } else {
@@ -605,30 +847,42 @@ static vm *exec_movn(vm *_vm, inst *_inst) {
 static vm *exec_movsn(vm *_vm, inst *_inst) {
   int64_t op2;
   if (_inst->op2_indirect) {
+    uint64_t op2_addr = _vm->regs->regs[_inst->operand2];
     if (_inst->is_op2_idx) {
-      op2 = read_mem64(_vm->mem,
-          _vm->regs->regs[_inst->operand2] + _inst->op2_idx);
-    } else {
-      op2 = read_mem64(_vm->mem,
-          _vm->regs->regs[_inst->operand2]);
+      switch (_inst->idx_len) {
+        case 2:
+          op2_addr += decode_index16(_inst->op2_idx);
+          break;
+        case 4:
+          op2_addr += decode_index32(_inst->op2_idx);
+          break;
+        default:
+          error("invalid instruction");
+      }
     }
+    op2 = read_mem64(_vm->mem, op2_addr);
   } else {
     if (_inst->is_op2_idx)
-      op2 = _vm->regs->regs[_inst->operand2] + _inst->op2_idx;
+      op2 = _vm->regs->regs[_inst->operand2] + (int64_t)_inst->op2_idx;
     else
       op2 = _vm->regs->regs[_inst->operand2];
   }
 
   if (_inst->op1_indirect) {
-    int64_t op1;
+    uint64_t op1_addr = _vm->regs->regs[_inst->operand1];
     if (_inst->is_op1_idx) {
-      op1 = read_mem64(_vm->mem,
-          _vm->regs->regs[_inst->operand1] + _inst->op1_idx);
-    } else {
-      op1 = read_mem64(_vm->mem,
-          _vm->regs->regs[_inst->operand1]);
+      switch (_inst->idx_len) {
+        case 2:
+          op1_addr += decode_index16(_inst->op1_idx);
+          break;
+        case 4:
+          op1_addr += decode_index32(_inst->op1_idx);
+          break;
+        default:
+          error("invalid instruction");
+      }
     }
-    write_mem64(_vm->mem, op1, op2);
+    write_mem64(_vm->mem, op1_addr, op2);
   } else {
     if (_inst->is_op1_idx)
       error("invalid instruction");
@@ -645,9 +899,10 @@ static vm *exec_pop(vm *_vm, inst *_inst) {
     if (_inst->is_imm) {
       if (_inst->op1_indirect) {
         write_mem64(_vm->mem,
-            _vm->regs->regs[_inst->operand1] + _inst->imm, op);
+            _vm->regs->regs[_inst->operand1]
+            + decode_index16(_inst->imm), op);
       } else {
-        _vm->regs->regs[_inst->operand1] = op + (uint64_t)_inst->imm;
+        _vm->regs->regs[_inst->operand1] = op + (int64_t)_inst->imm;
       }
     } else {
       if (_inst->op1_indirect) {
@@ -663,9 +918,10 @@ static vm *exec_pop(vm *_vm, inst *_inst) {
     if (_inst->is_imm) {
       if (_inst->op1_indirect) {
         write_mem32(_vm->mem,
-            _vm->regs->regs[_inst->operand1] + _inst->imm, op);
+            _vm->regs->regs[_inst->operand1]
+            + decode_index16(_inst->imm), op);
       } else {
-        _vm->regs->regs[_inst->operand1] = op + (uint32_t)_inst->imm;
+        _vm->regs->regs[_inst->operand1] = op + (int32_t)_inst->imm;
       }
     } else {
       if (_inst->op1_indirect) {
@@ -688,7 +944,8 @@ static vm *exec_popn(vm *_vm, inst *_inst) {
     if (_inst->is_imm) {
       if (_inst->op1_indirect) {
         write_mem64(_vm->mem,
-            _vm->regs->regs[_inst->operand1] + _inst->imm, op);
+            _vm->regs->regs[_inst->operand1]
+            + decode_index16(_inst->imm), op);
       } else {
         _vm->regs->regs[_inst->operand1] = op + (int64_t)_inst->imm;
       }
@@ -700,13 +957,14 @@ static vm *exec_popn(vm *_vm, inst *_inst) {
         _vm->regs->regs[_inst->operand1] = op;
       }
     }
-    _vm->regs->regs[R0] = _vm->regs->regs[R0] + 8;
+    _vm->regs->regs[R0] = _vm->regs->regs[R0] + ARCH_BYTES;
   } else {
     int32_t op = read_mem32(_vm->mem, _vm->regs->regs[R0]);
     if (_inst->is_imm) {
       if (_inst->op1_indirect) {
         write_mem32(_vm->mem,
-            _vm->regs->regs[_inst->operand1] + _inst->imm, op);
+            _vm->regs->regs[_inst->operand1]
+            + decode_index16(_inst->imm), op);
       } else {
         _vm->regs->regs[_inst->operand1] = op + (int32_t)_inst->imm;
       }
@@ -718,7 +976,7 @@ static vm *exec_popn(vm *_vm, inst *_inst) {
         _vm->regs->regs[_inst->operand1] = op;
       }
     }
-    _vm->regs->regs[R0] = _vm->regs->regs[R0] + 4;
+    _vm->regs->regs[R0] = _vm->regs->regs[R0] + ARCH_BYTES;
   }
 
   return _vm;
@@ -730,9 +988,10 @@ static vm *exec_push(vm *_vm, inst *_inst) {
     if (_inst->is_imm) {
       if (_inst->op1_indirect) {
         op = read_mem64(_vm->mem,
-            _vm->regs->regs[_inst->operand1] + _inst->imm);
+            _vm->regs->regs[_inst->operand1]
+            + decode_index16(_inst->imm));
       } else {
-        op = _vm->regs->regs[_inst->operand1] + _inst->imm;
+        op = _vm->regs->regs[_inst->operand1] + (int64_t)_inst->imm;
       }
     } else {
       if (_inst->op1_indirect) {
@@ -749,9 +1008,10 @@ static vm *exec_push(vm *_vm, inst *_inst) {
     if (_inst->is_imm) {
       if (_inst->op1_indirect) {
         op = read_mem32(_vm->mem,
-            _vm->regs->regs[_inst->operand1] + _inst->imm);
+            _vm->regs->regs[_inst->operand1]
+            + decode_index16(_inst->imm));
       } else {
-        op = _vm->regs->regs[_inst->operand1] + _inst->imm;
+        op = _vm->regs->regs[_inst->operand1] + (int32_t)_inst->imm;
       }
     } else {
       if (_inst->op1_indirect) {
@@ -775,9 +1035,10 @@ static vm *exec_pushn(vm *_vm, inst *_inst) {
     if (_inst->is_imm) {
       if (_inst->op1_indirect) {
         op = read_mem64(_vm->mem,
-            _vm->regs->regs[_inst->operand1] + _inst->imm);
+            _vm->regs->regs[_inst->operand1]
+            + decode_index16(_inst->imm));
       } else {
-        op = _vm->regs->regs[_inst->operand1] + _inst->imm;
+        op = _vm->regs->regs[_inst->operand1] + (int64_t)_inst->imm;
       }
     } else {
       if (_inst->op1_indirect) {
@@ -787,16 +1048,17 @@ static vm *exec_pushn(vm *_vm, inst *_inst) {
         op = _vm->regs->regs[_inst->operand1];
       }
     }
-    _vm->regs->regs[R0] = _vm->regs->regs[R0] - 8;
+    _vm->regs->regs[R0] = _vm->regs->regs[R0] - ARCH_BYTES;
     write_mem64(_vm->mem, _vm->regs->regs[R0], op);
   } else {
     int32_t op;
     if (_inst->is_imm) {
       if (_inst->op1_indirect) {
         op = read_mem32(_vm->mem,
-            _vm->regs->regs[_inst->operand1] + _inst->imm);
+            _vm->regs->regs[_inst->operand1]
+            + decode_index16(_inst->imm));
       } else {
-        op = _vm->regs->regs[_inst->operand1] + _inst->imm;
+        op = _vm->regs->regs[_inst->operand1] + (int32_t)_inst->imm;
       }
     } else {
       if (_inst->op1_indirect) {
@@ -806,7 +1068,7 @@ static vm *exec_pushn(vm *_vm, inst *_inst) {
         op = _vm->regs->regs[_inst->operand1];
       }
     }
-    _vm->regs->regs[R0] = _vm->regs->regs[R0] - 4;
+    _vm->regs->regs[R0] = _vm->regs->regs[R0] - ARCH_BYTES;
     write_mem32(_vm->mem, _vm->regs->regs[R0], op);
   }
 
@@ -843,17 +1105,19 @@ static vm *exec_storesp(vm *_vm, inst *_inst) {
 
 static vm *exec_nop(vm *_vm, inst *_inst) {
   /* do nothing */
+
   return _vm;
 }
 
-static vm *inc_ip(vm *_vm) {
-  _vm->regs->regs[IP]++;
+static vm *inc_ip(vm *_vm, inst *_inst) {
+  _vm->regs->regs[IP] += _inst->inst_len;
+
   return _vm;
 }
 
 vm *exec_op(vm *_vm, inst *_inst) {
   if (_inst->opcode >= ADD && _inst->opcode <= MODU) {
-    arith_ops[_inst->opcode](_vm, _inst);
+    arith_ops[_inst->opcode - ADD](_vm, _inst);
     goto done_inc;
   }
   if (_inst->opcode >= CMPeq && _inst->opcode <= CMPugte) {
@@ -931,7 +1195,7 @@ vm *exec_op(vm *_vm, inst *_inst) {
   }
 
 done_inc:
-  inc_ip(_vm);
+  inc_ip(_vm, _inst);
 
 done_ret:
   return _vm;

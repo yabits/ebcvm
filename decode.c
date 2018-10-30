@@ -112,6 +112,7 @@ static inst *decode_jmp(inst *_inst, uint8_t *op) {
     int imm_len = _inst->is_jmp64 ? 8 : 4;
     for (int k = 0; k < imm_len; k++)
       _inst->jmp_imm += ((uint64_t)op[2 + k] << (k * 8));
+    _inst->inst_len += imm_len;
   }
 
   return _inst;
@@ -150,11 +151,13 @@ static inst *decode_cmpi(inst *_inst, uint8_t *op) {
   if (_inst->is_opt_idx) {
     _inst->opt_idx = ((uint16_t)op[i] << 0) + ((uint16_t)op[i + 1] << 8);
     i += 2;
+    _inst->inst_len += 2;
   }
 
   _inst->imm_data = 0x00;
   for (int k = 0; k < _inst->imm_len; k++)
     _inst->imm_data += (uint64_t)op[i + k] << (8 * k);
+  _inst->inst_len += _inst->imm_len;
 
   return _inst;
 
@@ -170,11 +173,13 @@ static inst *decode_mov_idx(inst *_inst, uint8_t *op, size_t idx_len) {
   if (_inst->is_op1_idx) {
     for (int k = 0; k < idx_len; k++)
       _inst->op1_idx += ((uint64_t)op[2 + k] << (k * 8));
+    _inst->inst_len += idx_len;
   }
   if (_inst->is_op2_idx) {
     int i = _inst->is_op1_idx ? idx_len + 2 : 2;
     for (int k = 0; k < idx_len; k++)
       _inst->op2_idx += ((uint64_t)op[i + k] << (k * 8));
+    _inst->inst_len += idx_len;
   }
 
   return _inst;
@@ -303,11 +308,13 @@ static inst *decode_movi(inst *_inst, uint8_t *op) {
   if (_inst->is_opt_idx) {
     _inst->opt_idx = ((uint16_t)op[i] << 0) + ((uint16_t)op[i + 1] << 8);
     i += 2;
+    _inst->inst_len += 2;
   }
 
   _inst->imm_data = 0x00;
   for (int k = 0; k < _inst->imm_len; k++)
     _inst->imm_data += (uint64_t)op[i + k] << (8 * k);
+  _inst->inst_len += _inst->imm_len;
 
   return _inst;
 
@@ -325,6 +332,7 @@ inst *decode_op(uint8_t *op) {
     goto fail;
 
   _inst->opcode = decode_opcode(op[0] & 0x3f);
+  _inst->inst_len = 2;
 
   if (_inst->opcode == BREAK) {
     _inst->break_code = op[1];
@@ -350,8 +358,10 @@ inst *decode_op(uint8_t *op) {
       _inst->is_64op = true;
     else
       _inst->is_64op = false;
-    if (_inst->is_imm)
+    if (_inst->is_imm) {
       _inst->imm = (op[2] << 0) + (op[3] << 8);
+      _inst->inst_len += 2;
+    }
   }
 
   if (op[1] & 0x80)
