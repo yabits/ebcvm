@@ -772,15 +772,10 @@ static vm *exec_movrel(vm *_vm, inst *_inst) {
   uint64_t op2 = read_mem64(_vm->mem,
       _vm->regs->regs[IP] + inst_len + _inst->imm_data);
   if (_inst->op1_indirect) {
-    uint64_t op1;
-    if (_inst->is_opt_idx) {
-      op1 = read_mem64(_vm->mem,
-          _vm->regs->regs[_inst->operand1] + _inst->opt_idx);
-    } else {
-      op1 = read_mem64(_vm->mem,
-          _vm->regs->regs[_inst->operand1]);
-    }
-    write_mem64(_vm->mem, op1, op2);
+    uint64_t op1_addr = _vm->regs->regs[_inst->operand1];
+    if (_inst->is_opt_idx)
+      op1_addr += decode_index16(_inst->opt_idx);
+    write_mem64(_vm->mem, op1_addr, op2);
   } else {
     if (_inst->is_opt_idx)
       error("invalid instruction");
