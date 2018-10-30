@@ -794,27 +794,49 @@ static vm *exec_movrel(vm *_vm, inst *_inst) {
 static vm *exec_movn(vm *_vm, inst *_inst) {
   uint64_t op2;
   if (_inst->op2_indirect) {
+    uint64_t op2_addr = _vm->regs->regs[_inst->operand2];
     if (_inst->is_op2_idx) {
-      op2 = read_mem64(_vm->mem,
-          _vm->regs->regs[_inst->operand2] + _inst->op2_idx);
-    } else {
-      op2 = read_mem64(_vm->mem,
-          _vm->regs->regs[_inst->operand2]);
+      switch (_inst->idx_len) {
+        case 2:
+          op2_addr += decode_index16(_inst->op2_idx);
+          break;
+        case 4:
+          op2_addr += decode_index32(_inst->op2_idx);
+          break;
+        default:
+          error("invalid instruction");
+      }
     }
+    op2 = read_mem64(_vm->mem, op2_addr);
   } else {
-    if (_inst->is_op2_idx)
-      op2 = _vm->regs->regs[_inst->operand2] + _inst->op2_idx;
-    else
-      op2 = _vm->regs->regs[_inst->operand2];
+    op2 = _vm->regs->regs[_inst->operand2];
+    if (_inst->is_op2_idx) {
+      switch (_inst->idx_len) {
+        case 2:
+          op2 += decode_index16(_inst->op2_idx);
+          break;
+        case 4:
+          op2 += decode_index32(_inst->op2_idx);
+          break;
+        default:
+          error("invalid instruction");
+      }
+    }
   }
+
   if (_inst->op1_indirect) {
-    uint64_t op1;
+    uint64_t op1 = _vm->regs->regs[_inst->operand1];
     if (_inst->is_op1_idx) {
-      op1 = read_mem64(_vm->mem,
-          _vm->regs->regs[_inst->operand1] + _inst->op1_idx);
-    } else {
-      op1 = read_mem64(_vm->mem,
-          _vm->regs->regs[_inst->operand1]);
+      switch (_inst->idx_len) {
+        case 2:
+          op1 += decode_index16(_inst->op1_idx);
+          break;
+        case 4:
+          op1 += decode_index32(_inst->op1_idx);
+          break;
+        default:
+          error("invalid instruction");
+      }
     }
     write_mem64(_vm->mem, op1, op2);
   } else {
