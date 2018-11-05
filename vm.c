@@ -59,24 +59,6 @@ static uint8_t *maybe_fetch_imms(vm *_vm, uint8_t *op) {
       goto fail;
   }
 
-  size_t mov_len = 0;
-  switch (op[1] & 0x30) {
-    case 0:
-      mov_len = 1;
-      break;
-    case 1:
-      mov_len = 2;
-      break;
-    case 2:
-      mov_len = 4;
-      break;
-    case 3:
-      mov_len = 8;
-      break;
-    default:
-      goto fail;
-  }
-
   int i = 2;
   if (op[1] & 0x80) {
     op = realloc(op, sizeof(uint8_t) * (2 + i));
