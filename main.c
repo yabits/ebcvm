@@ -34,7 +34,7 @@ int main(int argc, char *argv[]) {
       bin_path = argv[i];
     } else if (sscanf(argv[i], "--mem=%d%c", &n, &junk) == 1) {
       FLAGS_mem = n;
-    } else if (sscanf(argv[i], "--step%d%c", &n, &junk) == 1 &&
+    } else if (sscanf(argv[i], "--step=%d%c", &n, &junk) == 1 &&
         (n == 0 || n == 1)) {
       FLAGS_step = n;
     } else {
