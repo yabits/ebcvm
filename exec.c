@@ -51,6 +51,10 @@ static op##bits *read_op##bits(vm *_vm, inst *_inst) {              \
 
 #define EXEC_OP(type, name, op)                                     \
 static type op_##name(type op1, type op2) {                         \
+  if (!strcmp("##name##", "div") || !strcmp("##name##", "divu") ||  \
+      !strcmp("##name##", "mod") || !strcmp("##name##", "modu"))    \
+    if (op2 == 0)                                                   \
+      raise_except(DIV0, "devide by 0");                            \
   return op;                                                        \
 }                                                                   \
 static vm *exec_##name(vm *_vm, inst *_inst) {                      \
@@ -131,7 +135,7 @@ static vm *exec_break(vm *_vm, inst *_inst) {
       break;
     case 3:
       /* FIXME: debug breakpoint */
-      error("debug breakpoint");
+      raise_except(DEBUG, "breakpoint");
       break;
     case 4:
       /* FIXME: system call */
@@ -143,7 +147,7 @@ static vm *exec_break(vm *_vm, inst *_inst) {
       _vm->compiler_version = _vm->regs->regs[R7];
       break;
     default:
-      error("bad break exception");
+      raise_except(BADBREAK, "bad break");
   }
 
   return _vm;
@@ -153,7 +157,7 @@ static vm *exec_jmp(vm *_vm, inst *_inst) {
   bool do_jmp = false;
   if (_inst->is_jmp64) {
     if (!_inst->jmp_imm)
-      error("invalid instruction");
+      raise_except(ENCODE, "JMP");
     if (_inst->is_cond) {
       if (_inst->is_cs && (_vm->regs->regs[FLAGS] & 0x01))
         do_jmp = true;
@@ -163,7 +167,7 @@ static vm *exec_jmp(vm *_vm, inst *_inst) {
       do_jmp = true;
     if (do_jmp) {
       if (_inst->jmp_imm % 2)
-        error("alignemnt check");
+        raise_except(ALIGN, "alignemnt check");
       if (_inst->is_rel) {
         /* XXX: JMP64 only supports immediate */
         _vm->regs->regs[IP] += 10 + _inst->jmp_imm;
@@ -197,7 +201,7 @@ static vm *exec_jmp(vm *_vm, inst *_inst) {
           op1 += _inst->jmp_imm;
       }
       if (op1 % 2)
-        error("alignemnt check");
+        raise_except(ALIGN, "alignemnt check");
       if (_inst->is_rel) {
         size_t inst_len = _inst->is_jmp_imm ? 6 : 2;
         _vm->regs->regs[IP] += inst_len + op1;
@@ -240,7 +244,7 @@ static vm *exec_call(vm *_vm, inst *_inst) {
       if (_inst->is_jmp_imm)
         _vm->regs->regs[IP] = (uint64_t)_inst->jmp_imm;
       else
-        error("invalid instruction");
+        raise_except(ENCODE, "CALL");
   } else {
     uint32_t op;
     if (_inst->operand1 != R0) {
@@ -263,7 +267,7 @@ static vm *exec_call(vm *_vm, inst *_inst) {
       if (_inst->is_jmp_imm)
         op = (uint32_t)_inst->jmp_imm;
       else
-        error("invalid instruction");
+        raise_except(ENCODE, "CALL");
     if (_inst->is_native) {
       if (_inst->is_rel)
         ; /* FIXME: call to native code IP + op */
@@ -334,7 +338,7 @@ static vm *exec_extnd(vm *_vm, inst *_inst) {
         op2 = (uint32_t)(_vm->regs->regs[_inst->operand2]);
     }
   } else
-    error("invalid instruction");
+    raise_except(ENCODE, "EXTND");
 
   if (_inst->is_64op) {
     if (_inst->op1_indirect) {
@@ -404,7 +408,7 @@ static vm *exec_cmp(vm *_vm, inst *_inst) {
           _vm->regs->regs[FLAGS] &= ~0x01;
         break;
       default:
-        error("invalid instruction");
+        raise_except(OPCODE, "CMP");
     }
   } else {
     uint32_t op2;
@@ -456,7 +460,7 @@ static vm *exec_cmp(vm *_vm, inst *_inst) {
           _vm->regs->regs[FLAGS] &= ~0x01;
         break;
       default:
-        error("invalid instruction");
+        raise_except(OPCODE, "CMP");
     }
   }
 
@@ -477,19 +481,11 @@ static vm *exec_cmpi(vm *_vm, inst *_inst) {
       }
     } else {
       if (_inst->is_opt_idx)
-        error("invalid instruction");
+        raise_except(ENCODE, "CMPI");
       else
         op1 = _vm->regs->regs[_inst->operand1];
     }
     op2 = (uint64_t)_inst->imm_data;
-    /*
-    if (_inst->imm_len == 2)
-      op2 = (int16_t)_inst->imm_data;
-    else if (_inst->imm_len == 4)
-      op2 = (int32_t)_inst->imm_data;
-    else
-      error("invalid instruction");
-    */
 
     switch (_inst->opcode) {
       case CMPIeq:
@@ -523,7 +519,7 @@ static vm *exec_cmpi(vm *_vm, inst *_inst) {
           _vm->regs->regs[FLAGS] &= ~0x01;
         break;
       default:
-        error("invalid instruction");
+        raise_except(OPCODE, "CMPI");
     }
   } else if (_inst->mov_len == 4) {
     uint32_t op1, op2;
@@ -538,7 +534,7 @@ static vm *exec_cmpi(vm *_vm, inst *_inst) {
       }
     } else {
       if (_inst->is_opt_idx)
-        error("invalid instruction");
+        raise_except(ENCODE, "CMPI");
       else
         op1 = (int32_t)_vm->regs->regs[_inst->operand1];
     }
@@ -576,10 +572,10 @@ static vm *exec_cmpi(vm *_vm, inst *_inst) {
           _vm->regs->regs[FLAGS] &= ~0x01;
         break;
       default:
-        error("invalid instruction");
+        raise_except(OPCODE, "CMPI");
     }
   } else {
-    error("invalid instruction");
+    raise_except(ENCODE, "CMPI");
   }
 
   return _vm;
@@ -601,7 +597,7 @@ static vm *exec_mov(vm *_vm, inst *_inst) {
           op2_addr += decode_index64(_inst->op2_idx);
           break;
         default:
-          error("invalid instruction");
+          raise_except(ENCODE, "MOV");
       }
     }
     switch (_inst->op_len) {
@@ -618,11 +614,11 @@ static vm *exec_mov(vm *_vm, inst *_inst) {
         op = read_mem64(_vm->mem, op2_addr);
         break;
       default:
-        error("invalid instruction");
+        raise_except(ENCODE, "MOV");
     }
   } else {
     if (_inst->is_op2_idx)
-      error("invalid instruction");
+      raise_except(ENCODE, "MOV");
     else {
       switch (_inst->op_len) {
         case 1:
@@ -638,7 +634,7 @@ static vm *exec_mov(vm *_vm, inst *_inst) {
           op = (uint64_t)_vm->regs->regs[_inst->operand2];
           break;
         default:
-          error("invalid instruction");
+          raise_except(ENCODE, "MOV");
       }
     }
   }
@@ -657,7 +653,7 @@ static vm *exec_mov(vm *_vm, inst *_inst) {
           op1_addr += decode_index64(_inst->op1_idx);
           break;
         default:
-          error("invalid instruction");
+          raise_except(ENCODE, "MOV");
       }
     }
     switch (_inst->op_len) {
@@ -674,11 +670,11 @@ static vm *exec_mov(vm *_vm, inst *_inst) {
         write_mem64(_vm->mem, op1_addr, (uint64_t)op);
         break;
       default:
-        error("invalid instruction");
+        raise_except(ENCODE, "MOV");
     }
   } else {
     if (_inst->is_op1_idx)
-      error("invalid instruction");
+      raise_except(ENCODE, "MOV");
     else
       _vm->regs->regs[_inst->operand1] = op;
   }
@@ -705,11 +701,11 @@ static vm *exec_movi(vm *_vm, inst *_inst) {
         write_mem64(_vm->mem, op, (uint64_t)_inst->imm_data);
         break;
       default:
-        error("invalid instruction");
+        raise_except(ENCODE, "MOVI");
     }
   } else {
     if (_inst->is_opt_idx)
-      error("invalid instruction");
+      raise_except(ENCODE, "MOVI");
     else {
       switch (_inst->mov_len) {
         case 1:
@@ -725,7 +721,7 @@ static vm *exec_movi(vm *_vm, inst *_inst) {
           _vm->regs->regs[_inst->operand1] = (uint64_t)_inst->imm_data;
           break;
         default:
-          error("invalid instruction");
+          raise_except(ENCODE, "MOVI");
       }
     }
   }
@@ -746,7 +742,7 @@ static vm *exec_movin(vm *_vm, inst *_inst) {
       op2 = decode_index64(_inst->imm_data);
       break;
     default:
-      error("invalid instruction");
+      raise_except(ENCODE, "MOVIn");
   }
   if (_inst->op1_indirect) {
     uint64_t op1 = _vm->regs->regs[_inst->operand1];
@@ -755,7 +751,7 @@ static vm *exec_movin(vm *_vm, inst *_inst) {
     write_mem64(_vm->mem, op1, op2);
   } else {
     if (_inst->is_opt_idx)
-      error("invalid instruction");
+      raise_except(ENCODE, "MOVIn");
     else
       _vm->regs->regs[_inst->operand1] = op2;
   }
@@ -778,7 +774,7 @@ static vm *exec_movrel(vm *_vm, inst *_inst) {
     write_mem64(_vm->mem, op1_addr, op2);
   } else {
     if (_inst->is_opt_idx)
-      error("invalid instruction");
+      raise_except(ENCODE, "MOVREL");
     else
       _vm->regs->regs[_inst->operand1] = op2;
   }
@@ -799,7 +795,7 @@ static vm *exec_movn(vm *_vm, inst *_inst) {
           op2_addr += decode_index32(_inst->op2_idx);
           break;
         default:
-          error("invalid instruction");
+          raise_except(ENCODE, "MOVn");
       }
     }
     op2 = read_mem64(_vm->mem, op2_addr);
@@ -814,7 +810,7 @@ static vm *exec_movn(vm *_vm, inst *_inst) {
           op2 += decode_index32(_inst->op2_idx);
           break;
         default:
-          error("invalid instruction");
+          raise_except(ENCODE, "MOVn");
       }
     }
   }
@@ -830,13 +826,13 @@ static vm *exec_movn(vm *_vm, inst *_inst) {
           op1 += decode_index32(_inst->op1_idx);
           break;
         default:
-          error("invalid instruction");
+          raise_except(ENCODE, "MOVn");
       }
     }
     write_mem64(_vm->mem, op1, op2);
   } else {
     if (_inst->is_op1_idx)
-      error("invalid instruction");
+      raise_except(ENCODE, "MOVn");
     else
       _vm->regs->regs[_inst->operand1] = op2;
   }
@@ -857,7 +853,7 @@ static vm *exec_movsn(vm *_vm, inst *_inst) {
           op2_addr += decode_index32(_inst->op2_idx);
           break;
         default:
-          error("invalid instruction");
+          raise_except(ENCODE, "MOVsn");
       }
     }
     op2 = read_mem64(_vm->mem, op2_addr);
@@ -879,13 +875,13 @@ static vm *exec_movsn(vm *_vm, inst *_inst) {
           op1_addr += decode_index32(_inst->op1_idx);
           break;
         default:
-          error("invalid instruction");
+          raise_except(ENCODE, "MOVsn");
       }
     }
     write_mem64(_vm->mem, op1_addr, op2);
   } else {
     if (_inst->is_op1_idx)
-      error("invalid instruction");
+      raise_except(ENCODE, "MOVsn");
     else
       _vm->regs->regs[_inst->operand1] = op2;
   }
@@ -1084,10 +1080,10 @@ static vm *exec_ret(vm *_vm, inst *_inst) {
 
 static vm *exec_loadsp(vm *_vm, inst *_inst) {
   if (_inst->operand1 <= RV2 && _inst->operand1 >= RV7)
-    error("invalid instruction");
+    raise_except(ENCODE, "LOADSP");
 
   if (_inst->operand1 != FLAGS)
-    error("invalid instruction");
+    raise_except(ENCODE, "LOADSP");
 
   if (_inst->operand1 == FLAGS) {
     /* FIXME: save reserved bits 2..63 */

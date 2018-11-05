@@ -1,4 +1,5 @@
-CFLAGS=-Wall -std=c11 -I. -g -O0
+CFLAGS=-Wall -std=c11 -Iinclude -g -O0
+HDRS=$(wildcard include/*.h)
 SRCS=$(wildcard *.c)
 OBJS=$(SRCS:.c=.o)
 TESTS=$(wildcard test/*.c)
@@ -8,12 +9,12 @@ TARGET=ebcvm
 $(TARGET): $(OBJS)
 	$(CC) -o $@ $^
 
-$(OBJS): $(TARGET).h
+$(OBJS): $(HDRS)
 
 test: $(OBJS) $(TOBJS)
 	./test.sh
 
 clean:
-	rm -f $(TARGET) *.o test/*.{o,exe}
+	rm -f $(TARGET) *.o test/*.o test/*.exe
 
 .PHONY: test clean

@@ -1,8 +1,12 @@
+#ifndef EBCVM_H_
+#define EBCVM_H_
+
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define MAJOR_VERSION 0x0001
 #define MINOR_VERSION 0x0000
@@ -152,6 +156,32 @@ typedef struct inst {
   };
 } inst;
 
+typedef enum except {
+  DIV0,
+  DEBUG,
+  OPCODE,
+  STACK,
+  ALIGN,
+  ENCODE,
+  BADBREAK,
+  UNDEF,
+} except;
+
+/* Size of memory */
+int FLAGS_mem;
+/* Step exection */
+bool FLAGS_step;
+
+/* vm.c */
+vm *init_vm(void);
+void fini_vm(vm *);
+vm *step_inst(vm *);
+void exec_vm(vm *);
+void raise_except(except, const char *);
+
+/* load.c */
+vm *load_exe(const char *, vm *);
+
 /* decode.c */
 inst *decode_op(uint8_t *);
 
@@ -170,10 +200,7 @@ void write_mem16(mem *, size_t, uint16_t);
 void write_mem32(mem *, size_t, uint32_t);
 void write_mem64(mem *, size_t, uint64_t);
 
-/* vm.c */
-vm *init_vm(void);
-void fini_vm(vm *);
-vm *step_inst(vm *);
-
 /* util.c */
 void error(const char *, ...);
+
+#endif /* EBCVM_H_ */

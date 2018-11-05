@@ -32,7 +32,7 @@ static uint8_t *maybe_fetch_opts(vm *_vm, uint8_t *op, size_t bytes) {
   return op;
 
 fail:
-  error("failed to fetch opts");
+  raise_except(UNDEF, "fetch opts");
   return NULL;
 }
 
@@ -92,7 +92,7 @@ static uint8_t *maybe_fetch_imms(vm *_vm, uint8_t *op) {
   return op;
 
 fail:
-  error("failed to fetch imms");
+  raise_except(UNDEF, "fetch imms");
   return NULL;
 }
 
@@ -110,7 +110,7 @@ static uint8_t *maybe_fetch_jmp_imms(vm *_vm, uint8_t *op) {
   return op;
 
 fail:
-  error("failed to fetch jmp imms");
+  raise_except(UNDEF, "fetch jmp imms");
   return NULL;
 }
 
@@ -135,7 +135,7 @@ static uint8_t *maybe_fetch_cmpi_imms(vm *_vm, uint8_t *op) {
   return op;
 
 fail:
-  error("failed to fetch cmpi imms");
+  raise_except(UNDEF, "fetch cmpi imms");
   return NULL;
 }
 
@@ -180,7 +180,7 @@ static uint8_t *fetch_op(vm *_vm) {
   return op;
 
 fail:
-  error("failed to fetch op");
+  raise_except(UNDEF, "fetch op");
   return NULL;
 }
 
@@ -206,4 +206,14 @@ vm *step_inst(vm *_vm) {
   free(_inst);
 
   return _vm;
+}
+
+void exec_vm(vm *_vm) {
+  while (true) {
+    step_inst(_vm);
+  }
+}
+
+void raise_except(except _except, const char *reason) {
+  fprintf(stderr, "%s\n", reason);
 }
