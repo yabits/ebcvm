@@ -159,6 +159,7 @@ typedef struct inst {
 typedef enum except {
   DIV0,
   DEBUG,
+  STEP,
   OPCODE,
   STACK,
   ALIGN,
@@ -167,6 +168,15 @@ typedef enum except {
   UNDEF,
 } except;
 
+typedef struct dbg {
+  vm *_vm;
+} dbg;
+
+/* Debugger */
+dbg *_dbg;
+
+/* Debug mode */
+bool FLAGS_debug;
 /* Size of memory */
 int FLAGS_mem;
 /* Step exection */
@@ -178,6 +188,11 @@ void fini_vm(vm *);
 vm *step_inst(vm *);
 void exec_vm(vm *);
 void raise_except(except, const char *);
+
+/* debug.c */
+dbg *init_dbg(vm *);
+void fini_dbg(dbg *);
+void handle_except(dbg *, except, const char *);
 
 /* load.c */
 vm *load_exe(const char *, vm *);

@@ -238,9 +238,10 @@ static vm *exec_call(vm *_vm, inst *_inst) {
       _vm->regs->regs[R0], _vm->regs->regs[IP] + inst_len);
 
   if (_inst->is_jmp64) {
-    if (_inst->is_native)
-      ; /* FIXME: call to native code */
-    else
+    if (_inst->is_native) {
+      /* FIXME: call to native code */
+      raise_except(OPCODE, "call native");
+    } else
       if (_inst->is_jmp_imm)
         _vm->regs->regs[IP] = (uint64_t)_inst->jmp_imm;
       else
@@ -269,10 +270,13 @@ static vm *exec_call(vm *_vm, inst *_inst) {
       else
         raise_except(ENCODE, "CALL");
     if (_inst->is_native) {
-      if (_inst->is_rel)
-        ; /* FIXME: call to native code IP + op */
-      else
+      if (_inst->is_rel) {
+        /* FIXME: call to native code IP + op */
+        raise_except(OPCODE, "call native");
+      } else {
         ; /* FIXME: call to native code op */
+        raise_except(OPCODE, "call native");
+      }
     } else {
       if (_inst->is_rel)
         _vm->regs->regs[IP] += (uint64_t)op + inst_len;
@@ -1194,5 +1198,8 @@ done_inc:
   inc_ip(_vm, _inst);
 
 done_ret:
+  if (_vm->regs->regs[FLAGS] & 0x02)
+    raise_except(STEP, "single step");
+
   return _vm;
 }

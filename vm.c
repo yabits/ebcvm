@@ -12,6 +12,10 @@ static regs *init_regs() {
   for (int i = 0; i < 16; i++)
     _regs->regs[i] = 0x00000000000000000;
 
+  /* XXX: set single-step flag */
+  if (FLAGS_step)
+    _regs->regs[FLAGS] |= 0x02;
+
   return _regs;
 }
 
@@ -214,6 +218,33 @@ void exec_vm(vm *_vm) {
   }
 }
 
-void raise_except(except _except, const char *reason) {
-  fprintf(stderr, "%s\n", reason);
+void raise_except(except _except, const char *str) {
+  char *exceptions[] = {
+    "DIV0",
+    "DEBUG",
+    "STEP",
+    "OPCODE",
+    "STACK",
+    "ALIGN",
+    "ENCODE",
+    "BADBREAK",
+    "UNDEF",
+  };
+
+  if (FLAGS_debug)
+    handle_except(_dbg, _except, str);
+  else {
+    switch (_except) {
+      case DIV0:
+      case OPCODE:
+      case STACK:
+      case ALIGN:
+      case ENCODE:
+      case UNDEF:
+        error("exception %s: %s\n", exceptions[_except], str);
+        break;
+      default:
+        ; /* XXX: DEBUG and STEP is ignored */
+    }
+  }
 }
