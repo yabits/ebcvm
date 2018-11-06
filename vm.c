@@ -174,6 +174,7 @@ vm *init_vm() {
   vm *_vm = malloc(sizeof(vm));
   _vm->regs = init_regs();
   _vm->mem = init_mem();
+  _vm->memmap = NULL;
   return _vm;
 }
 

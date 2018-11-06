@@ -5,6 +5,7 @@ typedef enum cmd_type {
   CONTINUE,
   REG,
   EXAMINE,
+  MEMMAP,
   HELP,
   QUIT,
 } cmd_type;
@@ -37,11 +38,24 @@ static void print_mem(dbg *_dbg, size_t addr) {
   fprintf(stdout, "\n");
 }
 
+static void print_memmap(dbg *_dbg) {
+  const char *mem_types[] = {
+  "data", "text", "bss", "efi", "unknown",
+  };
+  for (int i = 0; i < _dbg->_vm->memmap_size; i++) {
+    fprintf(stdout, "%s\t0x%016llx - 0x%016llx\n",
+            mem_types[_dbg->_vm->memmap[i].mem_type],
+            _dbg->_vm->memmap[i].addr,
+            _dbg->_vm->memmap[i].addr + _dbg->_vm->memmap[i].size);
+  }
+}
+
 static void print_help() {
   fprintf(stdout, "List of commands\n");
   fprintf(stdout, "continue -- continue program\n");
   fprintf(stdout, "reg -- show registers\n");
   fprintf(stdout, "examine -- show memory\n");
+  fprintf(stdout, "memmap -- show memory map\n");
   fprintf(stdout, "quit -- quit program\n");
   fprintf(stdout, "help -- show this help\n");
 }
@@ -58,6 +72,8 @@ static cmds *parse_cmd(const char *str) {
           || (sscanf(str, "x 0x%x\n", &n) == 1)) {
     _cmds->type = EXAMINE;
     _cmds->value = n;
+  } else if (!strcmp(str, "memmap\n") || !strcmp(str, "m\n")) {
+    _cmds->type = MEMMAP;
   } else if (!strcmp(str, "help\n") || !strcmp(str, "h\n")) {
     _cmds->type = HELP;
   } else if (!strcmp(str, "quit\n") || !strcmp(str, "q\n")) {
@@ -80,6 +96,9 @@ static int exec_cmd(dbg *_dbg, cmds *_cmds) {
       break;
     case EXAMINE:
       print_mem(_dbg, _cmds->value);
+      break;
+    case MEMMAP:
+      print_memmap(_dbg);
       break;
     case HELP:
       print_help();

@@ -41,9 +41,25 @@ typedef struct mem {
   size_t size;
 } mem;
 
+typedef enum mem_type {
+  DATA = 0,
+  TEXT,
+  BSS,
+  EFI,
+  UNKNOWN,
+} mem_type;
+
+typedef struct memmap {
+  mem_type mem_type;
+  uint64_t addr;
+  size_t size;
+} memmap;
+
 typedef struct vm {
   regs *regs;
   mem *mem;
+  memmap *memmap;
+  size_t memmap_size;
   uint32_t compiler_version;
 } vm;
 

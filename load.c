@@ -30,6 +30,9 @@ static vm *do_load_exe(const char *addr, vm *_vm) {
   uint32_t entry_point = opthdr->AddressOfEntryPoint;
   uint64_t image_base = opthdr->ImageBase;
 
+  _vm->memmap_size = fhdr->NumberOfSections;
+  _vm->memmap = malloc(sizeof(memmap) * _vm->memmap_size);
+
   IMAGE_SECTION_HEADER *sechdr;
   for (int i = 0; i < fhdr->NumberOfSections; i++) {
     sechdr = (IMAGE_SECTION_HEADER *)
@@ -41,8 +44,19 @@ static vm *do_load_exe(const char *addr, vm *_vm) {
     void *src = (void *)addr + sechdr->PointerToRawData;
     size_t n = sechdr->Misc.VirtualSize;
     memcpy(dst, src, n);
+    if (!memcmp(sechdr->Name, ".text", 5))
+      _vm->memmap[i].mem_type = TEXT;
+    else if (!memcmp(sechdr->Name, ".data", 5))
+      _vm->memmap[i].mem_type = DATA;
+    else if (!memcmp(sechdr->Name, ".bss", 4))
+      _vm->memmap[i].mem_type = BSS;
+    else
+      _vm->memmap[i].mem_type = UNKNOWN;
+    _vm->memmap[i].addr = image_base + sechdr->VirtualAddress;
+    _vm->memmap[i].size = sechdr->Misc.VirtualSize;
   }
 
+  /* setup registers */
   _vm->regs->regs[IP] = image_base + entry_point;
   _vm->regs->regs[R0] = 0x0012d000; /* FIXME: stack pointer */
 
