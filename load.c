@@ -27,16 +27,24 @@ static vm *do_load_exe(const char *addr, vm *_vm) {
   if (opthdr->Magic != 0x20b)
     goto unsupported;
 
-  int entry_point = opthdr->AddressOfEntryPoint;
+  uint32_t entry_point = opthdr->AddressOfEntryPoint;
+  uint64_t image_base = opthdr->ImageBase;
 
   IMAGE_SECTION_HEADER *sechdr;
   for (int i = 0; i < fhdr->NumberOfSections; i++) {
     sechdr = (IMAGE_SECTION_HEADER *)
       (addr + doshdr->e_lfanew
-       + sizeof(IMAGE_NT_HEADERS)
-       + sizeof(IMAGE_SECTION_HEADER) * i);
-    /* copy section */
+       + sizeof(IMAGE_NT_HEADERS) + sizeof(IMAGE_SECTION_HEADER) * i);
+    if (image_base + sechdr->VirtualAddress > _vm->mem->size)
+      error("out of memory");
+    void *dst = _vm->mem->body + image_base + sechdr->VirtualAddress;
+    void *src = (void *)addr + sechdr->PointerToRawData;
+    size_t n = sechdr->Misc.VirtualSize;
+    memcpy(dst, src, n);
   }
+
+  _vm->regs->regs[IP] = image_base + entry_point;
+  _vm->regs->regs[R0] = 0x0012d000; /* FIXME: stack pointer */
 
   return _vm;
 
