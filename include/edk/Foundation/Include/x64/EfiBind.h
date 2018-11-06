@@ -113,6 +113,7 @@ Abstract:
     // Assume standard IA-32 alignment. 
     // BugBug: Need to check portability of long long
     //
+    /*
     typedef unsigned long long  uint64_t;
     typedef long long           int64_t;
     typedef unsigned int        uint32_t;
@@ -120,7 +121,8 @@ Abstract:
     typedef unsigned short      uint16_t;
     typedef short               int16_t;
     typedef unsigned char       uint8_t;
-    //typedef char                int8_t;
+    typedef char                int8_t;
+    */
   #endif
 #else
   //
