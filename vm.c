@@ -45,7 +45,7 @@ static uint8_t *maybe_fetch_imms(vm *_vm, uint8_t *op) {
     goto fail;
   uint64_t ip = _vm->regs->regs[IP];
   size_t imm_len = 0;
-  switch (op[0] & 0xc0) {
+  switch (op[0] & 0xc0 >> 6) {
     case 1:
       imm_len = 2;
       break;
