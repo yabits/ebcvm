@@ -11,7 +11,7 @@
 #define MAJOR_VERSION 0x0001
 #define MINOR_VERSION 0x0000
 #define ARCH_BYTES 8
-#define MEM_SIZE 1024
+#define MEM_SIZE 8388608
 
 typedef enum reg {
   IP = 0,
