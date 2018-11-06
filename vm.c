@@ -196,6 +196,8 @@ vm *step_inst(vm *_vm) {
 }
 
 void exec_vm(vm *_vm) {
+  if (FLAGS_debug)
+    raise_except(DEBUG, "debug");
   while (true) {
     step_inst(_vm);
   }
