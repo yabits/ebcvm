@@ -1,6 +1,7 @@
 #include "ebcvm.h"
 
 typedef enum cmd_type {
+  INVALID,
   CONTINUE,
   REG,
   EXAMINE,
@@ -61,6 +62,8 @@ static cmds *parse_cmd(const char *str) {
     _cmds->type = HELP;
   } else if (!strcmp(str, "quit\n") || !strcmp(str, "q\n")) {
     _cmds->type = QUIT;
+  } else {
+    _cmds->type = INVALID;
   }
 
   return _cmds;
