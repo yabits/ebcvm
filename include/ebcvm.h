@@ -165,6 +165,7 @@ typedef enum except {
   ALIGN,
   ENCODE,
   BADBREAK,
+  EXIT,
   UNDEF,
 } except;
 

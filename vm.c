@@ -210,6 +210,7 @@ void raise_except(except _except, const char *str) {
     "ALIGN",
     "ENCODE",
     "BADBREAK",
+    "EXIT",
     "UNDEF",
   };
 
@@ -224,6 +225,9 @@ void raise_except(except _except, const char *str) {
       case ENCODE:
       case UNDEF:
         error("exception %s: %s\n", exceptions[_except], str);
+        break;
+      case EXIT:
+        exit(0);
         break;
       default:
         ; /* XXX: DEBUG and STEP is ignored */
