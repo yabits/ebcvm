@@ -239,8 +239,7 @@ static vm *exec_call(vm *_vm, inst *_inst) {
 
   if (_inst->is_jmp64) {
     if (_inst->is_native) {
-      /* FIXME: call to native code */
-      raise_except(OPCODE, "call native");
+      raise_excall((uint64_t)_inst->jmp_imm, _vm);
     } else
       if (_inst->is_jmp_imm)
         _vm->regs->regs[IP] = (uint64_t)_inst->jmp_imm;
@@ -271,11 +270,9 @@ static vm *exec_call(vm *_vm, inst *_inst) {
         raise_except(ENCODE, "CALL");
     if (_inst->is_native) {
       if (_inst->is_rel) {
-        /* FIXME: call to native code IP + op */
-        raise_except(OPCODE, "call native");
+        raise_excall(_vm->regs->regs[IP] + op, _vm);
       } else {
-        ; /* FIXME: call to native code op */
-        raise_except(OPCODE, "call native");
+        raise_excall(_vm->regs->regs[IP], _vm);
       }
     } else {
       if (_inst->is_rel)
@@ -1079,7 +1076,10 @@ static vm *exec_ret(vm *_vm, inst *_inst) {
   _vm->regs->regs[IP] = read_mem64(_vm->mem, _vm->regs->regs[R0]);
   _vm->regs->regs[R0] = _vm->regs->regs[R0] + 16;
 
-  if (_vm->regs->regs[IP] == 0x00)
+  if (_vm->regs->regs[R0] % 16)
+    raise_except(ALIGN, "align");
+
+  if (_vm->regs->regs[IP] == RET_MAGIC)
     raise_except(EXIT, "exit");
 
   return _vm;

@@ -27,11 +27,16 @@ static vm *do_load_exe(const char *addr, vm *_vm) {
   if (opthdr->Magic != 0x20b)
     goto unsupported;
 
+  if (fhdr->NumberOfSections < 1)
+    goto unsupported;
+
   uint32_t entry_point = opthdr->AddressOfEntryPoint;
   uint64_t image_base = opthdr->ImageBase;
 
   _vm->memmap_size = fhdr->NumberOfSections;
   _vm->memmap = malloc(sizeof(memmap) * _vm->memmap_size);
+  if (!_vm->memmap)
+    goto fail;
 
   IMAGE_SECTION_HEADER *sechdr;
   for (int i = 0; i < fhdr->NumberOfSections; i++) {
@@ -45,13 +50,13 @@ static vm *do_load_exe(const char *addr, vm *_vm) {
     size_t n = sechdr->Misc.VirtualSize;
     memcpy(dst, src, n);
     if (!memcmp(sechdr->Name, ".text", 5))
-      _vm->memmap[i].mem_type = TEXT;
+      _vm->memmap[i].mem_type = MEM_TEXT;
     else if (!memcmp(sechdr->Name, ".data", 5))
-      _vm->memmap[i].mem_type = DATA;
+      _vm->memmap[i].mem_type = MEM_DATA;
     else if (!memcmp(sechdr->Name, ".bss", 4))
-      _vm->memmap[i].mem_type = BSS;
+      _vm->memmap[i].mem_type = MEM_BSS;
     else
-      _vm->memmap[i].mem_type = UNKNOWN;
+      _vm->memmap[i].mem_type = MEM_UNKNOWN;
     _vm->memmap[i].addr = image_base + sechdr->VirtualAddress;
     _vm->memmap[i].size = sechdr->Misc.VirtualSize;
   }
@@ -60,10 +65,22 @@ static vm *do_load_exe(const char *addr, vm *_vm) {
   _vm->regs->regs[IP] = image_base + entry_point;
   _vm->regs->regs[R0] = 0x0012d000; /* FIXME: stack pointer */
 
+  /* calculate efi entry point address */
+  uint32_t align = opthdr->SectionAlignment;
+  uint16_t last = _vm->memmap_size - 1;
+  uint64_t tail = _vm->memmap[last].addr + _vm->memmap[last].size;
+  uint64_t efi_addr = ((tail / align) + 1 ) * align;
+
+  _vm = load_efi(efi_addr, _vm);
+
   return _vm;
 
 unsupported:
   error("unsupported file");
+  return NULL;
+
+fail:
+  error("could not load file");
   return NULL;
 }
 

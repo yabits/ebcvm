@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define RET_MAGIC 0x0000000000000000
 #define MAJOR_VERSION 0x0001
 #define MINOR_VERSION 0x0000
 #define ARCH_BYTES 8
@@ -42,11 +43,11 @@ typedef struct mem {
 } mem;
 
 typedef enum mem_type {
-  DATA = 0,
-  TEXT,
-  BSS,
-  EFI,
-  UNKNOWN,
+  MEM_DATA = 0,
+  MEM_TEXT,
+  MEM_BSS,
+  MEM_EFI,
+  MEM_UNKNOWN,
 } mem_type;
 
 typedef struct memmap {
@@ -205,6 +206,7 @@ void fini_vm(vm *);
 vm *step_inst(vm *);
 void exec_vm(vm *);
 void raise_except(except, const char *);
+void raise_excall(uint64_t, vm *);
 
 /* debug.c */
 dbg *init_dbg(vm *);
@@ -231,6 +233,10 @@ void write_mem8(mem *, size_t, uint8_t);
 void write_mem16(mem *, size_t, uint16_t);
 void write_mem32(mem *, size_t, uint32_t);
 void write_mem64(mem *, size_t, uint64_t);
+
+/* efi.c */
+vm *load_efi(uint64_t, vm *);
+void handle_excall(uint64_t, vm *);
 
 /* util.c */
 void error(const char *, ...);

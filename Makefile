@@ -1,7 +1,4 @@
-INCLUDE=-Iinclude -Iinclude/edk/Foundation/Efi/Include \
-		-Iinclude/edk/Foundation/Include -Iinclude/edk/Foundation/Efi \
-		-Iinclude/edk/Foundation/Framework/Include
-CFLAGS=-Wall -std=c11 -g -O0 $(INCLUDE)
+CFLAGS=-Wall -std=c11 -g -O0 -Iinclude
 HDRS=$(wildcard include/*.h)
 SRCS=$(wildcard *.c)
 OBJS=$(SRCS:.c=.o)

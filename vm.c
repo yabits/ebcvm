@@ -237,3 +237,10 @@ void raise_except(except _except, const char *str) {
     }
   }
 }
+
+void raise_excall(uint64_t addr, vm *_vm) {
+  if (FLAGS_debug)
+    raise_except(DEBUG, "excall");
+
+  handle_excall(addr, _vm);
+}
