@@ -1,13 +1,18 @@
+#ifndef EBCVM_H_
+#define EBCVM_H_
+
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
+#define RET_MAGIC 0x0000000000000000
 #define MAJOR_VERSION 0x0001
 #define MINOR_VERSION 0x0000
 #define ARCH_BYTES 8
-#define MEM_SIZE 1024
+#define MEM_SIZE 8388608
 
 typedef enum reg {
   IP = 0,
@@ -37,9 +42,25 @@ typedef struct mem {
   size_t size;
 } mem;
 
+typedef enum mem_type {
+  MEM_DATA = 0,
+  MEM_TEXT,
+  MEM_BSS,
+  MEM_EFI,
+  MEM_UNKNOWN,
+} mem_type;
+
+typedef struct memmap {
+  mem_type mem_type;
+  uint64_t addr;
+  size_t size;
+} memmap;
+
 typedef struct vm {
   regs *regs;
   mem *mem;
+  memmap *memmap;
+  size_t memmap_size;
   uint32_t compiler_version;
 } vm;
 
@@ -152,6 +173,49 @@ typedef struct inst {
   };
 } inst;
 
+typedef enum except {
+  DIV0,
+  DEBUG,
+  STEP,
+  OPCODE,
+  STACK,
+  ALIGN,
+  ENCODE,
+  BADBREAK,
+  EXIT,
+  UNDEF,
+} except;
+
+typedef struct dbg {
+  vm *_vm;
+} dbg;
+
+/* Debugger */
+dbg *_dbg;
+
+/* Debug mode */
+bool FLAGS_debug;
+/* Size of memory */
+int FLAGS_mem;
+/* Step exection */
+bool FLAGS_step;
+
+/* vm.c */
+vm *init_vm(void);
+void fini_vm(vm *);
+vm *step_inst(vm *);
+void exec_vm(vm *);
+void raise_except(except, const char *);
+void raise_excall(uint64_t, vm *);
+
+/* debug.c */
+dbg *init_dbg(vm *);
+void fini_dbg(dbg *);
+void handle_except(dbg *, except, const char *);
+
+/* load.c */
+vm *load_exe(const char *, vm *);
+
 /* decode.c */
 inst *decode_op(uint8_t *);
 
@@ -170,10 +234,11 @@ void write_mem16(mem *, size_t, uint16_t);
 void write_mem32(mem *, size_t, uint32_t);
 void write_mem64(mem *, size_t, uint64_t);
 
-/* vm.c */
-vm *init_vm(void);
-void fini_vm(vm *);
-vm *step_inst(vm *);
+/* efi.c */
+vm *load_efi(uint64_t, vm *);
+void handle_excall(uint64_t, vm *);
 
 /* util.c */
 void error(const char *, ...);
+
+#endif /* EBCVM_H_ */

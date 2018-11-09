@@ -1,9 +1,11 @@
 #include "ebcvm.h"
 
 mem *init_mem() {
+  if (!FLAGS_mem)
+    FLAGS_mem = MEM_SIZE;
   mem *_mem = (mem *)malloc(sizeof(mem));
-  _mem->body = (uint8_t *)malloc(sizeof(uint8_t) * MEM_SIZE);
-  _mem->size = MEM_SIZE;
+  _mem->body = (uint8_t *)malloc(sizeof(uint8_t) * FLAGS_mem);
+  _mem->size = FLAGS_mem;
 
   return _mem;
 }

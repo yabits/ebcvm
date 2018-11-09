@@ -82,7 +82,7 @@ static opcode decode_opcode(uint8_t _opcode) {
 
 static reg decode_gp_reg(uint8_t operand) {
   if (operand > 0x07)
-    error("failed to decode general purpose register");
+    raise_except(ENCODE, "general purpose register");
   /* XXX: R0 is at 8 in reg*/
   return operand + 8;
 }
@@ -90,7 +90,7 @@ static reg decode_gp_reg(uint8_t operand) {
 static reg decode_dd_reg(uint8_t operand) {
   /* XXX: allow reserved resigters */
   if (operand > 0x07)
-    error("failed to decode dedicated register");
+    raise_except(ENCODE, "dedicated register");
   return operand + 0;
 }
 
@@ -118,7 +118,7 @@ static inst *decode_jmp(inst *_inst, uint8_t *op) {
   return _inst;
 
 fail:
-  error("failed to decode JMP");
+  raise_except(ENCODE, "JMP");
   return NULL;
 }
 
@@ -135,7 +135,7 @@ static inst *decode_jmp8(inst *_inst, uint8_t *op) {
   return _inst;
 
 fail:
-  error("failed to decode JMP8");
+  raise_except(ENCODE, "JMP8");
   return NULL;
 }
 
@@ -162,7 +162,7 @@ static inst *decode_cmpi(inst *_inst, uint8_t *op) {
   return _inst;
 
 fail:
-  error("failed to decode CMPI");
+  raise_except(ENCODE, "CMPI");
   return NULL;
 }
 
@@ -254,7 +254,7 @@ static inst *decode_mov(inst *_inst, uint8_t *op) {
   return _inst;
 
 fail:
-  error("failed to decode MOV");
+  raise_except(ENCODE, "MOV");
   return NULL;
 }
 
@@ -319,7 +319,7 @@ static inst *decode_movi(inst *_inst, uint8_t *op) {
   return _inst;
 
 fail:
-  error("failed to decode MOVI");
+  raise_except(ENCODE, "MOVI");
   return NULL;
 }
 
@@ -388,6 +388,6 @@ done:
   return _inst;
 
 fail:
-  error("failed to decode inst");
+  raise_except(ENCODE, "inst");
   return NULL;
 }

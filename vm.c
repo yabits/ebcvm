@@ -12,6 +12,10 @@ static regs *init_regs() {
   for (int i = 0; i < 16; i++)
     _regs->regs[i] = 0x00000000000000000;
 
+  /* XXX: set single-step flag */
+  if (FLAGS_step)
+    _regs->regs[FLAGS] |= 0x02;
+
   return _regs;
 }
 
@@ -32,7 +36,7 @@ static uint8_t *maybe_fetch_opts(vm *_vm, uint8_t *op, size_t bytes) {
   return op;
 
 fail:
-  error("failed to fetch opts");
+  raise_except(UNDEF, "fetch opts");
   return NULL;
 }
 
@@ -41,7 +45,7 @@ static uint8_t *maybe_fetch_imms(vm *_vm, uint8_t *op) {
     goto fail;
   uint64_t ip = _vm->regs->regs[IP];
   size_t imm_len = 0;
-  switch (op[0] & 0xc0) {
+  switch (op[0] & 0xc0 >> 6) {
     case 1:
       imm_len = 2;
       break;
@@ -50,24 +54,6 @@ static uint8_t *maybe_fetch_imms(vm *_vm, uint8_t *op) {
       break;
     case 3:
       imm_len = 8;
-      break;
-    default:
-      goto fail;
-  }
-
-  size_t mov_len = 0;
-  switch (op[1] & 0x30) {
-    case 0:
-      mov_len = 1;
-      break;
-    case 1:
-      mov_len = 2;
-      break;
-    case 2:
-      mov_len = 4;
-      break;
-    case 3:
-      mov_len = 8;
       break;
     default:
       goto fail;
@@ -92,7 +78,7 @@ static uint8_t *maybe_fetch_imms(vm *_vm, uint8_t *op) {
   return op;
 
 fail:
-  error("failed to fetch imms");
+  raise_except(UNDEF, "fetch imms");
   return NULL;
 }
 
@@ -110,7 +96,7 @@ static uint8_t *maybe_fetch_jmp_imms(vm *_vm, uint8_t *op) {
   return op;
 
 fail:
-  error("failed to fetch jmp imms");
+  raise_except(UNDEF, "fetch jmp imms");
   return NULL;
 }
 
@@ -135,7 +121,7 @@ static uint8_t *maybe_fetch_cmpi_imms(vm *_vm, uint8_t *op) {
   return op;
 
 fail:
-  error("failed to fetch cmpi imms");
+  raise_except(UNDEF, "fetch cmpi imms");
   return NULL;
 }
 
@@ -180,7 +166,7 @@ static uint8_t *fetch_op(vm *_vm) {
   return op;
 
 fail:
-  error("failed to fetch op");
+  raise_except(UNDEF, "fetch op");
   return NULL;
 }
 
@@ -188,6 +174,7 @@ vm *init_vm() {
   vm *_vm = malloc(sizeof(vm));
   _vm->regs = init_regs();
   _vm->mem = init_mem();
+  _vm->memmap = NULL;
   return _vm;
 }
 
@@ -206,4 +193,54 @@ vm *step_inst(vm *_vm) {
   free(_inst);
 
   return _vm;
+}
+
+void exec_vm(vm *_vm) {
+  if (FLAGS_debug)
+    raise_except(DEBUG, "debug");
+  while (true) {
+    step_inst(_vm);
+  }
+}
+
+void raise_except(except _except, const char *str) {
+  char *exceptions[] = {
+    "DIV0",
+    "DEBUG",
+    "STEP",
+    "OPCODE",
+    "STACK",
+    "ALIGN",
+    "ENCODE",
+    "BADBREAK",
+    "EXIT",
+    "UNDEF",
+  };
+
+  if (FLAGS_debug)
+    handle_except(_dbg, _except, str);
+  else {
+    switch (_except) {
+      case DIV0:
+      case OPCODE:
+      case STACK:
+      case ALIGN:
+      case ENCODE:
+      case UNDEF:
+        error("exception %s: %s\n", exceptions[_except], str);
+        break;
+      case EXIT:
+        exit(0);
+        break;
+      default:
+        ; /* XXX: DEBUG and STEP is ignored */
+    }
+  }
+}
+
+void raise_excall(uint64_t addr, vm *_vm) {
+  if (FLAGS_debug)
+    raise_except(DEBUG, "excall");
+
+  handle_excall(addr, _vm);
 }
