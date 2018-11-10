@@ -63,7 +63,8 @@ static vm *do_load_exe(const char *addr, vm *_vm) {
 
   /* setup registers */
   _vm->regs->regs[IP] = image_base + entry_point;
-  _vm->regs->regs[R0] = 0x0012d000; /* FIXME: stack pointer */
+  _vm->regs->regs[R0] = STACK_BASE; /* FIXME: stack pointer */
+  write_mem64(_vm->mem, STACK_BASE, STACK_MAGIC);
 
   /* calculate efi entry point address */
   uint32_t align = opthdr->SectionAlignment;

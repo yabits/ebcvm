@@ -8,7 +8,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define RET_MAGIC 0x0000000000000000
+#define STACK_BASE 0x0012d000
+#define STACK_MAGIC 0x0ebc0ebc0ebc0ebc
+#define RET_MAGIC 0xffffffffffffffff
 #define MAJOR_VERSION 0x0001
 #define MINOR_VERSION 0x0000
 #define ARCH_BYTES 8
