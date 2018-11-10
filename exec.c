@@ -765,8 +765,7 @@ static vm *exec_movrel(vm *_vm, inst *_inst) {
     inst_len += 2;
   inst_len += _inst->imm_len;
 
-  uint64_t op2 = read_mem64(_vm->mem,
-      _vm->regs->regs[IP] + inst_len + _inst->imm_data);
+  uint64_t op2 = _vm->regs->regs[IP] + inst_len + _inst->imm_data;
   if (_inst->op1_indirect) {
     uint64_t op1_addr = _vm->regs->regs[_inst->operand1];
     if (_inst->is_opt_idx)
