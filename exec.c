@@ -229,8 +229,6 @@ static vm *exec_jmp8(vm *_vm, inst *_inst) {
 }
 
 static vm *exec_call(vm *_vm, inst *_inst) {
-  _vm->regs->regs[R0] -= 8;
-
   size_t inst_len = _inst->is_jmp64 ? 10 : (_inst->is_jmp_imm ? 6 : 2);
   /* XXX: PUSH64 return address */
   _vm->regs->regs[R0] -= 8;
@@ -246,15 +244,15 @@ static vm *exec_call(vm *_vm, inst *_inst) {
       else
         raise_except(ENCODE, "CALL");
   } else {
-    uint32_t op;
+    uint64_t op;
     if (_inst->operand1 != R0) {
       if (_inst->op1_indirect) {
         if (_inst->is_jmp_imm) {
-          op = read_mem32(_vm->mem,
+          op = read_mem64(_vm->mem,
               _vm->regs->regs[_inst->operand1]
               + decode_index32(_inst->jmp_imm));
         } else {
-          op = read_mem32(_vm->mem,
+          op = read_mem64(_vm->mem,
               _vm->regs->regs[_inst->operand1]);
         }
       } else {
@@ -263,16 +261,17 @@ static vm *exec_call(vm *_vm, inst *_inst) {
         else
           op = _vm->regs->regs[_inst->operand1];
       }
-    } else
+    } else {
       if (_inst->is_jmp_imm)
-        op = (uint32_t)_inst->jmp_imm;
+        op = _inst->jmp_imm;
       else
         raise_except(ENCODE, "CALL");
+    }
     if (_inst->is_native) {
       if (_inst->is_rel) {
         raise_excall(_vm->regs->regs[IP] + op, _vm);
       } else {
-        raise_excall(_vm->regs->regs[IP], _vm);
+        raise_excall(op, _vm);
       }
     } else {
       if (_inst->is_rel)
