@@ -30,8 +30,6 @@ typedef int64_t   EFI_STATUS;
 typedef int64_t   EFI_HANDLE;
 
 typedef struct EFI_MAIN_PARAMETERS {
-  UINT64            Reserved1;
-  UINT64            Reserved2;
   EFI_HANDLE        ImageHandle;
   VOID_PTR          SystemTable; 
 } EFI_MAIN_PARAMETERS;
