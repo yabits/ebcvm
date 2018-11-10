@@ -404,7 +404,7 @@ static void print_inst(inst *_inst) {
   "R7",
   };
 
-  fprintf(stdout, "opcode: %s op1: %s op2: %s\n",
+  fprintf(stdout, "opcode: %s\top1: %s\top2: %s\n",
       opcodes[_inst->opcode], regs[_inst->operand1], regs[_inst->operand2]);
 }
 #endif /* NDEBUG */
