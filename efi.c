@@ -1,6 +1,7 @@
 #include "ebcvm.h"
 #include "efi.h"
 
+#define ConOut_OutputString_MAGIC 0x928ae98de3f89c23
 uint64_t conout_output_string_addr;
 
 static void conout_output_string(vm *_vm) {
@@ -52,10 +53,10 @@ static void set_efi_system_table(uint64_t table, uint64_t addrs[], vm *_vm) {
   /* FIXME: COnfigurationTable */
 }
 
-static void set_efi_conout(uint64_t conout) {
+static void set_efi_conout(uint64_t conout, vm *_vm) {
   uint64_t offset = 0;
   offset += sizeof(VOID_PTR); /* Reset */
-  conout_output_string_addr = conout + offset;
+  write_mem64(_vm->mem, conout + offset, ConOut_OutputString_MAGIC);
 }
 
 vm *load_efi(uint64_t addr, vm *_vm) {
@@ -77,7 +78,7 @@ vm *load_efi(uint64_t addr, vm *_vm) {
   };
   set_efi_main_params(params_addr, table_addr, _vm);
   set_efi_system_table(table_addr, addrs, _vm);
-  set_efi_conout(conout_addr);
+  set_efi_conout(conout_addr, _vm);
 
   _vm->memmap_size += 1;
   _vm->memmap = realloc(_vm->memmap, sizeof(memmap) * _vm->memmap_size);
@@ -100,6 +101,8 @@ fail:
 }
 
 void handle_excall(uint64_t addr, vm *_vm) {
-  if (addr == conout_output_string_addr)
+  if (addr == ConOut_OutputString_MAGIC)
     conout_output_string(_vm);
+  else
+    raise_except(UNDEF, "invalid excall");
 }
