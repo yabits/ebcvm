@@ -1074,7 +1074,7 @@ static vm *exec_ret(vm *_vm, inst *_inst) {
   _vm->regs->regs[IP] = read_mem64(_vm->mem, _vm->regs->regs[R0]);
   _vm->regs->regs[R0] = _vm->regs->regs[R0] + 16;
 
-  if (_vm->regs->regs[R0] % 16)
+  if (_vm->regs->regs[R0] % sizeof(uint16_t))
     raise_except(ALIGN, "align");
 
   if (_vm->regs->regs[IP] == RET_MAGIC)
