@@ -78,9 +78,16 @@ vm *load_efi(uint64_t addr, vm *_vm) {
   _vm->memmap[_vm->memmap_size - 1].addr = addr;
   _vm->memmap[_vm->memmap_size - 1].size = size;
 
-  /* XXX: PUSH64 */
+  /* XXX: PUSH64 SystemTable */
   _vm->regs->regs[R0] -= 8;
-  write_mem64(_vm->mem, _vm->regs->regs[R0], addr);
+  write_mem64(_vm->mem, _vm->regs->regs[R0], table_addr);
+  /* XXX: PUSH64 ImageHandle */
+  _vm->regs->regs[R0] -= 8;
+  write_mem64(_vm->mem, _vm->regs->regs[R0], 0x0000000000000000);
+  /* XXX: PUSH64 RET_MAGIC */
+  _vm->regs->regs[R0] -= 8;
+  write_mem64(_vm->mem, _vm->regs->regs[R0], RET_MAGIC);
+  _vm->regs->regs[R0] -= 8;
 
   return _vm;
 
