@@ -133,8 +133,10 @@ static int exec_cmd(dbg *_dbg, cmds *_cmds) {
 
 static void prompt(dbg *_dbg) {
   fprintf(stdout, "IP = %lx\n", _dbg->_vm->regs->regs[IP]);
-  fprintf(stdout, "IP: ");
-  print_mem(_dbg, _dbg->_vm->regs->regs[IP]);
+  if (_dbg->_vm->regs->regs[IP] != RET_MAGIC) {
+    fprintf(stdout, "IP: ");
+    print_mem(_dbg, _dbg->_vm->regs->regs[IP]);
+  }
   while (true) {
     fprintf(stdout, "(dbg) ");
 
