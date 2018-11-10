@@ -25,7 +25,7 @@ static void set_efi_system_table(uint64_t table, uint64_t addrs[], vm *_vm) {
   offset += sizeof(EFI_TABLE_HEADER); /* Hdr */
   write_mem64(_vm->mem, table + offset, addrs[0]);
   offset += sizeof(VOID_PTR); /* FirmwareVendor */
-  offset += sizeof(UINT32); /* FirmwareRevision */
+  offset += sizeof(UINT32) + 4; /* FIXME: FirmwareRevision + padding */
   offset += sizeof(EFI_HANDLE); /* ConsoleInHandle */
   write_mem64(_vm->mem, table + offset, addrs[1]);
   offset += sizeof(VOID_PTR); /* ConIn */
