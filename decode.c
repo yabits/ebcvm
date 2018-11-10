@@ -323,6 +323,92 @@ fail:
   return NULL;
 }
 
+#ifndef NDEBUG
+static void print_inst(inst *_inst) {
+  const char *opcodes[] = {
+  "BREAK",
+  "JMP",
+  "JMP8",
+  "CALL",
+  "CMPeq",
+  "CMPlte",
+  "CMPgte",
+  "CMPulte",
+  "CMPugte",
+  "CMPIeq",
+  "CMPIlte",
+  "CMPIgte",
+  "CMPIulte",
+  "CMPIugte",
+  "ADD",
+  "SUB",
+  "MUL",
+  "DIV",
+  "MOD",
+  "AND",
+  "OR",
+  "XOR",
+  "SHL",
+  "SHR",
+  "ASHR",
+  "NEG",
+  "NOT",
+  "MULU",
+  "DIVU",
+  "MODU",
+  "EXTNDB",
+  "EXTNDD",
+  "EXTNDW",
+  "MOVbw",
+  "MOVww",
+  "MOVdw",
+  "MOVqw",
+  "MOVbd",
+  "MOVwd",
+  "MOVdd",
+  "MOVqd",
+  "MOVqq",
+  "MOVI",
+  "MOVIn",
+  "MOVREL",
+  "MOVnw",
+  "MOVnd",
+  "MOVsnw",
+  "MOVsnd",
+  "POP",
+  "POPn",
+  "PUSH",
+  "PUSHn",
+  "RET",
+  "LOADSP",
+  "STORESP",
+  "NOP",
+  };
+
+  const char *regs[] = {
+  "IP",
+  "FLAGS",
+  "RV2",
+  "RV3",
+  "RV4",
+  "RV5",
+  "RV6",
+  "RV7",
+  "R0",
+  "R1",
+  "R2",
+  "R3",
+  "R4",
+  "R5",
+  "R6",
+  "R7",
+  };
+
+  fprintf(stdout, "opcode: %s op1: %s op2: %s\n",
+      opcodes[_inst->opcode], regs[_inst->operand1], regs[_inst->operand2]);
+}
+#endif /* NDEBUG */
+
 inst *decode_op(uint8_t *op) {
   if (!op)
     goto fail;
@@ -383,6 +469,10 @@ inst *decode_op(uint8_t *op) {
     _inst->operand1 = decode_dd_reg(op[1] & 0x07);
   else
     _inst->operand1 = decode_gp_reg(op[1] & 0x07);
+
+#ifndef NDEBUG
+  print_inst(_inst);
+#endif
 
 done:
   return _inst;
