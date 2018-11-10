@@ -40,7 +40,7 @@ static void set_efi_system_table(uint64_t table, uint64_t addrs[], vm *_vm) {
   write_mem64(_vm->mem, table + offset, addrs[5]);
   offset += sizeof(VOID_PTR); /* BootServices */
   /* FIXME: NumberOfTableEntries */
-  /* FIXME: COnfigurationTable */
+  /* FIXME: ConfigurationTable */
 }
 
 static void set_efi_conout(uint64_t conout, vm *_vm) {
