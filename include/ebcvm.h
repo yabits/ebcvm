@@ -236,6 +236,16 @@ void write_mem16(mem *, size_t, uint16_t);
 void write_mem32(mem *, size_t, uint32_t);
 void write_mem64(mem *, size_t, uint64_t);
 
+#if ARCH_BYTES == 4
+uint32_t read_memn(mem *, size_t);
+void write_memn(mem *, size_t, uint32_t);
+#elif ARCH_BYTES == 8
+uint64_t read_memn(mem *, size_t);
+void write_memn(mem *, size_t, uint64_t);
+#else
+#error unsupported architecture
+#endif
+
 /* efi.c */
 vm *load_efi(uint64_t, vm *);
 void handle_excall(uint64_t, vm *);

@@ -62,3 +62,21 @@ void write_mem64(mem *_mem, size_t idx, uint64_t val) {
   write_mem32(_mem, idx + sizeof(uint32_t) * 0, (uint32_t)(val >> 0));
   write_mem32(_mem, idx + sizeof(uint32_t) * 1, (uint32_t)(val >> 32));
 }
+
+#if ARCH_BYTES == 4
+uint32_t read_memn(mem *_mem, size_t idx) {
+  return read_mem32(_mem, idx);
+}
+void write_memn(mem *_mem, size_t idx, uint32_t val) {
+  write_mem32(_mem, idx, val);
+}
+#elif ARCH_BYTES == 8
+uint64_t read_memn(mem *_mem, size_t idx) {
+  return read_mem64(_mem, idx);
+}
+void write_memn(mem *_mem, size_t idx, uint64_t val) {
+  write_mem64(_mem, idx, val);
+}
+#else
+#error unsupported architecture
+#endif
