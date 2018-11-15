@@ -15,7 +15,7 @@ static void conout_output_string(vm *_vm) {
 
   _vm->regs->regs[R7] = EFI_SUCCESS;
   /* XXX: POPn */
-  _vm->regs->regs[R0] += 8;
+  _vm->regs->regs[R0] += ARCH_BYTES;
   _vm->regs->regs[IP] = ret_addr;
 }
 
