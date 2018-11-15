@@ -9,15 +9,15 @@ jobs:
         - master
     steps:
       - run:
-        name: Install toolchains
-        command: |
-          apt-get update
-          apt-get install -y build-essential make git
-          apt-get clean
+          name: Install toolchains
+          command: |
+            apt-get update
+            apt-get install -y build-essential make git
+            apt-get clean
       - checkout
       - run:
-        name: Build
-        command: make
+          name: Build
+          command: make
       - run:
-        name: Run test
-        command: make test
+          name: Run test
+          command: make test
