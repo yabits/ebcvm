@@ -765,12 +765,39 @@ static vm *exec_movrel(vm *_vm, inst *_inst) {
     inst_len += 2;
   inst_len += _inst->imm_len;
 
-  uint64_t op2 = _vm->regs->regs[IP] + inst_len + _inst->imm_data;
+  uint64_t op2;
+  uint64_t op2_addr = _vm->regs->regs[IP] + inst_len + _inst->imm_data;
+  switch (_inst->imm_len) {
+    case 2:
+      op2 = read_mem16(_vm->mem, op2_addr);
+      break;
+    case 4:
+      op2 = read_mem32(_vm->mem, op2_addr);
+      break;
+    case 8:
+      op2 = read_mem64(_vm->mem, op2_addr);
+      break;
+    default:
+      raise_except(ENCODE, "MOVREL");
+  }
+
   if (_inst->op1_indirect) {
     uint64_t op1_addr = _vm->regs->regs[_inst->operand1];
     if (_inst->is_opt_idx)
       op1_addr += decode_index16(_inst->opt_idx);
-    write_mem64(_vm->mem, op1_addr, op2);
+    switch (_inst->imm_len) {
+      case 2:
+        write_mem16(_vm->mem, op1_addr, op2);
+        break;
+      case 4:
+        write_mem32(_vm->mem, op1_addr, op2);
+        break;
+      case 8:
+        write_mem64(_vm->mem, op1_addr, op2);
+        break;
+      default:
+        raise_except(ENCODE, "MOVREL");
+    }
   } else {
     if (_inst->is_opt_idx)
       raise_except(ENCODE, "MOVREL");
