@@ -138,7 +138,7 @@ static uint8_t *fetch_op(vm *_vm) {
   } else if ((op[0] & 0x3f) >= 0x2d && (op[0] & 0x3f) <= 0x31) {
     /* XXX: CMPI */
     op = maybe_fetch_cmpi_imms(_vm, op);
-  } else if ((op[0] & 0x3f) >= 0x1d && (op[0] & 0x3f) <= 0x1f) {
+  } else if ((op[0] & 0x3f) >= 0x1d && (op[0] & 0x3f) <= 0x20) {
     /* XXX: MOVbw to MOVqw */
     op = maybe_fetch_opts(_vm, op, 2);
   } else if ((op[0] & 0x3f) >= 0x21 && (op[0] & 0x3f) <= 0x24) {
