@@ -323,7 +323,7 @@ fail:
   return NULL;
 }
 
-#ifndef NDEBUG
+#ifdef DEBUG_INST
 static void print_inst(inst *_inst) {
   const char *opcodes[] = {
   "BREAK",
@@ -407,7 +407,7 @@ static void print_inst(inst *_inst) {
   fprintf(stdout, "opcode: %s\top1: %s\top2: %s\n",
       opcodes[_inst->opcode], regs[_inst->operand1], regs[_inst->operand2]);
 }
-#endif /* NDEBUG */
+#endif /* DEBUG_INST */
 
 inst *decode_op(uint8_t *op) {
   if (!op)
@@ -470,7 +470,7 @@ inst *decode_op(uint8_t *op) {
   else
     _inst->operand1 = decode_gp_reg(op[1] & 0x07);
 
-#ifndef NDEBUG
+#ifdef DEBUG_INST
   print_inst(_inst);
 #endif
 
