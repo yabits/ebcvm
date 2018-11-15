@@ -617,9 +617,6 @@ static vm *exec_mov(vm *_vm, inst *_inst) {
         raise_except(ENCODE, "MOV");
     }
   } else {
-    if (_inst->is_op2_idx)
-      raise_except(ENCODE, "MOV");
-    else {
       switch (_inst->op_len) {
         case 1:
           op = (uint8_t)_vm->regs->regs[_inst->operand2];
@@ -632,6 +629,20 @@ static vm *exec_mov(vm *_vm, inst *_inst) {
           break;
         case 8:
           op = (uint64_t)_vm->regs->regs[_inst->operand2];
+          break;
+        default:
+          raise_except(ENCODE, "MOV");
+      }
+    if (_inst->is_op2_idx) {
+      switch (_inst->idx_len) {
+        case 2:
+          op += decode_index16(_inst->op2_idx);
+          break;
+        case 4:
+          op += decode_index32(_inst->op2_idx);
+          break;
+        case 8:
+          op += decode_index64(_inst->op2_idx);
           break;
         default:
           raise_except(ENCODE, "MOV");
