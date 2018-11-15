@@ -2,14 +2,13 @@
 #include "efi.h"
 
 #define ConOut_OutputString_MAGIC 0x928ae98de3f89c23
-uint64_t conout_output_string_addr;
 
 /* FIXME: below native code emulation supports only 64-bit machine */
 static void conout_output_string(vm *_vm) {
   uint64_t stack_top = _vm->regs->regs[R0];
   uint64_t ret_addr = read_mem64(_vm->mem, stack_top);
-  /* this */
-  uint64_t string = read_mem64(_vm->mem, stack_top + ARCH_BYTES * 2);
+  uint64_t this = read_mem64(_vm->mem, stack_top + 8);
+  uint64_t string = read_mem64(_vm->mem, stack_top + 16);
 
   for (uint64_t p = string; read_mem16(_vm->mem, p) != '\0'; p += 2)
     fputc((char)read_mem16(_vm->mem, p), stdout);
