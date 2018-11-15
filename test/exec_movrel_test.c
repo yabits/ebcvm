@@ -14,9 +14,8 @@ static void movrelw_test01() {
 
   _vm = init_vm();
   _vm->regs->regs[IP] = 0x10;
-  write_mem64(_vm->mem, 0x10 + 4 + 0x10, 0x0123456789abcdef);
   _vm = exec_op(_vm, _inst);
-  assert(_vm->regs->regs[_inst->operand1] == 0x0123456789abcdef);
+  assert(_vm->regs->regs[_inst->operand1] == 0x10 + 4 + 0x10);
   fini_vm(_vm);
 
   free(_inst);
@@ -36,9 +35,8 @@ static void movrelw_test02() {
   _vm = init_vm();
   _vm->regs->regs[_inst->operand1] = 0x30;
   _vm->regs->regs[IP] = 0x10;
-  write_mem64(_vm->mem, 0x10 + 4 + 0x10, 0x0123456789abcdef);
   _vm = exec_op(_vm, _inst);
-  assert(read_mem64(_vm->mem, 0x30) == 0x0123456789abcdef);
+  assert(read_mem64(_vm->mem, 0x30) == 0x10 + 4 + 0x10);
   fini_vm(_vm);
 
   free(_inst);
@@ -58,9 +56,8 @@ static void movrelw_test03() {
   _vm = init_vm();
   _vm->regs->regs[_inst->operand1] = 0x30;
   _vm->regs->regs[IP] = 0x10;
-  write_mem64(_vm->mem, 0x10 + 6 + 0x10, 0x0123456789abcdef);
   _vm = exec_op(_vm, _inst);
-  assert(read_mem64(_vm->mem, 0x40) == 0x0123456789abcdef);
+  assert(read_mem64(_vm->mem, 0x40) == 0x10 + 6 + 0x10);
   fini_vm(_vm);
 
   free(_inst);
@@ -79,9 +76,8 @@ static void movreld_test01() {
 
   _vm = init_vm();
   _vm->regs->regs[IP] = 0x10;
-  write_mem64(_vm->mem, 0x10 + 6 + 0x10, 0x0123456789abcdef);
   _vm = exec_op(_vm, _inst);
-  assert(_vm->regs->regs[_inst->operand1] == 0x0123456789abcdef);
+  assert(_vm->regs->regs[_inst->operand1] == 0x10 + 6 + 0x10);
   fini_vm(_vm);
 
   free(_inst);
@@ -101,9 +97,8 @@ static void movreld_test02() {
   _vm = init_vm();
   _vm->regs->regs[_inst->operand1] = 0x30;
   _vm->regs->regs[IP] = 0x10;
-  write_mem64(_vm->mem, 0x10 + 6 + 0x10, 0x0123456789abcdef);
   _vm = exec_op(_vm, _inst);
-  assert(read_mem64(_vm->mem, 0x30) == 0x0123456789abcdef);
+  assert(read_mem64(_vm->mem, 0x30) == 0x10 + 6 + 0x10);
   fini_vm(_vm);
 
   free(_inst);
@@ -123,9 +118,8 @@ static void movreld_test03() {
   _vm = init_vm();
   _vm->regs->regs[_inst->operand1] = 0x30;
   _vm->regs->regs[IP] = 0x10;
-  write_mem64(_vm->mem, 0x10 + 8 + 0x10, 0x0123456789abcdef);
   _vm = exec_op(_vm, _inst);
-  assert(read_mem64(_vm->mem, 0x40) == 0x0123456789abcdef);
+  assert(read_mem64(_vm->mem, 0x40) == 0x10 + 8 + 0x10);
   fini_vm(_vm);
 
   free(_inst);
@@ -144,9 +138,8 @@ static void movrelq_test01() {
 
   _vm = init_vm();
   _vm->regs->regs[IP] = 0x10;
-  write_mem64(_vm->mem, 0x10 + 10 + 0x10, 0x0123456789abcdef);
   _vm = exec_op(_vm, _inst);
-  assert(_vm->regs->regs[_inst->operand1] == 0x0123456789abcdef);
+  assert(_vm->regs->regs[_inst->operand1] == 0x10 + 10 + 0x10);
   fini_vm(_vm);
 
   free(_inst);
@@ -166,9 +159,8 @@ static void movrelq_test02() {
   _vm = init_vm();
   _vm->regs->regs[_inst->operand1] = 0x30;
   _vm->regs->regs[IP] = 0x10;
-  write_mem64(_vm->mem, 0x10 + 10 + 0x10, 0x0123456789abcdef);
   _vm = exec_op(_vm, _inst);
-  assert(read_mem64(_vm->mem, 0x30) == 0x0123456789abcdef);
+  assert(read_mem64(_vm->mem, 0x30) == 0x10 + 10 + 0x10);
   fini_vm(_vm);
 
   free(_inst);
@@ -188,9 +180,8 @@ static void movrelq_test03() {
   _vm = init_vm();
   _vm->regs->regs[_inst->operand1] = 0x30;
   _vm->regs->regs[IP] = 0x10;
-  write_mem64(_vm->mem, 0x10 + 12 + 0x10, 0x0123456789abcdef);
   _vm = exec_op(_vm, _inst);
-  assert(read_mem64(_vm->mem, 0x40) == 0x0123456789abcdef);
+  assert(read_mem64(_vm->mem, 0x40) == 0x10 + 12 + 0x10);
   fini_vm(_vm);
 
   free(_inst);
