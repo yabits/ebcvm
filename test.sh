@@ -1,5 +1,6 @@
 #!/bin/bash
 
+passed=1
 for file in $(ls test); do
   test=${file%.*}
   objs=`ls *.o | grep -v main.o`
@@ -7,6 +8,15 @@ for file in $(ls test); do
   ./test/${test}.exe
   out=$?
   if [ "${out}" != 0 ]; then
+    passed=0
     echo "${test}: NG"
   fi
 done
+
+if [ "${passed}" == 1 ]; then
+  echo "OK"
+  exit 0
+else
+  echo "NG"
+  exit 1
+fi
