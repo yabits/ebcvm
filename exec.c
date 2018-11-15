@@ -932,7 +932,6 @@ static vm *exec_pop(vm *_vm, inst *_inst) {
   return _vm;
 }
 
-/*FIXME: is POP identical with POPn? */
 static vm *exec_popn(vm *_vm, inst *_inst) {
   if (_inst->is_64op) {
     int64_t op = read_mem64(_vm->mem, _vm->regs->regs[R0]);
@@ -1023,7 +1022,6 @@ static vm *exec_push(vm *_vm, inst *_inst) {
   return _vm;
 }
 
-/*FIXME: is PUSH identical with PUSHn? */
 static vm *exec_pushn(vm *_vm, inst *_inst) {
   if (_inst->is_64op) {
     int64_t op;

@@ -8,13 +8,14 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define STACK_BASE 0x0012d000
-#define STACK_MAGIC 0x0ebc0ebc0ebc0ebc
-#define RET_MAGIC 0xffffffffffffffff
+#define ARCH_BYTES    8 /* EBC supports 32-bit or 64-bit */
 #define MAJOR_VERSION 0x0001
 #define MINOR_VERSION 0x0000
-#define ARCH_BYTES 8
-#define MEM_SIZE 8388608
+
+#define MEM_SIZE      8388608
+#define STACK_BASE    0x0012d000
+#define STACK_MAGIC   0x0ebc0ebc0ebc0ebc
+#define RET_MAGIC     0xffffffffffffffff
 
 typedef enum reg {
   IP = 0,
