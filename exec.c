@@ -229,8 +229,6 @@ static vm *exec_jmp8(vm *_vm, inst *_inst) {
 }
 
 static vm *exec_call(vm *_vm, inst *_inst) {
-  _vm->regs->regs[R0] -= 8;
-
   size_t inst_len = _inst->is_jmp64 ? 10 : (_inst->is_jmp_imm ? 6 : 2);
   /* XXX: PUSH64 return address */
   _vm->regs->regs[R0] -= 8;
@@ -246,15 +244,15 @@ static vm *exec_call(vm *_vm, inst *_inst) {
       else
         raise_except(ENCODE, "CALL");
   } else {
-    uint32_t op;
+    uint64_t op;
     if (_inst->operand1 != R0) {
       if (_inst->op1_indirect) {
         if (_inst->is_jmp_imm) {
-          op = read_mem32(_vm->mem,
+          op = read_mem64(_vm->mem,
               _vm->regs->regs[_inst->operand1]
               + decode_index32(_inst->jmp_imm));
         } else {
-          op = read_mem32(_vm->mem,
+          op = read_mem64(_vm->mem,
               _vm->regs->regs[_inst->operand1]);
         }
       } else {
@@ -263,16 +261,17 @@ static vm *exec_call(vm *_vm, inst *_inst) {
         else
           op = _vm->regs->regs[_inst->operand1];
       }
-    } else
+    } else {
       if (_inst->is_jmp_imm)
-        op = (uint32_t)_inst->jmp_imm;
+        op = _inst->jmp_imm;
       else
         raise_except(ENCODE, "CALL");
+    }
     if (_inst->is_native) {
       if (_inst->is_rel) {
         raise_excall(_vm->regs->regs[IP] + op, _vm);
       } else {
-        raise_excall(_vm->regs->regs[IP], _vm);
+        raise_excall(op, _vm);
       }
     } else {
       if (_inst->is_rel)
@@ -618,9 +617,6 @@ static vm *exec_mov(vm *_vm, inst *_inst) {
         raise_except(ENCODE, "MOV");
     }
   } else {
-    if (_inst->is_op2_idx)
-      raise_except(ENCODE, "MOV");
-    else {
       switch (_inst->op_len) {
         case 1:
           op = (uint8_t)_vm->regs->regs[_inst->operand2];
@@ -633,6 +629,20 @@ static vm *exec_mov(vm *_vm, inst *_inst) {
           break;
         case 8:
           op = (uint64_t)_vm->regs->regs[_inst->operand2];
+          break;
+        default:
+          raise_except(ENCODE, "MOV");
+      }
+    if (_inst->is_op2_idx) {
+      switch (_inst->idx_len) {
+        case 2:
+          op += decode_index16(_inst->op2_idx);
+          break;
+        case 4:
+          op += decode_index32(_inst->op2_idx);
+          break;
+        case 8:
+          op += decode_index64(_inst->op2_idx);
           break;
         default:
           raise_except(ENCODE, "MOV");
@@ -766,8 +776,7 @@ static vm *exec_movrel(vm *_vm, inst *_inst) {
     inst_len += 2;
   inst_len += _inst->imm_len;
 
-  uint64_t op2 = read_mem64(_vm->mem,
-      _vm->regs->regs[IP] + inst_len + _inst->imm_data);
+  uint64_t op2 = _vm->regs->regs[IP] + inst_len + _inst->imm_data;
   if (_inst->op1_indirect) {
     uint64_t op1_addr = _vm->regs->regs[_inst->operand1];
     if (_inst->is_opt_idx)
@@ -934,7 +943,6 @@ static vm *exec_pop(vm *_vm, inst *_inst) {
   return _vm;
 }
 
-/*FIXME: is POP identical with POPn? */
 static vm *exec_popn(vm *_vm, inst *_inst) {
   if (_inst->is_64op) {
     int64_t op = read_mem64(_vm->mem, _vm->regs->regs[R0]);
@@ -1025,7 +1033,6 @@ static vm *exec_push(vm *_vm, inst *_inst) {
   return _vm;
 }
 
-/*FIXME: is PUSH identical with PUSHn? */
 static vm *exec_pushn(vm *_vm, inst *_inst) {
   if (_inst->is_64op) {
     int64_t op;
@@ -1076,7 +1083,7 @@ static vm *exec_ret(vm *_vm, inst *_inst) {
   _vm->regs->regs[IP] = read_mem64(_vm->mem, _vm->regs->regs[R0]);
   _vm->regs->regs[R0] = _vm->regs->regs[R0] + 16;
 
-  if (_vm->regs->regs[R0] % 16)
+  if (_vm->regs->regs[R0] % sizeof(uint16_t))
     raise_except(ALIGN, "align");
 
   if (_vm->regs->regs[IP] == RET_MAGIC)

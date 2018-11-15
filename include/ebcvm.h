@@ -8,11 +8,14 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define RET_MAGIC 0x0000000000000000
+#define ARCH_BYTES    8 /* EBC supports 32-bit or 64-bit */
 #define MAJOR_VERSION 0x0001
 #define MINOR_VERSION 0x0000
-#define ARCH_BYTES 8
-#define MEM_SIZE 8388608
+
+#define MEM_SIZE      8388608
+#define STACK_BASE    0x0012d000
+#define STACK_MAGIC   0x0ebc0ebc0ebc0ebc
+#define RET_MAGIC     0xffffffffffffffff
 
 typedef enum reg {
   IP = 0,
@@ -233,6 +236,16 @@ void write_mem8(mem *, size_t, uint8_t);
 void write_mem16(mem *, size_t, uint16_t);
 void write_mem32(mem *, size_t, uint32_t);
 void write_mem64(mem *, size_t, uint64_t);
+
+#if ARCH_BYTES == 4
+uint32_t read_memn(mem *, size_t);
+void write_memn(mem *, size_t, uint32_t);
+#elif ARCH_BYTES == 8
+uint64_t read_memn(mem *, size_t);
+void write_memn(mem *, size_t, uint64_t);
+#else
+#error unsupported architecture
+#endif
 
 /* efi.c */
 vm *load_efi(uint64_t, vm *);

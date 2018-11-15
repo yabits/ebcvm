@@ -6,6 +6,7 @@ typedef enum cmd_type {
   REG,
   EXAMINE,
   MEMMAP,
+  BACKTRACE,
   HELP,
   QUIT,
 } cmd_type;
@@ -50,12 +51,24 @@ static void print_memmap(dbg *_dbg) {
   }
 }
 
+static void print_backtrace(dbg *_dbg) {
+  int i = 0;
+  for (uint64_t p = _dbg->_vm->regs->regs[R0];
+      read_mem64(_dbg->_vm->mem, p) != STACK_MAGIC;
+      p += 8) {
+    fprintf(stdout, "frame #%d: 0x%016llx 0x%016llx\n",
+            i, p, read_mem64(_dbg->_vm->mem, p));
+    i++;
+  }
+}
+
 static void print_help() {
   fprintf(stdout, "List of commands\n");
   fprintf(stdout, "continue -- continue program\n");
   fprintf(stdout, "reg -- show registers\n");
   fprintf(stdout, "examine -- show memory\n");
   fprintf(stdout, "memmap -- show memory map\n");
+  fprintf(stdout, "backtrace -- show backtrace\n");
   fprintf(stdout, "quit -- quit program\n");
   fprintf(stdout, "help -- show this help\n");
 }
@@ -74,6 +87,8 @@ static cmds *parse_cmd(const char *str) {
     _cmds->value = n;
   } else if (!strcmp(str, "memmap\n") || !strcmp(str, "m\n")) {
     _cmds->type = MEMMAP;
+  } else if (!strcmp(str, "backtrace\n") || !strcmp(str, "bt\n")) {
+    _cmds->type = BACKTRACE;
   } else if (!strcmp(str, "help\n") || !strcmp(str, "h\n")) {
     _cmds->type = HELP;
   } else if (!strcmp(str, "quit\n") || !strcmp(str, "q\n")) {
@@ -100,6 +115,9 @@ static int exec_cmd(dbg *_dbg, cmds *_cmds) {
     case MEMMAP:
       print_memmap(_dbg);
       break;
+    case BACKTRACE:
+      print_backtrace(_dbg);
+      break;
     case HELP:
       print_help();
       break;
@@ -115,8 +133,10 @@ static int exec_cmd(dbg *_dbg, cmds *_cmds) {
 
 static void prompt(dbg *_dbg) {
   fprintf(stdout, "IP = %lx\n", _dbg->_vm->regs->regs[IP]);
-  fprintf(stdout, "IP: ");
-  print_mem(_dbg, _dbg->_vm->regs->regs[IP]);
+  if (_dbg->_vm->regs->regs[IP] != RET_MAGIC) {
+    fprintf(stdout, "IP: ");
+    print_mem(_dbg, _dbg->_vm->regs->regs[IP]);
+  }
   while (true) {
     fprintf(stdout, "(dbg) ");
 

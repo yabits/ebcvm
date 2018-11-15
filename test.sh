@@ -3,13 +3,10 @@
 for file in $(ls test); do
   test=${file%.*}
   objs=`ls *.o | grep -v main.o`
-  cc -o test/${test}.exe ${objs} test/${test}.o
+  cc -o test/${test}.exe ${objs} test/${test}.o &> /dev/null
   ./test/${test}.exe
   out=$?
   if [ "${out}" != 0 ]; then
-    exit 1
+    echo "${test}: NG"
   fi
-  echo "${test}: OK"
 done
-
-echo OK
