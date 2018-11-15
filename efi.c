@@ -88,9 +88,8 @@ vm *load_efi(uint64_t addr, vm *_vm) {
   _vm->regs->regs[R0] -= 8;
   write_mem64(_vm->mem, _vm->regs->regs[R0], 0x0000000000000000);
   /* XXX: PUSH64 RET_MAGIC */
-  _vm->regs->regs[R0] -= 8;
+  _vm->regs->regs[R0] -= 16;
   write_mem64(_vm->mem, _vm->regs->regs[R0], RET_MAGIC);
-  _vm->regs->regs[R0] -= 8;
 
   return _vm;
 
