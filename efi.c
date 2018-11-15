@@ -20,32 +20,36 @@ static void conout_output_string(vm *_vm) {
   _vm->regs->regs[IP] = ret_addr;
 }
 
+static size_t calc_offset(size_t size) {
+  return size + size % ARCH_BYTES;
+}
+
 static void set_efi_system_table(uint64_t table, uint64_t addrs[], vm *_vm) {
   uint64_t offset = 0;
-  offset += sizeof(EFI_TABLE_HEADER); /* Hdr */
+  offset += calc_offset(sizeof(EFI_TABLE_HEADER));  /* Hdr */
   write_mem64(_vm->mem, table + offset, addrs[0]);
-  offset += sizeof(VOID_PTR); /* FirmwareVendor */
-  offset += sizeof(UINT32) + 4; /* FIXME: FirmwareRevision + padding */
-  offset += sizeof(EFI_HANDLE); /* ConsoleInHandle */
+  offset += calc_offset(sizeof(VOID_PTR));          /* FirmwareVendor */
+  offset += calc_offset(sizeof(UINT32));            /* FirmwareRevision */
+  offset += calc_offset(sizeof(EFI_HANDLE));        /* ConsoleInHandle */
   write_mem64(_vm->mem, table + offset, addrs[1]);
-  offset += sizeof(VOID_PTR); /* ConIn */
-  offset += sizeof(EFI_HANDLE); /* ConsoleOutHandle */
+  offset += calc_offset(sizeof(VOID_PTR));          /* ConIn */
+  offset += calc_offset(sizeof(EFI_HANDLE));        /* ConsoleOutHandle */
   write_mem64(_vm->mem, table + offset, addrs[2]);
-  offset += sizeof(VOID_PTR); /* ConOut */
-  offset += sizeof(EFI_HANDLE); /* StandardErrorHandle */
+  offset += calc_offset(sizeof(VOID_PTR));          /* ConOut */
+  offset += calc_offset(sizeof(EFI_HANDLE));        /* StandardErrorHandle */
   write_mem64(_vm->mem, table + offset, addrs[3]);
-  offset += sizeof(VOID_PTR); /* StdErr */
+  offset += calc_offset(sizeof(VOID_PTR));          /* StdErr */
   write_mem64(_vm->mem, table + offset, addrs[4]);
-  offset += sizeof(VOID_PTR); /* RuntimeServices */
+  offset += calc_offset(sizeof(VOID_PTR));          /* RuntimeServices */
   write_mem64(_vm->mem, table + offset, addrs[5]);
-  offset += sizeof(VOID_PTR); /* BootServices */
+  offset += calc_offset(sizeof(VOID_PTR));          /* BootServices */
   /* FIXME: NumberOfTableEntries */
   /* FIXME: ConfigurationTable */
 }
 
 static void set_efi_conout(uint64_t conout, vm *_vm) {
   uint64_t offset = 0;
-  offset += sizeof(VOID_PTR); /* Reset */
+  offset += calc_offset(sizeof(VOID_PTR)); /* Reset */
   write_mem64(_vm->mem, conout + offset, ConOut_OutputString_MAGIC);
 }
 

@@ -12,7 +12,7 @@
 #define EFI_SUCCESS 0x0000000000000000
 #define EFI_ERROR   0x8000000000000000
 
-typedef bool      BOOLEAN;
+typedef uint8_t   BOOLEAN;
 typedef int8_t    INT8;
 typedef uint8_t   UINT8;
 typedef uint8_t   CHAR8;
@@ -23,11 +23,18 @@ typedef int32_t   INT32;
 typedef uint32_t  UINT32;
 typedef int64_t   INT64;
 typedef uint64_t  UINT64;
+#if ARCH_BYTES == 4
+typedef int32_t   INTN;
+typedef uint32_t  UINTN;
+#elif ARCH_BYTES == 8
 typedef int64_t   INTN;
 typedef uint64_t  UINTN;
-typedef int64_t   VOID_PTR;
-typedef int64_t   EFI_STATUS;
-typedef int64_t   EFI_HANDLE;
+#else
+#error unsupported architecture
+#endif
+typedef UINTN   VOID_PTR;
+typedef UINTN   EFI_STATUS;
+typedef UINTN   EFI_HANDLE;
 
 typedef struct EFI_MAIN_PARAMETERS {
   EFI_HANDLE        ImageHandle;
