@@ -22,7 +22,7 @@ static void call_test01() {
     _vm->regs->regs[IP] = 0x01234560;
     _vm->regs->regs[_inst->operand1] = 0x01234567;
     _vm = exec_op(_vm, _inst);
-    assert(_vm->regs->regs[R0] == 0x10);
+    assert(_vm->regs->regs[R0] == 0x18);
     assert(read_mem32(_vm->mem, _vm->regs->regs[R0]) == 0x01234562);
     assert(_vm->regs->regs[IP] == 0x01234567);
     fini_vm(_vm);
@@ -54,11 +54,11 @@ static void call_test02() {
       _vm->regs->regs[_inst->operand1] = 0x01230000;
     _vm = exec_op(_vm, _inst);
     if (_inst->operand1 != R0) {
-      assert(_vm->regs->regs[R0] == 0x10);
+      assert(_vm->regs->regs[R0] == 0x18);
       assert(read_mem32(_vm->mem, _vm->regs->regs[R0]) == 0x01234560 + 6);
       assert(_vm->regs->regs[IP] == 0x01234567);
     } else {
-      assert(_vm->regs->regs[R0] == 0x10);
+      assert(_vm->regs->regs[R0] == 0x18);
       assert(read_mem32(_vm->mem, _vm->regs->regs[R0]) == 0x01234560 + 6);
       assert(_vm->regs->regs[IP] == 0x00004567);
     }
@@ -88,7 +88,7 @@ static void call_test03() {
     _vm->regs->regs[IP] = 0x45670000;
     _vm->regs->regs[_inst->operand1] = 0x00001230;
     _vm = exec_op(_vm, _inst);
-    assert(_vm->regs->regs[R0] == 0x10);
+    assert(_vm->regs->regs[R0] == 0x18);
     assert(read_mem32(_vm->mem, _vm->regs->regs[R0]) == 0x45670002);
     assert(_vm->regs->regs[IP] == 0x45671232);
     fini_vm(_vm);
@@ -118,7 +118,7 @@ static void call_test04() {
     _vm->regs->regs[_inst->operand1] = 0x30;
     write_mem32(_vm->mem, 0x30, 0x89abcdef);
     _vm = exec_op(_vm, _inst);
-    assert(_vm->regs->regs[R0] == 0x10);
+    assert(_vm->regs->regs[R0] == 0x18);
     assert(read_mem32(_vm->mem, _vm->regs->regs[R0]) == 0x01234562);
     assert(_vm->regs->regs[IP] == 0x89abcdef);
     fini_vm(_vm);
@@ -148,7 +148,7 @@ static void call_test05() {
     _vm->regs->regs[IP] = 0x45670000;
     _vm->regs->regs[_inst->operand1] = 0x00000030;
     _vm = exec_op(_vm, _inst);
-    assert(_vm->regs->regs[R0] == 0x10);
+    assert(_vm->regs->regs[R0] == 0x18);
     assert(read_mem32(_vm->mem, _vm->regs->regs[R0]) == 0x45670006);
     assert(_vm->regs->regs[IP] == 0x45671236);
     fini_vm(_vm);
@@ -179,7 +179,7 @@ static void call_test06() {
     _vm->regs->regs[_inst->operand1] = 0x30;
     write_mem32(_vm->mem, 0x40, 0x89abcdef);
     _vm = exec_op(_vm, _inst);
-    assert(_vm->regs->regs[R0] == 0x10);
+    assert(_vm->regs->regs[R0] == 0x18);
     assert(read_mem32(_vm->mem, _vm->regs->regs[R0]) == 0x01234566);
     assert(_vm->regs->regs[IP] == 0x89abcdef);
     fini_vm(_vm);
@@ -209,7 +209,7 @@ static void call_test07() {
     _vm->regs->regs[IP] = 0x45670000;
     _vm->regs->regs[_inst->operand1] = 0x00000030;
     _vm = exec_op(_vm, _inst);
-    assert(_vm->regs->regs[R0] == 0x10);
+    assert(_vm->regs->regs[R0] == 0x18);
     assert(read_mem32(_vm->mem, _vm->regs->regs[R0]) == 0x45670006);
     assert(_vm->regs->regs[IP] == 0x45671236);
     fini_vm(_vm);
@@ -240,7 +240,7 @@ static void call_test08() {
     _vm->regs->regs[_inst->operand1] = 0x30;
     write_mem32(_vm->mem, 0x40, 0x00001230);
     _vm = exec_op(_vm, _inst);
-    assert(_vm->regs->regs[R0] == 0x10);
+    assert(_vm->regs->regs[R0] == 0x18);
     assert(read_mem32(_vm->mem, _vm->regs->regs[R0]) == 0x45670006);
     assert(_vm->regs->regs[IP] == 0x45671236);
     fini_vm(_vm);
