@@ -1,0 +1,23 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: ubuntu:16.04
+    working_directory: /usr/src/ebcvm
+    branches:
+      only:
+        - master
+    steps:
+      - run:
+        name: Install toolchains
+        command: |
+          apt-get update
+          apt-get install -y build-essential make git
+          apt-get clean
+      - checkout
+      - run:
+        name: Build
+        command: make
+      - run:
+        name: Run test
+        command: make test
