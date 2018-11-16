@@ -113,14 +113,14 @@ static char *disas_break(inst *_inst) {
   char *op = malloc(sizeof(char) * OP_SIZE);
   if (!op)
     error("malloc failed");
-  sprintf(op, "\t%d", _inst->break_code);
+  sprintf(op, " %d", _inst->break_code);
 
   return op;
 }
 
 static char *disas_call_jmp_jmp8(inst *_inst) {
   opcode opcode = _inst->opcode;
-  if (opcode != CALL || opcode != JMP || opcode != JMP8)
+  if (!(opcode == CALL || opcode == JMP || opcode == JMP8))
     error("invalid opcode");
 
   char *op = malloc(sizeof(char) * OP_SIZE);
@@ -149,7 +149,7 @@ static char *disas_call_jmp_jmp8(inst *_inst) {
       strcat(op, "a");
   }
 
-  strcat(op, "\t");
+  strcat(op, " ");
 
   if (opcode == CALL || opcode == JMP) {
     if (_inst->is_jmp64) {
@@ -182,10 +182,10 @@ static char *disas_call_jmp_jmp8(inst *_inst) {
 
 static char *disas_arith_stack_cmp_extnd(inst *_inst) {
   opcode opcode = _inst->opcode;
-  if (!(opcode >= ADD && opcode <= MODU)
-      || !(opcode >= POP && opcode <= PUSHn)
-      || !(opcode >= CMPeq && opcode <= CMPugte)
-      || !(opcode >= EXTNDB && opcode <= EXTNDW))
+  if (!((opcode >= ADD && opcode <= MODU)
+      || (opcode >= POP && opcode <= PUSHn)
+      || (opcode >= CMPeq && opcode <= CMPugte)
+      || (opcode >= EXTNDB && opcode <= EXTNDW)))
     error("invalid opcode");
 
   char *op = malloc(sizeof(char) * OP_SIZE);
@@ -198,7 +198,7 @@ static char *disas_arith_stack_cmp_extnd(inst *_inst) {
   else
     strcat(op, "64");
 
-  strcat(op, "\t");
+  strcat(op, " ");
 
   if (!(opcode >= CMPeq && opcode <= CMPugte)) {
     if (_inst->op1_indirect)
@@ -241,7 +241,7 @@ static char *disas_loadsp_store_sp(inst *_inst) {
     error("malloc failed");
   op[0] = '\0';
 
-  strcat(op, "\t");
+  strcat(op, " ");
   strcat(op, regsstr[_inst->operand1]);
   strcat(op, ", ");
   strcat(op, regsstr[_inst->operand2]);
@@ -251,9 +251,9 @@ static char *disas_loadsp_store_sp(inst *_inst) {
 
 static char *disas_mov_movn_movsn(inst *_inst) {
   opcode opcode = _inst->opcode;
-  if (!(opcode >= MOVbw && opcode <= MOVqq)
-      || !(opcode == MOVnw || opcode == MOVnd)
-      || !(opcode == MOVsnw || opcode == MOVsnd))
+  if (!((opcode >= MOVbw && opcode <= MOVqq)
+      || (opcode == MOVnw || opcode == MOVnd)
+      || (opcode == MOVsnw || opcode == MOVsnd)))
     error("invalid opcode");
 
   char *op = malloc(sizeof(char) * OP_SIZE);
@@ -261,7 +261,7 @@ static char *disas_mov_movn_movsn(inst *_inst) {
     error("malloc failed");
   op[0] = '\0';
 
-  strcat(op, "\t");
+  strcat(op, " ");
   if (_inst->op1_indirect)
     strcat(op, "@");
   strcat(op, regsstr[_inst->operand1]);
@@ -352,8 +352,8 @@ static char *disas_mov_movn_movsn(inst *_inst) {
 
 static char *disas_movi_movin_movrel_cmpi(inst *_inst) {
   opcode opcode = _inst->opcode;
-  if (!(opcode == MOVI || opcode == MOVIn || opcode == MOVREL)
-      || !(opcode >= CMPIeq && opcode <= CMPIugte))
+  if (!((opcode == MOVI || opcode == MOVIn || opcode == MOVREL)
+      || (opcode >= CMPIeq && opcode <= CMPIugte)))
     error("invalid opcode");
 
   char *op = malloc(sizeof(char) * OP_SIZE);
@@ -361,15 +361,15 @@ static char *disas_movi_movin_movrel_cmpi(inst *_inst) {
     error("malloc failed");
   op[0] = '\0';
 
-  if (opcode >= CMPIeq && opcode <= CMPIugte)
+  if (opcode >= CMPIeq && opcode <= CMPIugte) {
     strcat(op, "CMPI");
-
-  if (_inst->mov_len == 4)
-    strcat(op, "32");
-  else if (_inst->mov_len == 8)
-    strcat(op, "64");
-  else
-    error("invalid operand");
+    if (_inst->mov_len == 4)
+      strcat(op, "32");
+    else if (_inst->mov_len == 8)
+      strcat(op, "64");
+    else
+      error("invalid operand");
+  }
 
   if (opcode >= CMPIeq && opcode <= CMPIugte) {
     switch (opcode) {
@@ -393,7 +393,7 @@ static char *disas_movi_movin_movrel_cmpi(inst *_inst) {
     }
   }
 
-  strcat(op, "\t");
+  strcat(op, " ");
   if (_inst->op1_indirect)
     strcat(op, "@");
   strcat(op, regsstr[_inst->operand1]);
@@ -479,9 +479,10 @@ char *disas_inst(inst *_inst) {
           || (opcode >= CMPIeq && opcode <= CMPIugte)) {
     operands = disas_movi_movin_movrel_cmpi(_inst);
   } else {
-  ;
+    operands = malloc(sizeof(char) * OP_SIZE);
+    operands[0] = '\0';
   }
-  strcpy(op, operands);
+  strcat(op, operands);
   free(operands);
 
   return op;
