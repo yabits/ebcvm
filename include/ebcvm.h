@@ -208,6 +208,8 @@ vm *init_vm(void);
 void fini_vm(vm *);
 vm *step_inst(vm *);
 void exec_vm(vm *);
+size_t dump_inst(vm *);
+void dump_vm(vm *);
 void raise_except(except, const char *);
 void raise_excall(uint64_t, vm *);
 
@@ -250,6 +252,9 @@ void write_memn(mem *, size_t, uint64_t);
 /* efi.c */
 vm *load_efi(uint64_t, vm *);
 void handle_excall(uint64_t, vm *);
+
+/* disas.c */
+char *disas_inst(inst *);
 
 /* util.c */
 void error(const char *, ...);

@@ -4,17 +4,24 @@ SRCS=$(wildcard *.c)
 OBJS=$(SRCS:.c=.o)
 TESTS=$(wildcard test/*.c)
 TOBJS=$(TESTS:.c=.o)
+TOOLS=$(wildcard tools/*.c)
+TOOLSOBJS=$(TOOLS:.c=.o)
 TARGET=ebcvm
+
+all: $(TARGET) tools
 
 $(TARGET): $(OBJS)
 	$(CC) -o $@ $^
 
 $(OBJS): $(HDRS)
 
+tools: $(OBJS) $(TOOLSOBJS)
+	$(CC) -o tools/ebcdisas $(filter-out main.o, $(OBJS)) tools/ebcdisas.o
+
 test: $(OBJS) $(TOBJS)
 	./test.sh
 
 clean:
-	rm -f $(TARGET) *.o test/*.o test/*.exe
+	rm -f $(TARGET) ebcdisas tools/*.o *.o test/*.o test/*.exe
 
 .PHONY: test clean
