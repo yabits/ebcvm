@@ -325,7 +325,9 @@ fail:
 
 #ifdef DEBUG_INST
 static void print_inst(inst *_inst) {
-  fprintf(stdout, "%s\n", disas_inst(_inst));
+  char *disas = disas_inst(_inst);
+  fprintf(stdout, "%s\n", disas);
+  free(disas);
 }
 #endif /* DEBUG_INST */
 
