@@ -5,6 +5,7 @@ typedef enum cmd_type {
   CONTINUE,
   REG,
   EXAMINE,
+  DISASSEMBLE,
   MEMMAP,
   BACKTRACE,
   HELP,
@@ -13,7 +14,8 @@ typedef enum cmd_type {
 
 typedef struct cmds {
   cmd_type type;
-  int value;
+  uint64_t addr;
+  size_t size;
 } cmds;
 
 static void print_reg(dbg *_dbg) {
@@ -28,15 +30,29 @@ static void print_reg(dbg *_dbg) {
   }
 }
 
-static void print_mem(dbg *_dbg, size_t addr) {
-  if (_dbg->_vm->mem->size < addr)
+static void print_mem(dbg *_dbg, uint64_t addr, size_t size) {
+  if (_dbg->_vm->mem->size < addr + size)
     fprintf(stderr, "out of memory\n");
-  for (int i = 0; i < 8; i++) {
-    if (i > 0)
-      fprintf(stdout, " ");
-    fprintf(stdout, "%02x", read_mem8(_dbg->_vm->mem, addr + i));
+  for (int i = 0; i < size; i++) {
+    if (i % 8 == 0 && i > 0)
+      fprintf(stdout, "\n");
+    if (i % 8 == 0)
+      fprintf(stdout, "0x%016llx:", addr + i);
+    fprintf(stdout, " %02x", read_mem8(_dbg->_vm->mem, addr + i));
   }
   fprintf(stdout, "\n");
+}
+
+static void print_disas(dbg *_dbg, uint64_t addr, size_t size) {
+  if (_dbg->_vm->mem->size < addr + size)
+    fprintf(stderr, "out of memory\n");
+  uint64_t prev_ip = _dbg->_vm->regs->regs[IP];
+  _dbg->_vm->regs->regs[IP] = addr;
+  while (_dbg->_vm->regs->regs[IP] < addr + size) {
+    size_t op_len = dump_inst(_dbg->_vm);
+    _dbg->_vm->regs->regs[IP] += op_len;
+  }
+  _dbg->_vm->regs->regs[IP] = prev_ip;
 }
 
 static void print_memmap(dbg *_dbg) {
@@ -67,6 +83,7 @@ static void print_help() {
   fprintf(stdout, "continue -- continue program\n");
   fprintf(stdout, "reg -- show registers\n");
   fprintf(stdout, "examine -- show memory\n");
+  fprintf(stdout, "disassemble -- disassemble memory\n");
   fprintf(stdout, "memmap -- show memory map\n");
   fprintf(stdout, "backtrace -- show backtrace\n");
   fprintf(stdout, "quit -- quit program\n");
@@ -76,15 +93,26 @@ static void print_help() {
 static cmds *parse_cmd(const char *str) {
   cmds *_cmds = malloc(sizeof(cmds));
 
-  int n;
+  uint64_t addr = 0;
+  size_t size = 8;
   if (!strcmp(str, "continue\n") || !strcmp(str, "c\n")) {
     _cmds->type = CONTINUE;
   } else if (!strcmp(str, "reg\n") || !strcmp(str, "r\n")) {
     _cmds->type = REG;
-  } else if ((sscanf(str, "examine 0x%x\n", &n) == 1)
-          || (sscanf(str, "x 0x%x\n", &n) == 1)) {
+  } else if ((sscanf(str, "examine 0x%llx\n", &addr) == 1)
+          || (sscanf(str, "x 0x%llx\n", &addr) == 1)
+          || (sscanf(str, "examine/%zd 0x%llx\n", &size, &addr) == 2)
+          || (sscanf(str, "x/%zd 0x%llx\n", &size, &addr) == 2)) {
     _cmds->type = EXAMINE;
-    _cmds->value = n;
+    _cmds->addr = addr;
+    _cmds->size = size;
+  } else if ((sscanf(str, "disassemble 0x%llx\n", &addr) == 1)
+          || (sscanf(str, "disas 0x%llx\n", &addr) == 1)
+          || (sscanf(str, "disassemble/%zd 0x%llx\n", &size, &addr) == 2)
+          || (sscanf(str, "disas/%zd 0x%llx\n", &size, &addr) == 2)) {
+    _cmds->type = DISASSEMBLE;
+    _cmds->addr = addr;
+    _cmds->size = size;
   } else if (!strcmp(str, "memmap\n") || !strcmp(str, "m\n")) {
     _cmds->type = MEMMAP;
   } else if (!strcmp(str, "backtrace\n") || !strcmp(str, "bt\n")) {
@@ -110,7 +138,10 @@ static int exec_cmd(dbg *_dbg, cmds *_cmds) {
       print_reg(_dbg);
       break;
     case EXAMINE:
-      print_mem(_dbg, _cmds->value);
+      print_mem(_dbg, _cmds->addr, _cmds->size);
+      break;
+    case DISASSEMBLE:
+      print_disas(_dbg, _cmds->addr, _cmds->size);
       break;
     case MEMMAP:
       print_memmap(_dbg);
