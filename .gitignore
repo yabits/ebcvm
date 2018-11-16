@@ -1,3 +1,4 @@
 *.o
 ebcvm
+tools/ebcdisas
 *.exe

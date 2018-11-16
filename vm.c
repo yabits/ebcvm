@@ -203,6 +203,42 @@ void exec_vm(vm *_vm) {
   }
 }
 
+void dump_inst(vm *_vm) {
+  uint8_t *op = NULL;
+  size_t op_len = fetch_op(_vm, &op);
+  inst *_inst = decode_op(op);
+
+  char *disas = disas_inst(_inst);
+
+  fprintf(stdout, "0x%016llx:\t", _vm->regs->regs[IP]);
+  for (int i = 0; i < op_len; i++) {
+    if (i > 0)
+      fprintf(stdout, " ");
+    fprintf(stdout, "%02x", op[i]);
+  }
+  fprintf(stdout, "\t%s\n", disas);
+
+  /* move IP */
+  _vm->regs->regs[IP] += op_len;
+
+  free(op);
+  free(_inst);
+}
+
+void dump_vm(vm *_vm) {
+  /* XXX: we assume entry point is the address of text section */
+  uint64_t text_end = _vm->regs->regs[IP];
+  for (int i = 0; i < _vm->memmap_size; i++) {
+    if (_vm->memmap[i].mem_type == MEM_TEXT) {
+      text_end = _vm->memmap[i].addr + _vm->memmap[i].size;
+      break;
+    }
+  }
+  while (_vm->regs->regs[IP] < text_end) {
+    dump_inst(_vm);
+  }
+}
+
 void raise_except(except _except, const char *str) {
   char *exceptions[] = {
     "DIV0",
