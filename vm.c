@@ -1,11 +1,11 @@
 #include "ebcvm.h"
 
 static regs *init_regs(void);
-static uint8_t *maybe_fetch_opts(vm *, uint8_t *, size_t);
-static uint8_t *maybe_fetch_imms(vm *, uint8_t *);
-static uint8_t *maybe_fetch_jmp_imms(vm *, uint8_t *);
-static uint8_t *maybe_fetch_cmpi_imms(vm *, uint8_t *);
-static uint8_t *fetch_op(vm *);
+static size_t maybe_fetch_opts(vm *, uint8_t **, size_t);
+static size_t maybe_fetch_imms(vm *, uint8_t **);
+static size_t maybe_fetch_jmp_imms(vm *, uint8_t **);
+static size_t maybe_fetch_cmpi_imms(vm *, uint8_t **);
+static size_t fetch_op(vm *, uint8_t **);
 
 static regs *init_regs() {
   regs *_regs = malloc(sizeof(regs));
@@ -19,33 +19,35 @@ static regs *init_regs() {
   return _regs;
 }
 
-static uint8_t *maybe_fetch_opts(vm *_vm, uint8_t *op, size_t bytes) {
-  if (!op)
+static size_t maybe_fetch_opts(vm *_vm, uint8_t **op, size_t bytes) {
+  if (!*op)
     goto fail;
-  bool is_op1_idx = op[0] & 0x80;
-  bool is_op2_idx = op[0] & 0x40;
-  size_t opts_len = is_op2_idx ? bytes * 2 : bytes;
+  bool is_op1_idx = (*op)[0] & 0x80;
+  bool is_op2_idx = (*op)[0] & 0x40;
+  size_t opts_len = 0;
+  opts_len += is_op1_idx ? bytes : 0;
+  opts_len += is_op2_idx ? bytes : 0;
   if (is_op1_idx || is_op2_idx) {
-    op = realloc(op, sizeof(uint8_t) * (2 + opts_len));
-    if (!op)
+    *op = realloc(*op, sizeof(uint8_t) * (2 + opts_len));
+    if (!*op)
       goto fail;
     uint64_t ip = _vm->regs->regs[IP];
-    for (int i = 2; i < opts_len; i++)
-      op[i] = read_mem8(_vm->mem, ip + i);
+    for (int i = 0; i < opts_len; i++)
+      (*op)[2 + i] = read_mem8(_vm->mem, ip + 2 + i);
   }
-  return op;
+  return 2 + opts_len;
 
 fail:
   raise_except(UNDEF, "fetch opts");
-  return NULL;
+  return 0;
 }
 
-static uint8_t *maybe_fetch_imms(vm *_vm, uint8_t *op) {
-  if (!op)
+static size_t maybe_fetch_imms(vm *_vm, uint8_t **op) {
+  if (!*op)
     goto fail;
   uint64_t ip = _vm->regs->regs[IP];
   size_t imm_len = 0;
-  switch (op[0] & 0xc0 >> 6) {
+  switch ((*op)[0] & 0xc0 >> 6) {
     case 1:
       imm_len = 2;
       break;
@@ -60,114 +62,119 @@ static uint8_t *maybe_fetch_imms(vm *_vm, uint8_t *op) {
   }
 
   int i = 2;
-  if (op[1] & 0x80) {
-    op = realloc(op, sizeof(uint8_t) * (2 + i));
-    if (!op)
+  if ((*op)[1] & 0x80) {
+    *op = realloc(*op, sizeof(uint8_t) * (2 + i));
+    if (!*op)
       goto fail;
-    op[2] = read_mem8(_vm->mem, ip + 2);
-    op[3] = read_mem8(_vm->mem, ip + 3);
+    (*op)[2] = read_mem8(_vm->mem, ip + 2);
+    (*op)[3] = read_mem8(_vm->mem, ip + 3);
     i += 2;
   }
 
-  op = realloc(op, sizeof(uint8_t) * (i + imm_len));
-  if (!op)
+  *op = realloc(*op, sizeof(uint8_t) * (i + imm_len));
+  if (!*op)
     goto fail;
   for (int k = 0; k < imm_len; k++)
-    op[i + k] = read_mem8(_vm->mem, ip + i + k);
+    (*op)[i + k] = read_mem8(_vm->mem, ip + i + k);
 
-  return op;
+  return i + imm_len;
 
 fail:
   raise_except(UNDEF, "fetch imms");
-  return NULL;
+  return 0;
 }
 
-static uint8_t *maybe_fetch_jmp_imms(vm *_vm, uint8_t *op) {
-  if (!op)
+static size_t maybe_fetch_jmp_imms(vm *_vm, uint8_t **op) {
+  if (!*op)
     goto fail;
-  if (op[0] & 0x80) {
-    int i = 2;
-    uint64_t ip = _vm->regs->regs[IP];
-    int imm_len = op[0] & 0x40 ? 8 : 4;
+  int i = 2;
+  uint64_t ip = _vm->regs->regs[IP];
+  int imm_len = (*op)[0] & 0x40 ? 8 : 4;
+  if ((*op)[0] & 0x80) {
+    *op = realloc(*op, sizeof(uint8_t) * (i + imm_len));
+    if (!*op)
+      goto fail;
     for (int k = 0; k < imm_len; k++)
-      op[i + k] = read_mem8(_vm->mem, ip + i + k);
+      (*op)[i + k] = read_mem8(_vm->mem, ip + i + k);
   }
 
-  return op;
+  return 2 + imm_len;
 
 fail:
   raise_except(UNDEF, "fetch jmp imms");
-  return NULL;
+  return 0;
 }
 
-static uint8_t *maybe_fetch_cmpi_imms(vm *_vm, uint8_t *op) {
-  if (!op)
+static size_t maybe_fetch_cmpi_imms(vm *_vm, uint8_t **op) {
+  if (!*op)
     goto fail;
   uint64_t ip = _vm->regs->regs[IP];
   int i = 2;
-  if (op[1] & 0x10) {
-    op = realloc(op, sizeof(uint8_t) * (2 + i));
-    if (!op)
+  if (*op[1] & 0x10) {
+    *op = realloc(*op, sizeof(uint8_t) * (2 + i));
+    if (!*op)
       goto fail;
-    op[2] = read_mem8(_vm->mem, ip + 2);
-    op[3] = read_mem8(_vm->mem, ip + 3);
+    (*op)[2] = read_mem8(_vm->mem, ip + 2);
+    (*op)[3] = read_mem8(_vm->mem, ip + 3);
     i += 2;
   }
 
-  size_t imm_len = (op[0] & 0x80) ? 4 : 2;
+  size_t imm_len = ((*op)[0] & 0x80) ? 4 : 2;
   for (int k = 0; k < imm_len; k++)
-    op[i + k] = read_mem8(_vm->mem, ip + i + k);
+    (*op)[i + k] = read_mem8(_vm->mem, ip + i + k);
 
-  return op;
+  return i + imm_len;
 
 fail:
   raise_except(UNDEF, "fetch cmpi imms");
-  return NULL;
+  return 0;
 }
 
-static uint8_t *fetch_op(vm *_vm) {
-  uint8_t *op = malloc(sizeof(uint8_t) * 2);
-  if (!op)
+static size_t fetch_op(vm *_vm, uint8_t **op) {
+  *op = malloc(sizeof(uint8_t) * 2);
+  if (!*op)
     goto fail;
   uint64_t ip = _vm->regs->regs[IP];
-  op[0] = read_mem8(_vm->mem, ip + 0);
-  op[1] = read_mem8(_vm->mem, ip + 1);
-  if ((op[0] & 0x3f) == 0x01 || (op[0] & 0x3f) == 0x03) {
+  (*op)[0] = read_mem8(_vm->mem, ip + 0);
+  (*op)[1] = read_mem8(_vm->mem, ip + 1);
+  size_t op_len = 2;
+  if (((*op)[0] & 0x3f) == 0x01 || ((*op)[0] & 0x3f) == 0x03) {
     /* XXX: CALL or JMP */
-    op = maybe_fetch_jmp_imms(_vm, op);
-  } else if ((op[0] & 0x3f) >= 0x2d && (op[0] & 0x3f) <= 0x31) {
+    op_len = maybe_fetch_jmp_imms(_vm, op);
+  } else if (((*op)[0] & 0x3f) >= 0x2d && ((*op)[0] & 0x3f) <= 0x31) {
     /* XXX: CMPI */
-    op = maybe_fetch_cmpi_imms(_vm, op);
-  } else if ((op[0] & 0x3f) >= 0x1d && (op[0] & 0x3f) <= 0x20) {
+    op_len = maybe_fetch_cmpi_imms(_vm, op);
+  } else if (((*op)[0] & 0x3f) >= 0x1d && ((*op)[0] & 0x3f) <= 0x20) {
     /* XXX: MOVbw to MOVqw */
-    op = maybe_fetch_opts(_vm, op, 2);
-  } else if ((op[0] & 0x3f) >= 0x21 && (op[0] & 0x3f) <= 0x24) {
+    op_len = maybe_fetch_opts(_vm, op, 2);
+  } else if (((*op)[0] & 0x3f) >= 0x21 && ((*op)[0] & 0x3f) <= 0x24) {
     /* XXX: MOVbd to MOVqd */
-    op = maybe_fetch_opts(_vm, op, 4);
-  } else if ((op[0] & 0x3f) == 0x28) {
+    op_len = maybe_fetch_opts(_vm, op, 4);
+  } else if (((*op)[0] & 0x3f) == 0x28) {
     /* XXX: MOVqq */
-    op = maybe_fetch_opts(_vm, op, 8);
-  } else if ((op[0] & 0x3f) >= 0x37 && (op[0] & 0x3f) <= 0x39) {
+    op_len = maybe_fetch_opts(_vm, op, 8);
+  } else if (((*op)[0] & 0x3f) >= 0x37 && ((*op)[0] & 0x3f) <= 0x39) {
     /* XXX: MOVI, MOVIn, or MOVREL */
-    op = maybe_fetch_imms(_vm, op);
-  } else if ((op[0] & 0x3f) == 0x32 || (op[0] & 0x3f) == 0x25) {
+    op_len = maybe_fetch_imms(_vm, op);
+  } else if (((*op)[0] & 0x3f) == 0x32 || ((*op)[0] & 0x3f) == 0x25) {
     /* XXX: MOVnw or MOVsnw */
-    op = maybe_fetch_opts(_vm, op, 2);
-  } else if ((op[0] & 0x3f) == 0x33 || (op[0] & 0x3f) == 0x26) {
+    op_len = maybe_fetch_opts(_vm, op, 2);
+  } else if (((*op)[0] & 0x3f) == 0x33 || ((*op)[0] & 0x3f) == 0x26) {
     /* XXX: MOVnd or MOVsnw */
-    op = maybe_fetch_opts(_vm, op, 4);
-  } else if (op[0] & 0x80){
-    op = realloc(op, sizeof(uint8_t) * 4);
-    if (!op)
+    op_len = maybe_fetch_opts(_vm, op, 4);
+  } else if ((*op)[0] & 0x80){
+    *op = realloc(*op, sizeof(uint8_t) * 4);
+    if (!*op)
       goto fail;
-    op[2] = read_mem8(_vm->mem, ip + 2);
-    op[3] = read_mem8(_vm->mem, ip + 3);
+    (*op)[2] = read_mem8(_vm->mem, ip + 2);
+    (*op)[3] = read_mem8(_vm->mem, ip + 3);
+    op_len = 4;
   }
-  return op;
+  return op_len;
 
 fail:
   raise_except(UNDEF, "fetch op");
-  return NULL;
+  return 0;
 }
 
 vm *init_vm() {
@@ -185,7 +192,8 @@ void fini_vm(vm *_vm) {
 }
 
 vm *step_inst(vm *_vm) {
-  uint8_t *op = fetch_op(_vm);
+  uint8_t *op = NULL;
+  fetch_op(_vm, &op);
   inst *_inst = decode_op(op);
   _vm = exec_op(_vm, _inst);
 
