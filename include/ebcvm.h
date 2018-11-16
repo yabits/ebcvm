@@ -251,6 +251,9 @@ void write_memn(mem *, size_t, uint64_t);
 vm *load_efi(uint64_t, vm *);
 void handle_excall(uint64_t, vm *);
 
+/* disas.c */
+char *disas_inst(inst *);
+
 /* util.c */
 void error(const char *, ...);
 
