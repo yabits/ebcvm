@@ -24,7 +24,7 @@ static void print_reg(dbg *_dbg) {
   for (int i = 0; i < 16; i++) {
     if (!strcmp(regs[i], ""))
       continue;
-    fprintf(stdout, "%s\t0x%lx\n", regs[i], _dbg->_vm->regs->regs[i]);
+    fprintf(stdout, "%s\t0x%llx\n", regs[i], _dbg->_vm->regs->regs[i]);
   }
 }
 
@@ -44,7 +44,7 @@ static void print_memmap(dbg *_dbg) {
   "data", "text", "bss", "efi", "unknown",
   };
   for (int i = 0; i < _dbg->_vm->memmap_size; i++) {
-    fprintf(stdout, "%s\t0x%016lx - 0x%016lx\n",
+    fprintf(stdout, "%s\t0x%016llx - 0x%016llx\n",
             mem_types[_dbg->_vm->memmap[i].mem_type],
             _dbg->_vm->memmap[i].addr,
             _dbg->_vm->memmap[i].addr + _dbg->_vm->memmap[i].size);
@@ -132,11 +132,9 @@ static int exec_cmd(dbg *_dbg, cmds *_cmds) {
 }
 
 static void prompt(dbg *_dbg) {
-  fprintf(stdout, "IP = %lx\n", _dbg->_vm->regs->regs[IP]);
-  if (_dbg->_vm->regs->regs[IP] != RET_MAGIC) {
-    fprintf(stdout, "IP: ");
-    print_mem(_dbg, _dbg->_vm->regs->regs[IP]);
-  }
+  fprintf(stdout, "IP = %llx\n", _dbg->_vm->regs->regs[IP]);
+  if (_dbg->_vm->regs->regs[IP] != RET_MAGIC)
+    dump_inst(_dbg->_vm);
   while (true) {
     fprintf(stdout, "(dbg) ");
 

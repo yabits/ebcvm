@@ -211,7 +211,7 @@ void exec_vm(vm *_vm) {
   }
 }
 
-void dump_inst(vm *_vm) {
+size_t dump_inst(vm *_vm) {
   uint8_t *op = NULL;
   size_t op_len = fetch_op(_vm, &op);
   inst *_inst = decode_op(op);
@@ -226,11 +226,10 @@ void dump_inst(vm *_vm) {
   }
   fprintf(stdout, "\t%s\n", disas);
 
-  /* move IP */
-  _vm->regs->regs[IP] += op_len;
-
   free(op);
   free(_inst);
+
+  return op_len;
 }
 
 void dump_vm(vm *_vm) {
@@ -243,7 +242,10 @@ void dump_vm(vm *_vm) {
     }
   }
   while (_vm->regs->regs[IP] < text_end) {
-    dump_inst(_vm);
+    size_t op_len = dump_inst(_vm);
+
+    /* move IP */
+    _vm->regs->regs[IP] += op_len;
   }
 }
 
