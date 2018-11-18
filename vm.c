@@ -47,7 +47,7 @@ static size_t maybe_fetch_imms(vm *_vm, uint8_t **op) {
     goto fail;
   uint64_t ip = _vm->regs->regs[IP];
   size_t imm_len = 0;
-  switch ((*op)[0] & 0xc0 >> 6) {
+  switch (((*op)[0] & 0xc0) >> 6) {
     case 1:
       imm_len = 2;
       break;
@@ -63,12 +63,12 @@ static size_t maybe_fetch_imms(vm *_vm, uint8_t **op) {
 
   int i = 2;
   if ((*op)[1] & 0x80) {
-    *op = realloc(*op, sizeof(uint8_t) * (2 + i));
+    i += 2;
+    *op = realloc(*op, sizeof(uint8_t) * i);
     if (!*op)
       goto fail;
     (*op)[2] = read_mem8(_vm->mem, ip + 2);
     (*op)[3] = read_mem8(_vm->mem, ip + 3);
-    i += 2;
   }
 
   *op = realloc(*op, sizeof(uint8_t) * (i + imm_len));
@@ -110,13 +110,13 @@ static size_t maybe_fetch_cmpi_imms(vm *_vm, uint8_t **op) {
     goto fail;
   uint64_t ip = _vm->regs->regs[IP];
   int i = 2;
-  if (*op[1] & 0x10) {
-    *op = realloc(*op, sizeof(uint8_t) * (2 + i));
+  if ((*op)[1] & 0x10) {
+    i += 2;
+    *op = realloc(*op, sizeof(uint8_t) * i);
     if (!*op)
       goto fail;
     (*op)[2] = read_mem8(_vm->mem, ip + 2);
     (*op)[3] = read_mem8(_vm->mem, ip + 3);
-    i += 2;
   }
 
   size_t imm_len = ((*op)[0] & 0x80) ? 4 : 2;
@@ -162,7 +162,7 @@ static size_t fetch_op(vm *_vm, uint8_t **op) {
   } else if (((*op)[0] & 0x3f) == 0x33 || ((*op)[0] & 0x3f) == 0x26) {
     /* XXX: MOVnd or MOVsnw */
     op_len = maybe_fetch_opts(_vm, op, 4);
-  } else if ((*op)[0] & 0x80){
+  } else if ((*op)[0] & 0x80 && !(((*op)[0] & 0x3f) == 0x02)){
     *op = realloc(*op, sizeof(uint8_t) * 4);
     if (!*op)
       goto fail;
@@ -234,13 +234,20 @@ size_t dump_inst(vm *_vm) {
 
 void dump_vm(vm *_vm) {
   /* XXX: we assume entry point is the address of text section */
-  uint64_t text_end = _vm->regs->regs[IP];
+  uint64_t text_start = 0;
+  uint64_t text_end = 0;
   for (int i = 0; i < _vm->memmap_size; i++) {
     if (_vm->memmap[i].mem_type == MEM_TEXT) {
+      text_start = _vm->memmap[i].addr;
       text_end = _vm->memmap[i].addr + _vm->memmap[i].size;
       break;
     }
   }
+
+  if (text_start == 0 || text_end == 0)
+    error("could not found .text section");
+
+  _vm->regs->regs[IP] = text_start;
   while (_vm->regs->regs[IP] < text_end) {
     size_t op_len = dump_inst(_vm);
 
