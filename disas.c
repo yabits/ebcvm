@@ -175,6 +175,7 @@ static char *disas_call_jmp_jmp8(inst *_inst) {
   if (opcode == JMP8) {
     char imm8[OP_SIZE];
     sprintf(imm8, "0x%02x", (uint8_t)_inst->jmp_imm);
+    strcat(op, imm8);
   }
 
   return op;
@@ -213,18 +214,31 @@ static char *disas_arith_stack_cmp_extnd(inst *_inst) {
     if (_inst->op2_indirect)
       strcat(op, "@");
     strcat(op, regsstr[_inst->operand2]);
-  }
 
-  if (_inst->imm) {
-    strcat(op, " ");
-    if (!_inst->op2_indirect) {
-      char imm16[OP_SIZE];
-      sprintf(imm16, "0x%04x", _inst->imm);
-      strcat(op, imm16);
-    } else {
-      char *idx16 = disas_index16(_inst->imm);
-      strcat(op, idx16);
-      free(idx16);
+    if (_inst->is_imm) {
+      strcat(op, " ");
+      if (!_inst->op2_indirect) {
+        char imm16[OP_SIZE];
+        sprintf(imm16, "0x%04x", _inst->imm);
+        strcat(op, imm16);
+      } else {
+        char *idx16 = disas_index16(_inst->imm);
+        strcat(op, idx16);
+        free(idx16);
+      }
+    }
+  } else {
+    if (_inst->is_imm) {
+      strcat(op, " ");
+      if (!_inst->op1_indirect) {
+        char imm16[OP_SIZE];
+        sprintf(imm16, "0x%04x", _inst->imm);
+        strcat(op, imm16);
+      } else {
+        char *idx16 = disas_index16(_inst->imm);
+        strcat(op, idx16);
+        free(idx16);
+      }
     }
   }
 
@@ -409,9 +423,9 @@ static char *disas_movi_movin_movrel_cmpi(inst *_inst) {
   strcat(op, ", ");
   if (opcode == MOVI
       || opcode == MOVREL
-      || (opcode >= CMPIeq && opcode <= CMPugte)) {
+      || (opcode >= CMPIeq && opcode <= CMPIugte)) {
     char imm[OP_SIZE];
-    switch (_inst->idx_len) {
+    switch (_inst->imm_len) {
       case 2:
         sprintf(imm, "0x%04x", (uint16_t)_inst->imm_data);
         break;
@@ -427,7 +441,7 @@ static char *disas_movi_movin_movrel_cmpi(inst *_inst) {
     strcat(op, imm);
   } else if (opcode == MOVIn) {
       char *idx = NULL;
-      switch (_inst->idx_len) {
+      switch (_inst->imm_len) {
         case 2:
           idx = disas_index16((uint16_t)_inst->imm_data);
           break;
