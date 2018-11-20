@@ -4,7 +4,7 @@ char *bin_path;
 
 static void init() {
   FLAGS_debug = false;
-  FLAGS_mem = MEM_SIZE;
+  FLAGS_mem = AUTO_MEM_SIZE;
   FLAGS_step = false;
 }
 
