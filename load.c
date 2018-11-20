@@ -29,9 +29,14 @@ static vm *do_load_exe(const char *addr, vm *_vm) {
 
   if (fhdr->NumberOfSections < 1)
     goto unsupported;
-
+  
   uint32_t entry_point = opthdr->AddressOfEntryPoint;
   uint64_t image_base = opthdr->ImageBase;
+
+  uint32_t align = opthdr->SectionAlignment;
+
+  if (FLAGS_reloc)
+    image_base = (((FLAGS_heap + FLAGS_stack) / align) + 1 ) * align;
 
   _vm->memmap_size = fhdr->NumberOfSections;
   _vm->memmap = malloc(sizeof(memmap) * _vm->memmap_size);
@@ -56,7 +61,6 @@ static vm *do_load_exe(const char *addr, vm *_vm) {
     _vm->memmap[i].size = sechdr->Misc.VirtualSize;
   }
 
-  uint32_t align = opthdr->SectionAlignment;
   uint16_t last = _vm->memmap_size - 1;
   uint64_t tail = _vm->memmap[last].addr + _vm->memmap[last].size;
   /* realloc memory if AUTO_MEM_SIZE and mem size if too small */
@@ -81,8 +85,8 @@ static vm *do_load_exe(const char *addr, vm *_vm) {
 
   /* setup registers */
   _vm->regs->regs[IP] = image_base + entry_point;
-  _vm->regs->regs[R0] = STACK_BASE; /* FIXME: stack pointer */
-  write_mem64(_vm->mem, STACK_BASE, STACK_MAGIC);
+  _vm->regs->regs[R0] = ((FLAGS_heap / align) + 1) * align;
+  write_mem64(_vm->mem, _vm->regs->regs[R0], STACK_MAGIC);
 
   /* calculate efi entry point address */
   uint64_t efi_addr = ((tail / align) + 1 ) * align;

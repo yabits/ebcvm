@@ -14,7 +14,8 @@
 
 #define AUTO_MEM_SIZE 0
 #define MEM_SIZE      8388608
-#define STACK_BASE    0x0012d000
+#define STACK_SIZE    0x4000
+#define HEAP_SIZE     0x4000
 #define STACK_MAGIC   0x0ebc0ebc0ebc0ebc
 #define RET_MAGIC     0xffffffffffffffff
 
@@ -201,8 +202,14 @@ dbg *_dbg;
 bool FLAGS_debug;
 /* Size of memory */
 int FLAGS_mem;
+/* Size of stack */
+int FLAGS_stack;
+/* Size of heap */
+int FLAGS_heap;
 /* Step exection */
 bool FLAGS_step;
+/* Relocate sections */
+bool FLAGS_reloc;
 
 /* vm.c */
 vm *init_vm(void);
