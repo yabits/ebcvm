@@ -63,7 +63,7 @@ vm *load_efi(uint64_t addr, vm *_vm) {
   uint64_t runtime_addr = stderr_addr + sizeof(EFI_SIMPLE_TEXT_OUT_PROTOCOL);
   uint64_t boot_addr = runtime_addr + sizeof(EFI_RUNTIME_SERVICES);
   /* FIXME: ConfigurationTable */
-  size_t size = boot_addr - addr;
+  size_t size = boot_addr + sizeof(EFI_BOOT_SERVICES) - addr;
 
   /* setup pointers */
   uint64_t addrs[] = {
