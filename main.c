@@ -35,6 +35,8 @@ int main(int argc, char *argv[]) {
     } else if (i == 1) {
       bin_path = argv[i];
     } else if (sscanf(argv[i], "--mem=%d%c", &n, &junk) == 1) {
+      if (n < 1)
+        error("memory size is too small");
       FLAGS_mem = n;
     } else if (sscanf(argv[i], "--step=%d%c", &n, &junk) == 1 &&
         (n == 0 || n == 1)) {

@@ -1,11 +1,25 @@
 #include "ebcvm.h"
 
 mem *init_mem() {
+  int mem_size = FLAGS_mem;
   if (!FLAGS_mem)
-    FLAGS_mem = MEM_SIZE;
+    mem_size = MEM_SIZE;
   mem *_mem = (mem *)malloc(sizeof(mem));
-  _mem->body = (uint8_t *)malloc(sizeof(uint8_t) * FLAGS_mem);
-  _mem->size = FLAGS_mem;
+  if (!_mem)
+    error("malloc failed");
+  _mem->body = (uint8_t *)malloc(sizeof(uint8_t) * mem_size);
+  if (!_mem->body)
+    error("malloc failed");
+  _mem->size = mem_size;
+
+  return _mem;
+}
+
+mem *realloc_mem(mem *_mem, size_t size) {
+  _mem->body = (uint8_t *)realloc(_mem->body, sizeof(uint8_t) * size);
+  if (!_mem->body)
+    error("realloc failed");
+  _mem->size = size;
 
   return _mem;
 }

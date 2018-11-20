@@ -12,6 +12,7 @@
 #define MAJOR_VERSION 0x0001
 #define MINOR_VERSION 0x0000
 
+#define AUTO_MEM_SIZE 0
 #define MEM_SIZE      8388608
 #define STACK_BASE    0x0012d000
 #define STACK_MAGIC   0x0ebc0ebc0ebc0ebc
@@ -229,6 +230,7 @@ vm *exec_op(vm *, inst *);
 
 /* mem.c */
 mem *init_mem(void);
+mem *realloc_mem(mem *, size_t);
 void fini_mem(mem *);
 uint8_t read_mem8(mem *, size_t);
 uint16_t read_mem16(mem *, size_t);
