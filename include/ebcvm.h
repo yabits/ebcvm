@@ -12,8 +12,10 @@
 #define MAJOR_VERSION 0x0001
 #define MINOR_VERSION 0x0000
 
+#define AUTO_MEM_SIZE 0
 #define MEM_SIZE      8388608
-#define STACK_BASE    0x0012d000
+#define STACK_SIZE    0x4000
+#define HEAP_SIZE     0x4000
 #define STACK_MAGIC   0x0ebc0ebc0ebc0ebc
 #define RET_MAGIC     0xffffffffffffffff
 
@@ -200,8 +202,14 @@ dbg *_dbg;
 bool FLAGS_debug;
 /* Size of memory */
 int FLAGS_mem;
+/* Size of stack */
+int FLAGS_stack;
+/* Size of heap */
+int FLAGS_heap;
 /* Step exection */
 bool FLAGS_step;
+/* Relocate sections */
+bool FLAGS_reloc;
 
 /* vm.c */
 vm *init_vm(void);
@@ -229,6 +237,7 @@ vm *exec_op(vm *, inst *);
 
 /* mem.c */
 mem *init_mem(void);
+mem *realloc_mem(mem *, size_t);
 void fini_mem(mem *);
 uint8_t read_mem8(mem *, size_t);
 uint16_t read_mem16(mem *, size_t);
