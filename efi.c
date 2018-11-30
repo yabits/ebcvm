@@ -1,7 +1,32 @@
 #include "ebcvm.h"
 #include "efi.h"
 
-#define ConOut_OutputString_MAGIC 0x928ae98de3f89c23
+#define ConOut_OutputString_MAGIC 0xdbec42e5063aa942
+#define ConIn_ReadKeyStroke_MAGIC 0xa1b4e93c32d682d0
+
+static size_t calc_offset(size_t size) {
+  return size + size % ARCH_BYTES;
+}
+
+static void conin_read_key_stroke(vm *_vm) {
+  uint64_t stack_top = _vm->regs->regs[R0];
+  uint64_t ret_addr = read_mem64(_vm->mem, stack_top);
+  uint64_t this = read_mem64(_vm->mem, stack_top + 8);
+  uint64_t key = read_mem64(_vm->mem, stack_top + 16);
+
+  int c = fgetc(stdin);
+  /* FIXME: encode ASCII to UTF-8 */
+  uint64_t offset = 0;
+  write_mem16(_vm->mem, key + offset, (UINT16)0x00);
+  offset += calc_offset(sizeof(UINT16));
+  write_mem16(_vm->mem, key + offset, (CHAR16)c);
+
+  _vm->regs->regs[R7] = EFI_SUCCESS;
+  /* XXX: POPn */
+  _vm->regs->regs[R0] += ARCH_BYTES;
+  _vm->regs->regs[IP] = ret_addr;
+}
+
 
 /* FIXME: below native code emulation supports only 64-bit machine */
 static void conout_output_string(vm *_vm) {
@@ -17,10 +42,6 @@ static void conout_output_string(vm *_vm) {
   /* XXX: POPn */
   _vm->regs->regs[R0] += ARCH_BYTES;
   _vm->regs->regs[IP] = ret_addr;
-}
-
-static size_t calc_offset(size_t size) {
-  return size + size % ARCH_BYTES;
 }
 
 static void set_efi_system_table(uint64_t table, uint64_t addrs[], vm *_vm) {
@@ -44,6 +65,12 @@ static void set_efi_system_table(uint64_t table, uint64_t addrs[], vm *_vm) {
   offset += calc_offset(sizeof(VOID_PTR));          /* BootServices */
   /* FIXME: NumberOfTableEntries */
   /* FIXME: ConfigurationTable */
+}
+
+static void set_efi_conin(uint64_t conin, vm *_vm) {
+  uint64_t offset = 0;
+  offset += calc_offset(sizeof(VOID_PTR)); /* Reset */
+  write_mem64(_vm->mem, conin + offset, ConIn_ReadKeyStroke_MAGIC);
 }
 
 static void set_efi_conout(uint64_t conout, vm *_vm) {
@@ -70,6 +97,7 @@ vm *load_efi(uint64_t addr, vm *_vm) {
   0, conin_addr, conout_addr, stderr_addr, runtime_addr, boot_addr, 0,
   };
   set_efi_system_table(table_addr, addrs, _vm);
+  set_efi_conin(conin_addr, _vm);
   set_efi_conout(conout_addr, _vm);
 
   _vm->memmap_size += 1;
@@ -98,9 +126,15 @@ fail:
   return NULL;
 }
 
-void handle_excall(uint64_t addr, vm *_vm) {
-  if (addr == ConOut_OutputString_MAGIC)
-    conout_output_string(_vm);
-  else
-    raise_except(UNDEF, "invalid excall");
+void handle_excall(uint64_t code, vm *_vm) {
+  switch (code) {
+    case ConIn_ReadKeyStroke_MAGIC:
+      conin_read_key_stroke(_vm);
+      break;
+    case ConOut_OutputString_MAGIC:
+      conout_output_string(_vm);
+      break;
+    default:
+      raise_except(UNDEF, "invalid excall");
+  }
 }
