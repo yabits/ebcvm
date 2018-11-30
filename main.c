@@ -60,7 +60,7 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  if (FLAGS_mem < FLAGS_heap + FLAGS_stack)
+  if (FLAGS_mem != AUTO_MEM_SIZE && FLAGS_mem < FLAGS_heap + FLAGS_stack)
     error("memory size is too small");
 
   vm *_vm = init_vm();
