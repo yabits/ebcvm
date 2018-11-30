@@ -1,4 +1,5 @@
 *.o
 ebcvm
 tools/ebcdisas
+tools/fnv1
 *.exe
