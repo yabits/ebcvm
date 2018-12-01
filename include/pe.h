@@ -84,7 +84,7 @@ typedef struct _IMAGE_OPTIONAL_HEADER {
     DWORD     CheckSum;
     WORD      Subsystem;
     WORD      DllCharacteristics;
-    ULONGLONG Si0zeOfStackReserve;
+    ULONGLONG SizeOfStackReserve;
     ULONGLONG SizeOfStackCommit;
     ULONGLONG SizeOfHeapReserve;
     ULONGLONG SizeOfHeapCommit;
