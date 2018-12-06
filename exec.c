@@ -156,7 +156,7 @@ static vm *exec_break(vm *_vm, inst *_inst) {
 static vm *exec_jmp(vm *_vm, inst *_inst) {
   bool do_jmp = false;
   if (_inst->is_jmp64) {
-    if (!_inst->jmp_imm)
+    if (!_inst->is_jmp_imm)
       raise_except(ENCODE, "JMP");
     if (_inst->is_cond) {
       if (_inst->is_cs && (_vm->regs->regs[FLAGS] & 0x01))
