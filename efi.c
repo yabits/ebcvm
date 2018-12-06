@@ -15,6 +15,8 @@ static void conin_read_key_stroke(vm *_vm) {
   uint64_t key = read_mem64(_vm->mem, stack_top + 16);
 
   int c = fgetc(stdin);
+  if (c == EOF)
+    c = 0x00;
   /* FIXME: encode ASCII to UTF-8 */
   uint64_t offset = 0;
   write_mem16(_vm->mem, key + offset, (UINT16)0x00);
