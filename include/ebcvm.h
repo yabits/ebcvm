@@ -20,8 +20,8 @@
 #define RET_MAGIC     0xffffffffffffffff
 
 typedef enum reg {
-  IP = 0,
-  FLAGS,
+  FLAGS = 0,
+  IP,
   RV2,
   RV3,
   RV4,

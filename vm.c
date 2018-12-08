@@ -89,7 +89,7 @@ static size_t maybe_fetch_jmp_imms(vm *_vm, uint8_t **op) {
     goto fail;
   int i = 2;
   uint64_t ip = _vm->regs->regs[IP];
-  int imm_len = (*op)[0] & 0x40 ? 8 : 4;
+  int imm_len = (*op)[0] & 0x80 ? ((*op)[0] & 0x40 ? 8 : 4) : 0;
   if ((*op)[0] & 0x80) {
     *op = realloc(*op, sizeof(uint8_t) * (i + imm_len));
     if (!*op)

@@ -17,11 +17,12 @@ $(OBJS): $(HDRS)
 
 tools: $(OBJS) $(TOOLSOBJS)
 	$(CC) -o tools/ebcdisas $(filter-out main.o, $(OBJS)) tools/ebcdisas.o
+	$(CC) -o tools/fnv1 tools/fnv1.o
 
 test: $(OBJS) $(TOBJS)
 	./test.sh
 
 clean:
-	rm -f $(TARGET) ebcdisas tools/*.o *.o test/*.o test/*.exe
+	rm -f $(TARGET) ebcdisas fnv1 tools/*.o *.o test/*.o test/*.exe
 
 .PHONY: test clean
