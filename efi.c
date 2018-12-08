@@ -37,7 +37,7 @@ static void conout_output_string(vm *_vm) {
   uint64_t this = read_mem64(_vm->mem, stack_top + 8);
   uint64_t string = read_mem64(_vm->mem, stack_top + 16);
 
-  for (uint64_t p = string; read_mem16(_vm->mem, p) != '\0'; p += 2)
+  for (uint64_t p = string; read_mem16(_vm->mem, p) != 0xffff; p += 2)
     fputc((char)read_mem16(_vm->mem, p), stdout);
 
   _vm->regs->regs[R7] = EFI_SUCCESS;
