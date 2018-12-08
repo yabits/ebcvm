@@ -76,7 +76,7 @@ static vm *do_load_exe(const char *addr, vm *_vm) {
       (addr + doshdr->e_lfanew
        + sizeof(IMAGE_NT_HEADERS) + sizeof(IMAGE_SECTION_HEADER) * i);
     if (image_base + sechdr->VirtualAddress > _vm->mem->size)
-      error("out of memory");
+      raise_except(MEMORY, "out of memory");
     void *dst = _vm->mem->body + image_base + sechdr->VirtualAddress;
     void *src = (void *)addr + sechdr->PointerToRawData;
     size_t n = sechdr->Misc.VirtualSize;

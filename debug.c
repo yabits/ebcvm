@@ -205,6 +205,7 @@ void handle_except(dbg *_dbg, except _except, const char *str) {
     "ENCODE",
     "BADBREAK",
     "EXIT",
+    "MEMORY",
     "UNDEF",
   };
   

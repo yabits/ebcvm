@@ -267,6 +267,7 @@ void raise_except(except _except, const char *str) {
     "ENCODE",
     "BADBREAK",
     "EXIT",
+    "MEMORY",
     "UNDEF",
   };
 
@@ -279,6 +280,7 @@ void raise_except(except _except, const char *str) {
       case STACK:
       case ALIGN:
       case ENCODE:
+      case MEMORY:
       case UNDEF:
         error("exception %s: %s\n", exceptions[_except], str);
         break;

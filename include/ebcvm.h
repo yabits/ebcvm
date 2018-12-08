@@ -188,6 +188,7 @@ typedef enum except {
   ENCODE,
   BADBREAK,
   EXIT,
+  MEMORY,
   UNDEF,
 } except;
 
