@@ -4,7 +4,7 @@
 static int##bits##_t decode_index##bits(uint##bits##_t index) {     \
   uint##bits##_t mask;                                              \
   uint8_t b = sizeof(uint##bits##_t) * 8;                           \
-  bool s = index >> (b - 1) ? true : false;                         \
+  int64_t s = index >> (b - 1) ? -1 : 1;                            \
   uint8_t a = ((index >> (b - 4)) & 0x07) * sizeof(uint##bits##_t); \
   mask = 0x00;                                                      \
   for (int i = a; i < b - 4; i++)                                   \
@@ -14,7 +14,8 @@ static int##bits##_t decode_index##bits(uint##bits##_t index) {     \
   for (int i = 0; i < a; i++)                                       \
     mask |= 0x01 << i;                                              \
   uint##bits##_t n = (index & mask) >> 0;                           \
-  return (c + n * ARCH_BYTES) * (s ? -1 : 1);                       \
+  int##bits##_t offset = (c + n * ARCH_BYTES) * s;                  \
+  return offset;                                                    \
 }
 
 #define OP(bits)                                                    \
