@@ -62,7 +62,7 @@ static size_t maybe_fetch_imms(vm *_vm, uint8_t **op) {
   }
 
   int i = 2;
-  if ((*op)[1] & 0x80) {
+  if ((*op)[1] & 0x40) {
     i += 2;
     *op = realloc(*op, sizeof(uint8_t) * i);
     if (!*op)
