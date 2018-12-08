@@ -211,6 +211,9 @@ static vm *exec_jmp(vm *_vm, inst *_inst) {
     }
   }
 
+  if (!do_jmp)
+    _vm->regs->regs[IP] += _inst->inst_len;
+
   return _vm;
 }
 
@@ -225,6 +228,8 @@ static vm *exec_jmp8(vm *_vm, inst *_inst) {
     do_jmp = true;
   if (do_jmp)
     _vm->regs->regs[IP] += 2 + (int8_t)_inst->jmp_imm * 2;
+  else
+    _vm->regs->regs[IP] += _inst->inst_len;
 
   return _vm;
 }
