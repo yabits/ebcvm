@@ -38,10 +38,18 @@ static vm *do_load_exe(const char *addr, vm *_vm) {
   if (FLAGS_reloc)
     image_base = (((FLAGS_heap + FLAGS_stack) / align) + 1 ) * align;
 
-  _vm->memmap_size = fhdr->NumberOfSections;
+  _vm->memmap_size = fhdr->NumberOfSections + 2;
   _vm->memmap = malloc(sizeof(memmap) * _vm->memmap_size);
   if (!_vm->memmap)
     goto fail;
+
+  _vm->memmap[0].mem_type = MEM_HEAP;
+  _vm->memmap[0].addr = 0;
+  _vm->memmap[0].size = FLAGS_heap;
+
+  _vm->memmap[1].mem_type = MEM_STACK;
+  _vm->memmap[1].addr = ((FLAGS_heap / align) + 1) * align;
+  _vm->memmap[1].size = FLAGS_stack;
 
   /* enumerate sections */
   IMAGE_SECTION_HEADER *sechdr;
@@ -50,15 +58,17 @@ static vm *do_load_exe(const char *addr, vm *_vm) {
       (addr + doshdr->e_lfanew
        + sizeof(IMAGE_NT_HEADERS) + sizeof(IMAGE_SECTION_HEADER) * i);
     if (!memcmp(sechdr->Name, ".text", 5))
-      _vm->memmap[i].mem_type = MEM_TEXT;
+      _vm->memmap[i + 2].mem_type = MEM_TEXT;
     else if (!memcmp(sechdr->Name, ".data", 5))
-      _vm->memmap[i].mem_type = MEM_DATA;
+      _vm->memmap[i + 2].mem_type = MEM_DATA;
+    else if (!memcmp(sechdr->Name, ".rodata", 7))
+      _vm->memmap[i + 2].mem_type = MEM_RODATA;
     else if (!memcmp(sechdr->Name, ".bss", 4))
-      _vm->memmap[i].mem_type = MEM_BSS;
+      _vm->memmap[i + 2].mem_type = MEM_BSS;
     else
-      _vm->memmap[i].mem_type = MEM_UNKNOWN;
-    _vm->memmap[i].addr = image_base + sechdr->VirtualAddress;
-    _vm->memmap[i].size = sechdr->Misc.VirtualSize;
+      _vm->memmap[i + 2].mem_type = MEM_UNKNOWN;
+    _vm->memmap[i + 2].addr = image_base + sechdr->VirtualAddress;
+    _vm->memmap[i + 2].size = sechdr->Misc.VirtualSize;
   }
 
   uint16_t last = _vm->memmap_size - 1;
@@ -85,7 +95,7 @@ static vm *do_load_exe(const char *addr, vm *_vm) {
 
   /* setup registers */
   _vm->regs->regs[IP] = image_base + entry_point;
-  _vm->regs->regs[R0] = ((FLAGS_heap / align) + 1) * align;
+  _vm->regs->regs[R0] = (((FLAGS_heap + FLAGS_stack) / align) + 1) * align;
   write_mem64(_vm->mem, _vm->regs->regs[R0], STACK_MAGIC);
 
   /* calculate efi entry point address */
