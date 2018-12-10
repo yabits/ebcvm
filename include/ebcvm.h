@@ -48,8 +48,11 @@ typedef struct mem {
 } mem;
 
 typedef enum mem_type {
-  MEM_DATA = 0,
+  MEM_HEAP = 0,
+  MEM_STACK,
   MEM_TEXT,
+  MEM_DATA,
+  MEM_RODATA,
   MEM_BSS,
   MEM_EFI,
   MEM_UNKNOWN,
@@ -188,6 +191,7 @@ typedef enum except {
   ENCODE,
   BADBREAK,
   EXIT,
+  MEMORY,
   UNDEF,
 } except;
 

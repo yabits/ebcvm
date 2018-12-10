@@ -57,7 +57,7 @@ static void print_disas(dbg *_dbg, uint64_t addr, size_t size) {
 
 static void print_memmap(dbg *_dbg) {
   const char *mem_types[] = {
-  "data", "text", "bss", "efi", "unknown",
+  "heap", "stack", "text", "data", "rodata", "bss", "efi", "unknown",
   };
   for (int i = 0; i < _dbg->_vm->memmap_size; i++) {
     fprintf(stdout, "%s\t0x%016llx - 0x%016llx\n",
@@ -205,6 +205,7 @@ void handle_except(dbg *_dbg, except _except, const char *str) {
     "ENCODE",
     "BADBREAK",
     "EXIT",
+    "MEMORY",
     "UNDEF",
   };
   
