@@ -12,7 +12,7 @@ static void init() {
 }
 
 static void print_usage(const char *argv0) {
-  fprintf(stderr, "Usage: %s FILE [OPTION]...\n", argv0);
+  fprintf(stderr, "Usage: %s [OPTION] FILE\n", argv0);
   fprintf(stderr, "EFI Byte Code Interpreter\n");
   fprintf(stderr, "[OPTION]\n");
   fprintf(stderr, "  --debug={0,1}\t\tdebug mode\n");
@@ -38,7 +38,7 @@ int main(int argc, char *argv[]) {
     if (!strcmp(argv[i], "--help")) {
       print_usage(argv[0]);
       exit(0);
-    } else if (i == 1) {
+    } else if (i == argc - 1) {
       bin_path = argv[i];
     } else if (sscanf(argv[i], "--mem=%d%c", &n, &junk) == 1 && n > 0) {
       FLAGS_mem = n;
