@@ -271,5 +271,6 @@ char *disas_inst(inst *);
 
 /* util.c */
 void error(const char *, ...);
+uint64_t uintn(uint64_t);
 
 #endif /* EBCVM_H_ */

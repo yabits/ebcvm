@@ -12,7 +12,7 @@ static size_t calc_offset(size_t size) {
 static void bs_allocate_pool(vm *_vm) {
   uint64_t stack_top = _vm->regs->regs[R0];
   uint64_t ret_addr = read_mem64(_vm->mem, stack_top);
-  uint64_t pool_type = read_mem64(_vm->mem, stack_top + 8);
+  /* pool_size = stack_top + 8 */
   uint64_t size = read_mem64(_vm->mem, stack_top + 16);
   uint64_t buffer = read_mem64(_vm->mem, stack_top + 24);
 
@@ -39,7 +39,7 @@ static void bs_allocate_pool(vm *_vm) {
 static void conin_read_key_stroke(vm *_vm) {
   uint64_t stack_top = _vm->regs->regs[R0];
   uint64_t ret_addr = read_mem64(_vm->mem, stack_top);
-  uint64_t this = read_mem64(_vm->mem, stack_top + 8);
+  /* this = stack_top + 8 */
   uint64_t key = read_mem64(_vm->mem, stack_top + 16);
 
   int c = fgetc(stdin);
@@ -62,7 +62,7 @@ static void conin_read_key_stroke(vm *_vm) {
 static void conout_output_string(vm *_vm) {
   uint64_t stack_top = _vm->regs->regs[R0];
   uint64_t ret_addr = read_mem64(_vm->mem, stack_top);
-  uint64_t this = read_mem64(_vm->mem, stack_top + 8);
+  /* this = stack_top + 8 */
   uint64_t string = read_mem64(_vm->mem, stack_top + 16);
 
   for (uint64_t p = string; read_mem16(_vm->mem, p) != 0xffff; p += 2)
