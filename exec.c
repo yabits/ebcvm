@@ -765,7 +765,7 @@ static vm *exec_movin(vm *_vm, inst *_inst) {
     uint64_t op1 = _vm->regs->regs[_inst->operand1];
     if (_inst->is_opt_idx)
       op1 += decode_index16(_inst->opt_idx);
-    write_mem64(_vm->mem, op1, op2);
+    write_memn(_vm->mem, op1, op2);
   } else {
     if (_inst->is_opt_idx)
       raise_except(ENCODE, "MOVIn");
@@ -814,7 +814,7 @@ static vm *exec_movn(vm *_vm, inst *_inst) {
           raise_except(ENCODE, "MOVn");
       }
     }
-    op2 = read_mem64(_vm->mem, op2_addr);
+    op2 = read_memn(_vm->mem, op2_addr);
   } else {
     op2 = _vm->regs->regs[_inst->operand2];
     if (_inst->is_op2_idx) {
@@ -829,6 +829,7 @@ static vm *exec_movn(vm *_vm, inst *_inst) {
           raise_except(ENCODE, "MOVn");
       }
     }
+    op2 = uintn(op2);
   }
 
   if (_inst->op1_indirect) {
@@ -845,7 +846,7 @@ static vm *exec_movn(vm *_vm, inst *_inst) {
           raise_except(ENCODE, "MOVn");
       }
     }
-    write_mem64(_vm->mem, op1, op2);
+    write_memn(_vm->mem, op1, op2);
   } else {
     if (_inst->is_op1_idx)
       raise_except(ENCODE, "MOVn");
@@ -859,7 +860,7 @@ static vm *exec_movn(vm *_vm, inst *_inst) {
 static vm *exec_movsn(vm *_vm, inst *_inst) {
   int64_t op2;
   if (_inst->op2_indirect) {
-    uint64_t op2_addr = _vm->regs->regs[_inst->operand2];
+    int64_t op2_addr = _vm->regs->regs[_inst->operand2];
     if (_inst->is_op2_idx) {
       switch (_inst->idx_len) {
         case 2:
@@ -872,16 +873,15 @@ static vm *exec_movsn(vm *_vm, inst *_inst) {
           raise_except(ENCODE, "MOVsn");
       }
     }
-    op2 = read_mem64(_vm->mem, op2_addr);
+    op2 = read_memn(_vm->mem, (uint64_t)op2_addr);
   } else {
+    op2 = _vm->regs->regs[_inst->operand2];
     if (_inst->is_op2_idx)
-      op2 = _vm->regs->regs[_inst->operand2] + (int64_t)_inst->op2_idx;
-    else
-      op2 = _vm->regs->regs[_inst->operand2];
+      op2 = + (int64_t)_inst->op2_idx;
   }
 
   if (_inst->op1_indirect) {
-    uint64_t op1_addr = _vm->regs->regs[_inst->operand1];
+    int64_t op1_addr = _vm->regs->regs[_inst->operand1];
     if (_inst->is_op1_idx) {
       switch (_inst->idx_len) {
         case 2:
@@ -894,7 +894,7 @@ static vm *exec_movsn(vm *_vm, inst *_inst) {
           raise_except(ENCODE, "MOVsn");
       }
     }
-    write_mem64(_vm->mem, op1_addr, op2);
+    write_memn(_vm->mem, (uint64_t)op1_addr, op2);
   } else {
     if (_inst->is_op1_idx)
       raise_except(ENCODE, "MOVsn");
