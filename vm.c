@@ -38,7 +38,7 @@ static size_t maybe_fetch_opts(vm *_vm, uint8_t **op, size_t bytes) {
   return 2 + opts_len;
 
 fail:
-  raise_except(UNDEF, "fetch opts");
+  raise_except(UNDEF, "fetch opts", __FILE__, __LINE__);
   return 0;
 }
 
@@ -80,7 +80,7 @@ static size_t maybe_fetch_imms(vm *_vm, uint8_t **op) {
   return i + imm_len;
 
 fail:
-  raise_except(UNDEF, "fetch imms");
+  raise_except(UNDEF, "fetch imms", __FILE__, __LINE__);
   return 0;
 }
 
@@ -101,7 +101,7 @@ static size_t maybe_fetch_jmp_imms(vm *_vm, uint8_t **op) {
   return 2 + imm_len;
 
 fail:
-  raise_except(UNDEF, "fetch jmp imms");
+  raise_except(UNDEF, "fetch jmp imms", __FILE__, __LINE__);
   return 0;
 }
 
@@ -126,7 +126,7 @@ static size_t maybe_fetch_cmpi_imms(vm *_vm, uint8_t **op) {
   return i + imm_len;
 
 fail:
-  raise_except(UNDEF, "fetch cmpi imms");
+  raise_except(UNDEF, "fetch cmpi imms", __FILE__, __LINE__);
   return 0;
 }
 
@@ -173,7 +173,7 @@ static size_t fetch_op(vm *_vm, uint8_t **op) {
   return op_len;
 
 fail:
-  raise_except(UNDEF, "fetch op");
+  raise_except(UNDEF, "fetch op", __FILE__, __LINE__);
   return 0;
 }
 
@@ -205,7 +205,7 @@ vm *step_inst(vm *_vm) {
 
 void exec_vm(vm *_vm) {
   if (FLAGS_debug)
-    raise_except(DEBUG, "debug");
+    raise_except(DEBUG, "debug", __FILE__, __LINE__);
   while (true) {
     step_inst(_vm);
   }
@@ -256,7 +256,7 @@ void dump_vm(vm *_vm) {
   }
 }
 
-void raise_except(except _except, const char *str) {
+void raise_except(except _except, const char *str, const char *file, int line) {
   char *exceptions[] = {
     "DIV0",
     "DEBUG",
@@ -272,7 +272,7 @@ void raise_except(except _except, const char *str) {
   };
 
   if (FLAGS_debug)
-    handle_except(_dbg, _except, str);
+    handle_except(_dbg, _except, str, file, line);
   else {
     switch (_except) {
       case DIV0:
@@ -282,7 +282,8 @@ void raise_except(except _except, const char *str) {
       case ENCODE:
       case MEMORY:
       case UNDEF:
-        error("exception %s: %s\n", exceptions[_except], str);
+        error("exception %s: %s %s at %d\n",
+            exceptions[_except], str, file, line);
         break;
       case EXIT:
         exit(0);
@@ -295,7 +296,7 @@ void raise_except(except _except, const char *str) {
 
 void raise_excall(uint64_t addr, vm *_vm) {
   if (FLAGS_debug)
-    raise_except(DEBUG, "excall");
+    raise_except(DEBUG, "excall", __FILE__, __LINE__);
 
   handle_excall(addr, _vm);
 }

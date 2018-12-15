@@ -55,7 +55,7 @@ static type op_##name(type op1, type op2) {                         \
   if (!strcmp(#name, "div") || !strcmp(#name, "divu") ||            \
       !strcmp(#name, "mod") || !strcmp(#name, "modu"))              \
     if (op2 == 0)                                                   \
-      raise_except(DIV0, "devide by 0");                            \
+      raise_except(DIV0, "devide by 0", __FILE__, __LINE__);        \
   return op;                                                        \
 }                                                                   \
 static vm *exec_##name(vm *_vm, inst *_inst) {                      \
@@ -136,7 +136,7 @@ static vm *exec_break(vm *_vm, inst *_inst) {
       break;
     case 3:
       /* FIXME: debug breakpoint */
-      raise_except(DEBUG, "breakpoint");
+      raise_except(DEBUG, "breakpoint", __FILE__, __LINE__);
       break;
     case 4:
       /* FIXME: system call */
@@ -148,7 +148,7 @@ static vm *exec_break(vm *_vm, inst *_inst) {
       _vm->compiler_version = _vm->regs->regs[R7];
       break;
     default:
-      raise_except(BADBREAK, "bad break");
+      raise_except(BADBREAK, "bad break", __FILE__, __LINE__);
   }
 
   return _vm;
@@ -158,7 +158,7 @@ static vm *exec_jmp(vm *_vm, inst *_inst) {
   bool do_jmp = false;
   if (_inst->is_jmp64) {
     if (!_inst->is_jmp_imm)
-      raise_except(ENCODE, "JMP");
+      raise_except(ENCODE, "JMP", __FILE__, __LINE__);
     if (_inst->is_cond) {
       if (_inst->is_cs && (_vm->regs->regs[FLAGS] & 0x01))
         do_jmp = true;
@@ -168,7 +168,7 @@ static vm *exec_jmp(vm *_vm, inst *_inst) {
       do_jmp = true;
     if (do_jmp) {
       if (_inst->jmp_imm % 2)
-        raise_except(ALIGN, "alignemnt check");
+        raise_except(ALIGN, "alignemnt check", __FILE__, __LINE__);
       if (_inst->is_rel) {
         /* XXX: JMP64 only supports immediate */
         _vm->regs->regs[IP] += 10 + _inst->jmp_imm;
@@ -202,7 +202,7 @@ static vm *exec_jmp(vm *_vm, inst *_inst) {
           op1 += _inst->jmp_imm;
       }
       if (op1 % 2)
-        raise_except(ALIGN, "alignemnt check");
+        raise_except(ALIGN, "alignemnt check", __FILE__, __LINE__);
       if (_inst->is_rel) {
         size_t inst_len = _inst->is_jmp_imm ? 6 : 2;
         _vm->regs->regs[IP] += inst_len + op1;
@@ -248,7 +248,7 @@ static vm *exec_call(vm *_vm, inst *_inst) {
       if (_inst->is_jmp_imm)
         _vm->regs->regs[IP] = (uint64_t)_inst->jmp_imm;
       else
-        raise_except(ENCODE, "CALL");
+        raise_except(ENCODE, "CALL", __FILE__, __LINE__);
   } else {
     uint64_t op;
     if (_inst->operand1 != R0) {
@@ -271,7 +271,7 @@ static vm *exec_call(vm *_vm, inst *_inst) {
       if (_inst->is_jmp_imm)
         op = _inst->jmp_imm;
       else
-        raise_except(ENCODE, "CALL");
+        raise_except(ENCODE, "CALL", __FILE__, __LINE__);
     }
     if (_inst->is_native) {
       if (_inst->is_rel) {
@@ -344,7 +344,7 @@ static vm *exec_extnd(vm *_vm, inst *_inst) {
         op2 = (uint32_t)(_vm->regs->regs[_inst->operand2]);
     }
   } else
-    raise_except(ENCODE, "EXTND");
+    raise_except(ENCODE, "EXTND", __FILE__, __LINE__);
 
   if (_inst->is_64op) {
     if (_inst->op1_indirect) {
@@ -414,7 +414,7 @@ static vm *exec_cmp(vm *_vm, inst *_inst) {
           _vm->regs->regs[FLAGS] &= ~0x01;
         break;
       default:
-        raise_except(OPCODE, "CMP");
+        raise_except(OPCODE, "CMP", __FILE__, __LINE__);
     }
   } else {
     uint32_t op2;
@@ -466,7 +466,7 @@ static vm *exec_cmp(vm *_vm, inst *_inst) {
           _vm->regs->regs[FLAGS] &= ~0x01;
         break;
       default:
-        raise_except(OPCODE, "CMP");
+        raise_except(OPCODE, "CMP", __FILE__, __LINE__);
     }
   }
 
@@ -487,7 +487,7 @@ static vm *exec_cmpi(vm *_vm, inst *_inst) {
       }
     } else {
       if (_inst->is_opt_idx)
-        raise_except(ENCODE, "CMPI");
+        raise_except(ENCODE, "CMPI", __FILE__, __LINE__);
       else
         op1 = _vm->regs->regs[_inst->operand1];
     }
@@ -525,7 +525,7 @@ static vm *exec_cmpi(vm *_vm, inst *_inst) {
           _vm->regs->regs[FLAGS] &= ~0x01;
         break;
       default:
-        raise_except(OPCODE, "CMPI");
+        raise_except(OPCODE, "CMPI", __FILE__, __LINE__);
     }
   } else if (_inst->mov_len == 4) {
     uint32_t op1, op2;
@@ -540,7 +540,7 @@ static vm *exec_cmpi(vm *_vm, inst *_inst) {
       }
     } else {
       if (_inst->is_opt_idx)
-        raise_except(ENCODE, "CMPI");
+        raise_except(ENCODE, "CMPI", __FILE__, __LINE__);
       else
         op1 = (int32_t)_vm->regs->regs[_inst->operand1];
     }
@@ -578,10 +578,10 @@ static vm *exec_cmpi(vm *_vm, inst *_inst) {
           _vm->regs->regs[FLAGS] &= ~0x01;
         break;
       default:
-        raise_except(OPCODE, "CMPI");
+        raise_except(OPCODE, "CMPI", __FILE__, __LINE__);
     }
   } else {
-    raise_except(ENCODE, "CMPI");
+    raise_except(ENCODE, "CMPI", __FILE__, __LINE__);
   }
 
   return _vm;
@@ -603,7 +603,7 @@ static vm *exec_mov(vm *_vm, inst *_inst) {
           op2_addr += decode_index64(_inst->op2_idx);
           break;
         default:
-          raise_except(ENCODE, "MOV");
+          raise_except(ENCODE, "MOV", __FILE__, __LINE__);
       }
     }
     switch (_inst->op_len) {
@@ -620,7 +620,7 @@ static vm *exec_mov(vm *_vm, inst *_inst) {
         op = read_mem64(_vm->mem, op2_addr);
         break;
       default:
-        raise_except(ENCODE, "MOV");
+        raise_except(ENCODE, "MOV", __FILE__, __LINE__);
     }
   } else {
       switch (_inst->op_len) {
@@ -637,7 +637,7 @@ static vm *exec_mov(vm *_vm, inst *_inst) {
           op = (uint64_t)_vm->regs->regs[_inst->operand2];
           break;
         default:
-          raise_except(ENCODE, "MOV");
+          raise_except(ENCODE, "MOV", __FILE__, __LINE__);
       }
     if (_inst->is_op2_idx) {
       switch (_inst->idx_len) {
@@ -651,7 +651,7 @@ static vm *exec_mov(vm *_vm, inst *_inst) {
           op += decode_index64(_inst->op2_idx);
           break;
         default:
-          raise_except(ENCODE, "MOV");
+          raise_except(ENCODE, "MOV", __FILE__, __LINE__);
       }
     }
   }
@@ -670,7 +670,7 @@ static vm *exec_mov(vm *_vm, inst *_inst) {
           op1_addr += decode_index64(_inst->op1_idx);
           break;
         default:
-          raise_except(ENCODE, "MOV");
+          raise_except(ENCODE, "MOV", __FILE__, __LINE__);
       }
     }
     switch (_inst->op_len) {
@@ -687,11 +687,11 @@ static vm *exec_mov(vm *_vm, inst *_inst) {
         write_mem64(_vm->mem, op1_addr, (uint64_t)op);
         break;
       default:
-        raise_except(ENCODE, "MOV");
+        raise_except(ENCODE, "MOV", __FILE__, __LINE__);
     }
   } else {
     if (_inst->is_op1_idx)
-      raise_except(ENCODE, "MOV");
+      raise_except(ENCODE, "MOV", __FILE__, __LINE__);
     else
       _vm->regs->regs[_inst->operand1] = op;
   }
@@ -718,11 +718,11 @@ static vm *exec_movi(vm *_vm, inst *_inst) {
         write_mem64(_vm->mem, op, (uint64_t)_inst->imm_data);
         break;
       default:
-        raise_except(ENCODE, "MOVI");
+        raise_except(ENCODE, "MOVI", __FILE__, __LINE__);
     }
   } else {
     if (_inst->is_opt_idx)
-      raise_except(ENCODE, "MOVI");
+      raise_except(ENCODE, "MOVI", __FILE__, __LINE__);
     else {
       switch (_inst->mov_len) {
         case 1:
@@ -738,7 +738,7 @@ static vm *exec_movi(vm *_vm, inst *_inst) {
           _vm->regs->regs[_inst->operand1] = (uint64_t)_inst->imm_data;
           break;
         default:
-          raise_except(ENCODE, "MOVI");
+          raise_except(ENCODE, "MOVI", __FILE__, __LINE__);
       }
     }
   }
@@ -759,7 +759,7 @@ static vm *exec_movin(vm *_vm, inst *_inst) {
       op2 = decode_index64(_inst->imm_data);
       break;
     default:
-      raise_except(ENCODE, "MOVIn");
+      raise_except(ENCODE, "MOVIn", __FILE__, __LINE__);
   }
   if (_inst->op1_indirect) {
     uint64_t op1 = _vm->regs->regs[_inst->operand1];
@@ -768,7 +768,7 @@ static vm *exec_movin(vm *_vm, inst *_inst) {
     write_memn(_vm->mem, op1, op2);
   } else {
     if (_inst->is_opt_idx)
-      raise_except(ENCODE, "MOVIn");
+      raise_except(ENCODE, "MOVIn", __FILE__, __LINE__);
     else
       _vm->regs->regs[_inst->operand1] = op2;
   }
@@ -790,7 +790,7 @@ static vm *exec_movrel(vm *_vm, inst *_inst) {
     write_mem64(_vm->mem, op1_addr, op2);
   } else {
     if (_inst->is_opt_idx)
-      raise_except(ENCODE, "MOVREL");
+      raise_except(ENCODE, "MOVREL", __FILE__, __LINE__);
     else
       _vm->regs->regs[_inst->operand1] = op2;
   }
@@ -811,7 +811,7 @@ static vm *exec_movn(vm *_vm, inst *_inst) {
           op2_addr += decode_index32(_inst->op2_idx);
           break;
         default:
-          raise_except(ENCODE, "MOVn");
+          raise_except(ENCODE, "MOVn", __FILE__, __LINE__);
       }
     }
     op2 = read_memn(_vm->mem, op2_addr);
@@ -826,7 +826,7 @@ static vm *exec_movn(vm *_vm, inst *_inst) {
           op2 += decode_index32(_inst->op2_idx);
           break;
         default:
-          raise_except(ENCODE, "MOVn");
+          raise_except(ENCODE, "MOVn", __FILE__, __LINE__);
       }
     }
     op2 = uintn(op2);
@@ -843,13 +843,13 @@ static vm *exec_movn(vm *_vm, inst *_inst) {
           op1 += decode_index32(_inst->op1_idx);
           break;
         default:
-          raise_except(ENCODE, "MOVn");
+          raise_except(ENCODE, "MOVn", __FILE__, __LINE__);
       }
     }
     write_memn(_vm->mem, op1, op2);
   } else {
     if (_inst->is_op1_idx)
-      raise_except(ENCODE, "MOVn");
+      raise_except(ENCODE, "MOVn", __FILE__, __LINE__);
     else
       _vm->regs->regs[_inst->operand1] = op2;
   }
@@ -870,7 +870,7 @@ static vm *exec_movsn(vm *_vm, inst *_inst) {
           op2_addr += decode_index32(_inst->op2_idx);
           break;
         default:
-          raise_except(ENCODE, "MOVsn");
+          raise_except(ENCODE, "MOVsn", __FILE__, __LINE__);
       }
     }
     op2 = read_memn(_vm->mem, (uint64_t)op2_addr);
@@ -891,13 +891,13 @@ static vm *exec_movsn(vm *_vm, inst *_inst) {
           op1_addr += decode_index32(_inst->op1_idx);
           break;
         default:
-          raise_except(ENCODE, "MOVsn");
+          raise_except(ENCODE, "MOVsn", __FILE__, __LINE__);
       }
     }
     write_memn(_vm->mem, (uint64_t)op1_addr, op2);
   } else {
     if (_inst->is_op1_idx)
-      raise_except(ENCODE, "MOVsn");
+      raise_except(ENCODE, "MOVsn", __FILE__, __LINE__);
     else
       _vm->regs->regs[_inst->operand1] = op2;
   }
@@ -1090,20 +1090,20 @@ static vm *exec_ret(vm *_vm, inst *_inst) {
   _vm->regs->regs[R0] = _vm->regs->regs[R0] + 16;
 
   if (_vm->regs->regs[R0] % sizeof(uint16_t))
-    raise_except(ALIGN, "align");
+    raise_except(ALIGN, "align", __FILE__, __LINE__);
 
   if (_vm->regs->regs[IP] == RET_MAGIC)
-    raise_except(EXIT, "exit");
+    raise_except(EXIT, "exit", __FILE__, __LINE__);
 
   return _vm;
 }
 
 static vm *exec_loadsp(vm *_vm, inst *_inst) {
   if (_inst->operand1 <= RV2 && _inst->operand1 >= RV7)
-    raise_except(ENCODE, "LOADSP");
+    raise_except(ENCODE, "LOADSP", __FILE__, __LINE__);
 
   if (_inst->operand1 != FLAGS)
-    raise_except(ENCODE, "LOADSP");
+    raise_except(ENCODE, "LOADSP", __FILE__, __LINE__);
 
   if (_inst->operand1 == FLAGS) {
     /* FIXME: save reserved bits 2..63 */
@@ -1215,7 +1215,7 @@ done_inc:
 
 done_ret:
   if (_vm->regs->regs[FLAGS] & 0x02)
-    raise_except(STEP, "single step");
+    raise_except(STEP, "single step", __FILE__, __LINE__);
 
   return _vm;
 }

@@ -194,7 +194,7 @@ void fini_dbg(dbg *_dbg) {
   free(_dbg);
 }
 
-void handle_except(dbg *_dbg, except _except, const char *str) {
+void handle_except(dbg *_dbg, except _except, const char *str, const char *file, int line) {
   char *exceptions[] = {
     "DIV0",
     "DEBUG",
@@ -209,7 +209,8 @@ void handle_except(dbg *_dbg, except _except, const char *str) {
     "UNDEF",
   };
   
-  fprintf(stdout, "exception %s: %s\n", exceptions[_except], str);
+  fprintf(stdout, "exception %s: %s %s at %d\n",
+      exceptions[_except], str, file, line);
 
   prompt(_dbg);
 }

@@ -31,7 +31,7 @@ void fini_mem(mem *_mem) {
 
 uint8_t read_mem8(mem *_mem, size_t idx) {
   if (idx > _mem->size)
-    raise_except(MEMORY, "out of memory");
+    raise_except(MEMORY, "out of memory", __FILE__, __LINE__);
   return _mem->body[idx];
 }
 
@@ -58,7 +58,7 @@ uint64_t read_mem64(mem *_mem, size_t idx) {
 
 void write_mem8(mem *_mem, size_t idx, uint8_t val) {
   if (idx > _mem->size)
-    raise_except(MEMORY, "out of memory");
+    raise_except(MEMORY, "out of memory", __FILE__, __LINE__);
   _mem->body[idx] = val;
 }
 
