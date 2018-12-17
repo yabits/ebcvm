@@ -222,13 +222,13 @@ vm *step_inst(vm *);
 void exec_vm(vm *);
 size_t dump_inst(vm *);
 void dump_vm(vm *);
-void raise_except(except, const char *);
+void raise_except(except, const char *, const char *, int);
 void raise_excall(uint64_t, vm *);
 
 /* debug.c */
 dbg *init_dbg(vm *);
 void fini_dbg(dbg *);
-void handle_except(dbg *, except, const char *);
+void handle_except(dbg *, except, const char *, const char *, int);
 
 /* load.c */
 vm *load_exe(const char *, vm *);

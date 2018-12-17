@@ -17,7 +17,7 @@ static void bs_allocate_pool(vm *_vm) {
   uint64_t buffer = read_mem64(_vm->mem, stack_top + 24);
 
   if (size > FLAGS_heap)
-    raise_except(MEMORY, "out of memory");
+    raise_except(MEMORY, "out of memory", __FILE__, __LINE__);
 
   /* FIXME: Add sane memory allocator */
   uint64_t heap_addr = 0xffffffffffffffff;
@@ -26,7 +26,7 @@ static void bs_allocate_pool(vm *_vm) {
       heap_addr = _vm->memmap[i].addr;
   }
   if (heap_addr == 0xffffffffffffffff)
-    raise_except(MEMORY, "heap not found");
+    raise_except(MEMORY, "heap not found", __FILE__, __LINE__);
 
   write_mem64(_vm->mem, buffer, heap_addr);
 
@@ -180,6 +180,6 @@ void handle_excall(uint64_t code, vm *_vm) {
       bs_allocate_pool(_vm);
       break;
     default:
-      raise_except(UNDEF, "invalid excall");
+      raise_except(UNDEF, "invalid excall", __FILE__, __LINE__);
   }
 }
