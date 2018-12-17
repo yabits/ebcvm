@@ -218,7 +218,7 @@ size_t dump_inst(vm *_vm) {
 
   char *disas = disas_inst(_inst);
 
-  fprintf(stdout, "0x%016llx:\t", _vm->regs->regs[IP]);
+  fprintf(stdout, "0x%016lx:\t", _vm->regs->regs[IP]);
   for (int i = 0; i < op_len; i++) {
     if (i > 0)
       fprintf(stdout, " ");

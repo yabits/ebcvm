@@ -19,7 +19,7 @@ static char *disas_index##bits(uint##bits##_t index) {                \
   char *idx = malloc(sizeof(char) * OP_SIZE);                         \
   if (!idx)                                                           \
     error("malloc failed");                                           \
-  sprintf(idx, "(%+lld, %+lld)", s * n, s * c);                       \
+  sprintf(idx, "(%+ld, %+ld)", s * n, s * c);                         \
   return idx;                                                         \
 }
 
@@ -154,7 +154,7 @@ static char *disas_call_jmp_jmp8(inst *_inst) {
   if (opcode == CALL || opcode == JMP) {
     if (_inst->is_jmp64) {
       char imm64[OP_SIZE];
-      sprintf(imm64, "0x%016llx", _inst->jmp_imm);
+      sprintf(imm64, "0x%016lx", _inst->jmp_imm);
       strcat(op, imm64);
     } else {
       if (_inst->op1_indirect)
@@ -292,7 +292,7 @@ static char *disas_mov_movn_movsn(inst *_inst) {
           sprintf(imm, "0x%08x", (uint32_t)_inst->op1_idx);
           break;
         case 8:
-          sprintf(imm, "0x%016llx", (uint64_t)_inst->op1_idx);
+          sprintf(imm, "0x%016lx", (uint64_t)_inst->op1_idx);
           break;
         default:
           error("invalid operand");
@@ -335,7 +335,7 @@ static char *disas_mov_movn_movsn(inst *_inst) {
           sprintf(imm, "0x%08x", (uint32_t)_inst->op2_idx);
           break;
         case 8:
-          sprintf(imm, "0x%016llx", (uint64_t)_inst->op2_idx);
+          sprintf(imm, "0x%016lx", (uint64_t)_inst->op2_idx);
           break;
         default:
           error("invalid operand");
@@ -433,7 +433,7 @@ static char *disas_movi_movin_movrel_cmpi(inst *_inst) {
         sprintf(imm, "0x%08x", (uint32_t)_inst->imm_data);
         break;
       case 8:
-        sprintf(imm, "0x%016llx", (uint64_t)_inst->imm_data);
+        sprintf(imm, "0x%016lx", (uint64_t)_inst->imm_data);
         break;
       default:
         error("invalid operand");

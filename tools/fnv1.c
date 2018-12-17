@@ -13,7 +13,7 @@ int main(int argc, char *argv[]) {
     hash = hash ^ c;
   }
 
-  printf("0x%016llx\n", hash);
+  printf("0x%016lx\n", hash);
 
   return 0;
 }

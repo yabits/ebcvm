@@ -26,7 +26,7 @@ static void print_reg(dbg *_dbg) {
   for (int i = 0; i < 16; i++) {
     if (!strcmp(regs[i], ""))
       continue;
-    fprintf(stdout, "%s\t0x%llx\n", regs[i], _dbg->_vm->regs->regs[i]);
+    fprintf(stdout, "%s\t0x%lx\n", regs[i], _dbg->_vm->regs->regs[i]);
   }
 }
 
@@ -37,7 +37,7 @@ static void print_mem(dbg *_dbg, uint64_t addr, size_t size) {
     if (i % 8 == 0 && i > 0)
       fprintf(stdout, "\n");
     if (i % 8 == 0)
-      fprintf(stdout, "0x%016llx:", addr + i);
+      fprintf(stdout, "0x%016lx:", addr + i);
     fprintf(stdout, " %02x", read_mem8(_dbg->_vm->mem, addr + i));
   }
   fprintf(stdout, "\n");
@@ -60,7 +60,7 @@ static void print_memmap(dbg *_dbg) {
   "heap", "stack", "text", "data", "rodata", "bss", "efi", "unknown",
   };
   for (int i = 0; i < _dbg->_vm->memmap_size; i++) {
-    fprintf(stdout, "%s\t0x%016llx - 0x%016llx\n",
+    fprintf(stdout, "%s\t0x%016lx - 0x%016lx\n",
             mem_types[_dbg->_vm->memmap[i].mem_type],
             _dbg->_vm->memmap[i].addr,
             _dbg->_vm->memmap[i].addr + _dbg->_vm->memmap[i].size);
@@ -72,7 +72,7 @@ static void print_backtrace(dbg *_dbg) {
   for (uint64_t p = _dbg->_vm->regs->regs[R0];
       read_mem64(_dbg->_vm->mem, p) != STACK_MAGIC;
       p += 8) {
-    fprintf(stdout, "frame #%d: 0x%016llx 0x%016llx\n",
+    fprintf(stdout, "frame #%d: 0x%016lx 0x%016lx\n",
             i, p, read_mem64(_dbg->_vm->mem, p));
     i++;
   }
@@ -99,17 +99,17 @@ static cmds *parse_cmd(const char *str) {
     _cmds->type = CONTINUE;
   } else if (!strcmp(str, "reg\n") || !strcmp(str, "r\n")) {
     _cmds->type = REG;
-  } else if ((sscanf(str, "examine 0x%llx\n", &addr) == 1)
-          || (sscanf(str, "x 0x%llx\n", &addr) == 1)
-          || (sscanf(str, "examine/%zd 0x%llx\n", &size, &addr) == 2)
-          || (sscanf(str, "x/%zd 0x%llx\n", &size, &addr) == 2)) {
+  } else if ((sscanf(str, "examine 0x%lx\n", &addr) == 1)
+          || (sscanf(str, "x 0x%lx\n", &addr) == 1)
+          || (sscanf(str, "examine/%zd 0x%lx\n", &size, &addr) == 2)
+          || (sscanf(str, "x/%zd 0x%lx\n", &size, &addr) == 2)) {
     _cmds->type = EXAMINE;
     _cmds->addr = addr;
     _cmds->size = size;
-  } else if ((sscanf(str, "disassemble 0x%llx\n", &addr) == 1)
-          || (sscanf(str, "disas 0x%llx\n", &addr) == 1)
-          || (sscanf(str, "disassemble/%zd 0x%llx\n", &size, &addr) == 2)
-          || (sscanf(str, "disas/%zd 0x%llx\n", &size, &addr) == 2)) {
+  } else if ((sscanf(str, "disassemble 0x%lx\n", &addr) == 1)
+          || (sscanf(str, "disas 0x%lx\n", &addr) == 1)
+          || (sscanf(str, "disassemble/%zd 0x%lx\n", &size, &addr) == 2)
+          || (sscanf(str, "disas/%zd 0x%lx\n", &size, &addr) == 2)) {
     _cmds->type = DISASSEMBLE;
     _cmds->addr = addr;
     _cmds->size = size;
@@ -163,7 +163,7 @@ static int exec_cmd(dbg *_dbg, cmds *_cmds) {
 }
 
 static void prompt(dbg *_dbg) {
-  fprintf(stdout, "IP = %llx\n", _dbg->_vm->regs->regs[IP]);
+  fprintf(stdout, "IP = %lx\n", _dbg->_vm->regs->regs[IP]);
   if (_dbg->_vm->regs->regs[IP] != RET_MAGIC)
     dump_inst(_dbg->_vm);
   while (true) {
