@@ -11,6 +11,8 @@ static void jmp_test01() {
   _inst->is_cs = false;
   _inst->is_rel = false;
   _inst->op1_indirect = false;
+  _inst->inst_len = 2;
+
   for (_inst->operand1 = R0; _inst->operand1 <= R7; _inst->operand1++) {
     _vm = init_vm();
     _vm->regs->regs[IP] = 0x01234567;
@@ -28,7 +30,7 @@ static void jmp_test01() {
 static void jmp_test02() {
   vm *_vm;
   inst *_inst = malloc(sizeof(inst));
-  _inst->is_jmp_imm = false;
+  _inst->is_jmp_imm = true;
   _inst->jmp_imm = 0x02468ace02468ace;
   _inst->is_jmp64 = true;
   _inst->opcode = JMP;
@@ -36,6 +38,8 @@ static void jmp_test02() {
   _inst->is_cs = false;
   _inst->is_rel = false;
   _inst->op1_indirect = false;
+  _inst->inst_len = 10;
+
   _vm = init_vm();
   _vm->regs->regs[IP] = 0x0123456789abcdef;
   _vm = exec_op(_vm, _inst);
@@ -54,6 +58,7 @@ static void jmp_test03() {
   _inst->is_rel = false;
   _inst->op1_indirect = false;
   _inst->operand1 = R1;
+  _inst->inst_len = 2;
 
   _vm = init_vm();
   _vm->regs->regs[FLAGS] &= ~0x01; /* FLAGS.C is clear */
@@ -68,7 +73,7 @@ static void jmp_test03() {
   _vm->regs->regs[IP] = 0x01234567;
   _vm->regs->regs[_inst->operand1] = 0x02468ace;
   _vm = exec_op(_vm, _inst);
-  assert(_vm->regs->regs[IP] == 0x01234567);
+  assert(_vm->regs->regs[IP] == 0x01234567 + 2);
   fini_vm(_vm);
 }
 
@@ -83,13 +88,14 @@ static void jmp_test04() {
   _inst->is_rel = false;
   _inst->op1_indirect = false;
   _inst->operand1 = R1;
+  _inst->inst_len = 2;
 
   _vm = init_vm();
   _vm->regs->regs[FLAGS] &= ~0x01; /* FLAGS.C is clear */
   _vm->regs->regs[IP] = 0x01234567;
   _vm->regs->regs[_inst->operand1] = 0x02468ace;
   _vm = exec_op(_vm, _inst);
-  assert(_vm->regs->regs[IP] == 0x01234567);
+  assert(_vm->regs->regs[IP] == 0x01234567 + 2);
   fini_vm(_vm);
 
   _vm = init_vm();
@@ -112,6 +118,7 @@ static void jmp_test05() {
   _inst->is_rel = true;
   _inst->op1_indirect = false;
   _inst->operand1 = R1;
+  _inst->inst_len = 2;
 
   _vm = init_vm();
   _vm->regs->regs[IP] = 0x01234560;
@@ -132,6 +139,7 @@ static void jmp_test06() {
   _inst->is_rel = false;
   _inst->op1_indirect = true;
   _inst->operand1 = R1;
+  _inst->inst_len = 2;
 
   _vm = init_vm();
   _vm->regs->regs[IP] = 0x01234560;
@@ -154,6 +162,7 @@ static void jmp_test07() {
   _inst->op1_indirect = true;
   _inst->operand1 = R1;
   _inst->jmp_imm = 0x20000002; /* XXX: in 64-bit, it means +0x10 */
+  _inst->inst_len = 6;
 
   _vm = init_vm();
   _vm->regs->regs[IP] = 0x01234560;
@@ -175,6 +184,7 @@ static void jmp_test08() {
   _inst->is_rel = true;
   _inst->op1_indirect = true;
   _inst->operand1 = R1;
+  _inst->inst_len = 2;
 
   _vm = init_vm();
   _vm->regs->regs[IP] = 0x01234560;
@@ -197,6 +207,7 @@ static void jmp_test09() {
   _inst->op1_indirect = true;
   _inst->operand1 = R1;
   _inst->jmp_imm = 0x20000002; /* XXX: in 64-bit, it means +0x10 */
+  _inst->inst_len = 6;
 
   _vm = init_vm();
   _vm->regs->regs[IP] = 0x01234560;
@@ -218,6 +229,7 @@ static void jmp_test0a() {
   _inst->is_cs = false; /* jmp if FLAGS.C is clear */
   _inst->is_rel = false;
   _inst->op1_indirect = false;
+  _inst->inst_len = 10;
 
   _vm = init_vm();
   _vm->regs->regs[FLAGS] &= ~0x01; /* FLAGS.C is clear */
@@ -230,7 +242,7 @@ static void jmp_test0a() {
   _vm->regs->regs[FLAGS] |= 0x01; /* FLAGS.C is set */
   _vm->regs->regs[IP] = 0x0123456789abcdef;
   _vm = exec_op(_vm, _inst);
-  assert(_vm->regs->regs[IP] == 0x0123456789abcdef);
+  assert(_vm->regs->regs[IP] == 0x0123456789abcdef + 10);
   fini_vm(_vm);
 }
 
@@ -245,12 +257,13 @@ static void jmp_test0b() {
   _inst->is_cs = true; /* jmp if FLAGS.C is set */
   _inst->is_rel = false;
   _inst->op1_indirect = false;
+  _inst->inst_len = 10;
 
   _vm = init_vm();
   _vm->regs->regs[FLAGS] &= ~0x01; /* FLAGS.C is clear */
   _vm->regs->regs[IP] = 0x0123456789abcdef;
   _vm = exec_op(_vm, _inst);
-  assert(_vm->regs->regs[IP] == 0x0123456789abcdef);
+  assert(_vm->regs->regs[IP] == 0x0123456789abcdef + 10);
   fini_vm(_vm);
 
   _vm = init_vm();
@@ -272,6 +285,7 @@ static void jmp_test0c() {
   _inst->is_cs = false;
   _inst->is_rel = true;
   _inst->op1_indirect = false;
+  _inst->inst_len = 10;
 
   _vm = init_vm();
   _vm->regs->regs[IP] = 0x0123456789abcde0;
