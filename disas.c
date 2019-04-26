@@ -168,7 +168,7 @@ static char *disas_call_jmp_jmp8(inst *_inst) {
         strcat(op, " ");
         if (!_inst->op1_indirect) {
           char imm32[OP_SIZE];
-          sprintf(imm32, "0x%08x", (uint32_t)_inst->jmp_imm);
+          sprintf(imm32, "(0x%08x)", (uint32_t)_inst->jmp_imm);
           strcat(op, imm32);
         } else
           strcat(op, disas_index32((uint32_t)_inst->jmp_imm));
@@ -225,7 +225,7 @@ static char *disas_arith_stack_cmp_extnd(inst *_inst) {
       strcat(op, " ");
       if (!_inst->op2_indirect) {
         char imm16[OP_SIZE];
-        sprintf(imm16, "0x%04x", _inst->imm);
+        sprintf(imm16, "(0x%04x)", _inst->imm);
         strcat(op, imm16);
       } else {
         char *idx16 = disas_index16(_inst->imm);
@@ -238,7 +238,7 @@ static char *disas_arith_stack_cmp_extnd(inst *_inst) {
       strcat(op, " ");
       if (!_inst->op1_indirect) {
         char imm16[OP_SIZE];
-        sprintf(imm16, "0x%04x", _inst->imm);
+        sprintf(imm16, "(0x%04x)", _inst->imm);
         strcat(op, imm16);
       } else {
         char *idx16 = disas_index16(_inst->imm);
@@ -292,13 +292,13 @@ static char *disas_mov_movn_movsn(inst *_inst) {
       char imm[OP_SIZE];
       switch (_inst->idx_len) {
         case 2:
-          sprintf(imm, "0x%04x", (uint16_t)_inst->op1_idx);
+          sprintf(imm, "(0x%04x)", (uint16_t)_inst->op1_idx);
           break;
         case 4:
-          sprintf(imm, "0x%08x", (uint32_t)_inst->op1_idx);
+          sprintf(imm, "(0x%08x)", (uint32_t)_inst->op1_idx);
           break;
         case 8:
-          sprintf(imm, "0x%016lx", (uint64_t)_inst->op1_idx);
+          sprintf(imm, "(0x%016lx)", (uint64_t)_inst->op1_idx);
           break;
         default:
           error("invalid operand");
@@ -335,13 +335,13 @@ static char *disas_mov_movn_movsn(inst *_inst) {
       char imm[OP_SIZE];
       switch (_inst->idx_len) {
         case 2:
-          sprintf(imm, "0x%04x", (uint16_t)_inst->op2_idx);
+          sprintf(imm, "(0x%04x)", (uint16_t)_inst->op2_idx);
           break;
         case 4:
-          sprintf(imm, "0x%08x", (uint32_t)_inst->op2_idx);
+          sprintf(imm, "(0x%08x)", (uint32_t)_inst->op2_idx);
           break;
         case 8:
-          sprintf(imm, "0x%016lx", (uint64_t)_inst->op2_idx);
+          sprintf(imm, "(0x%016lx)", (uint64_t)_inst->op2_idx);
           break;
         default:
           error("invalid operand");
@@ -430,8 +430,23 @@ static char *disas_movi_movin_movrel_cmpi(inst *_inst) {
 
   strcat(op, ", ");
   if (opcode == MOVI
-      || opcode == MOVREL
       || (opcode >= CMPIeq && opcode <= CMPIugte)) {
+    char imm[OP_SIZE];
+    switch (_inst->imm_len) {
+      case 2:
+        sprintf(imm, "(0x%04x)", (uint16_t)_inst->imm_data);
+        break;
+      case 4:
+        sprintf(imm, "(0x%08x)", (uint32_t)_inst->imm_data);
+        break;
+      case 8:
+        sprintf(imm, "(0x%016lx)", (uint64_t)_inst->imm_data);
+        break;
+      default:
+        error("invalid operand");
+    }
+    strcat(op, imm);
+  } else if (opcode == MOVREL) {
     char imm[OP_SIZE];
     switch (_inst->imm_len) {
       case 2:
