@@ -128,12 +128,14 @@ static char *disas_call_jmp_jmp8(inst *_inst) {
     error("malloc failed");
   op[0] = '\0';
 
+#if 0
   if (opcode == CALL || opcode == JMP) {
     if (!_inst->is_jmp64)
       strcat(op, "32");
     else
       strcat(op, "64");
   }
+#endif
 
   if (opcode == JMP || opcode == JMP8) {
     if (_inst->is_cond) {
@@ -145,8 +147,10 @@ static char *disas_call_jmp_jmp8(inst *_inst) {
   } else if (opcode == CALL) {
     if (_inst->is_native)
       strcat(op, "EX");
+#if 0
     if (!_inst->is_rel)
       strcat(op, "a");
+#endif
   }
 
   strcat(op, " ");
@@ -194,10 +198,12 @@ static char *disas_arith_stack_cmp_extnd(inst *_inst) {
     error("malloc failed");
   op[0] = '\0';
 
+#if 0
   if (!_inst->is_64op)
     strcat(op, "32");
   else
     strcat(op, "64");
+#endif
 
   strcat(op, " ");
 
@@ -377,12 +383,14 @@ static char *disas_movi_movin_movrel_cmpi(inst *_inst) {
 
   if (opcode >= CMPIeq && opcode <= CMPIugte) {
     strcat(op, "CMPI");
+#if 0
     if (_inst->mov_len == 4)
       strcat(op, "32");
     else if (_inst->mov_len == 8)
       strcat(op, "64");
     else
       error("invalid operand");
+#endif
   }
 
   if (opcode >= CMPIeq && opcode <= CMPIugte) {
