@@ -235,13 +235,13 @@ int main() {
   movqq_test03();
   movqq_test04();
 
-  //movqq_test12();
-  //movqq_test14();
+  movqq_test12();
+  movqq_test14();
 
-  //movqq_test21();
-  //movqq_test23();
+  movqq_test21();
+  movqq_test23();
 
-  //movqq_test35();
+  movqq_test35();
 
   return 0;
 }

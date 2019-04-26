@@ -2,7 +2,7 @@
 #include "ebcvm.h"
 
 static void op2_test(uint8_t *op) {
-  const reg ops[] = { IP, FLAGS, RV2, RV3, RV4, RV5, RV6, RV7 };
+  const reg ops[] = { FLAGS, IP, RV2, RV3, RV4, RV5, RV6, RV7 };
   inst *_inst;
   for (uint8_t op2 = 0x0; op2 < 0x8; op2++) {
     op[1] &= ~(0x7 << 4);

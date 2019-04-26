@@ -172,7 +172,7 @@ static void movinq_test03() {
   _vm = init_vm();
   _vm->regs->regs[_inst->operand1] = 0x20;
   _vm = exec_op(_vm, _inst);
-  assert(read_mem64(_vm->mem, 0x30) == (int64_t)+16);
+  assert(read_mem64(_vm->mem, 0x20) == (int64_t)+16);
   fini_vm(_vm);
 
   free(_inst);
@@ -187,11 +187,9 @@ int main() {
   movind_test02();
   movind_test03();
 
-  /*
   movinq_test01();
   movinq_test02();
   movinq_test03();
-  */
 
   return 0;
 }
