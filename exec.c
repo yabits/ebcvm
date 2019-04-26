@@ -2,19 +2,20 @@
 
 #define DECODE_INDEX(bits)                                          \
 static int##bits##_t decode_index##bits(uint##bits##_t index) {     \
-  uint##bits##_t mask;                                              \
-  uint8_t b = sizeof(uint##bits##_t) * 8;                           \
-  int64_t s = index >> (b - 1) ? -1 : 1;                            \
-  uint8_t a = ((index >> (b - 4)) & 0x07) * sizeof(uint##bits##_t); \
-  mask = 0x00;                                                      \
-  for (int i = a; i < b - 4; i++)                                   \
-    mask |= 0x01 << i;                                              \
-  uint##bits##_t c = (index & mask) >> a;                           \
-  mask = 0x00;                                                      \
-  for (int i = 0; i < a; i++)                                       \
-    mask |= 0x01 << i;                                              \
-  uint##bits##_t n = (index & mask) >> 0;                           \
-  int##bits##_t offset = (c + n * ARCH_BYTES) * s;                  \
+  bool s = index >> (bits - 1);                                     \
+  uint8_t r = bits - 4;                                             \
+  uint8_t a = (index & ((uint##bits##_t)0x7 << r)) >> r;            \
+  uint8_t nl = a * (bits / 8);                                      \
+  uint8_t cl = bits - (4 + nl);                                     \
+  uint##bits##_t nm = 0;                                            \
+  uint##bits##_t cm = 0;                                            \
+  if (4 + cl != bits)                                               \
+    nm = ~0 >> (4 + cl);                                            \
+  if (4 + nl != bits)                                               \
+    cm = (~0 >> (4 + nl)) << nl;                                    \
+  int##bits##_t n = (s ? -1 : 1) * (index & nm);                    \
+  int##bits##_t c = (s ? -1 : 1) * ((index & cm) >> nl);            \
+  int##bits##_t offset = (c + n * ARCH_BYTES);                      \
   return offset;                                                    \
 }
 
