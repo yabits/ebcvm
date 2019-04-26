@@ -2,30 +2,31 @@
 
 #define OP_SIZE 128
 
-#define DISAS_INDEX(bits)                                             \
+#define DISAS_INDEX(bits, format)                                     \
 static char *disas_index##bits(uint##bits##_t index) {                \
-  uint##bits##_t mask;                                                \
-  uint8_t b = sizeof(uint##bits##_t) * 8;                             \
-  int64_t s = index >> (b - 1) ? -1 : 1;                              \
-  uint8_t a = ((index >> (b - 4)) & 0x07) * sizeof(uint##bits##_t);   \
-  mask = 0x00;                                                        \
-  for (int i = a; i < b - 4; i++)                                     \
-    mask |= 0x01 << i;                                                \
-  uint##bits##_t c = (index & mask) >> a;                             \
-  mask = 0x00;                                                        \
-  for (int i = 0; i < a; i++)                                         \
-    mask |= 0x01 << i;                                                \
-  uint##bits##_t n = (index & mask) >> 0;                             \
-  char *idx = malloc(sizeof(char) * OP_SIZE);                         \
-  if (!idx)                                                           \
+  bool s = index >> (bits - 1);                                       \
+  uint8_t r = bits - 4;                                               \
+  uint8_t a = (index & ((uint##bits##_t)0x7 << r)) >> r;              \
+  uint8_t nl = a * (bits / 8);                                        \
+  uint8_t cl = bits - (4 + nl);                                       \
+  uint##bits##_t nm = 0;                                              \
+  uint##bits##_t cm = 0;                                              \
+  if (4 + cl != bits)                                                 \
+    nm = UINT##bits##_MAX >> (4 + cl);                                \
+  if (4 + nl != bits)                                                 \
+    cm = (UINT##bits##_MAX >> (4 + nl)) << nl;                        \
+  int##bits##_t n = (s ? -1 : 1) * (index & nm);                      \
+  int##bits##_t c = (s ? -1 : 1) * ((index & cm) >> nl);              \
+  char *buf = malloc(sizeof(char) * OP_SIZE);                         \
+  if (!buf)                                                           \
     error("malloc failed");                                           \
-  sprintf(idx, "(%+ld, %+ld)", s * n, s * c);                         \
-  return idx;                                                         \
+  sprintf(buf, format, n, c);                                         \
+  return buf;                                                         \
 }
 
-DISAS_INDEX(16)
-DISAS_INDEX(32)
-DISAS_INDEX(64)
+DISAS_INDEX(16, "(%+d, %+d)")
+DISAS_INDEX(32, "(%+d, %+d)")
+DISAS_INDEX(64, "(%+ld, %+ld)")
 
 const char *opcodes[] = {
   "BREAK",
@@ -88,8 +89,8 @@ const char *opcodes[] = {
 };
 
 const char *regsstr[] = {
-  "FLAGS",
-  "IP",
+  "[FLAGS]",
+  "[IP]",
   "RV2",
   "RV3",
   "RV4",
@@ -128,12 +129,14 @@ static char *disas_call_jmp_jmp8(inst *_inst) {
     error("malloc failed");
   op[0] = '\0';
 
+#if 0
   if (opcode == CALL || opcode == JMP) {
     if (!_inst->is_jmp64)
       strcat(op, "32");
     else
       strcat(op, "64");
   }
+#endif
 
   if (opcode == JMP || opcode == JMP8) {
     if (_inst->is_cond) {
@@ -145,8 +148,10 @@ static char *disas_call_jmp_jmp8(inst *_inst) {
   } else if (opcode == CALL) {
     if (_inst->is_native)
       strcat(op, "EX");
+#if 0
     if (!_inst->is_rel)
       strcat(op, "a");
+#endif
   }
 
   strcat(op, " ");
@@ -164,7 +169,7 @@ static char *disas_call_jmp_jmp8(inst *_inst) {
         strcat(op, " ");
         if (!_inst->op1_indirect) {
           char imm32[OP_SIZE];
-          sprintf(imm32, "0x%08x", (uint32_t)_inst->jmp_imm);
+          sprintf(imm32, "(0x%08x)", (uint32_t)_inst->jmp_imm);
           strcat(op, imm32);
         } else
           strcat(op, disas_index32((uint32_t)_inst->jmp_imm));
@@ -194,10 +199,12 @@ static char *disas_arith_stack_cmp_extnd(inst *_inst) {
     error("malloc failed");
   op[0] = '\0';
 
+#if 0
   if (!_inst->is_64op)
     strcat(op, "32");
   else
     strcat(op, "64");
+#endif
 
   strcat(op, " ");
 
@@ -219,7 +226,7 @@ static char *disas_arith_stack_cmp_extnd(inst *_inst) {
       strcat(op, " ");
       if (!_inst->op2_indirect) {
         char imm16[OP_SIZE];
-        sprintf(imm16, "0x%04x", _inst->imm);
+        sprintf(imm16, "(0x%04x)", _inst->imm);
         strcat(op, imm16);
       } else {
         char *idx16 = disas_index16(_inst->imm);
@@ -232,7 +239,7 @@ static char *disas_arith_stack_cmp_extnd(inst *_inst) {
       strcat(op, " ");
       if (!_inst->op1_indirect) {
         char imm16[OP_SIZE];
-        sprintf(imm16, "0x%04x", _inst->imm);
+        sprintf(imm16, "(0x%04x)", _inst->imm);
         strcat(op, imm16);
       } else {
         char *idx16 = disas_index16(_inst->imm);
@@ -286,13 +293,13 @@ static char *disas_mov_movn_movsn(inst *_inst) {
       char imm[OP_SIZE];
       switch (_inst->idx_len) {
         case 2:
-          sprintf(imm, "0x%04x", (uint16_t)_inst->op1_idx);
+          sprintf(imm, "(0x%04x)", (uint16_t)_inst->op1_idx);
           break;
         case 4:
-          sprintf(imm, "0x%08x", (uint32_t)_inst->op1_idx);
+          sprintf(imm, "(0x%08x)", (uint32_t)_inst->op1_idx);
           break;
         case 8:
-          sprintf(imm, "0x%016lx", (uint64_t)_inst->op1_idx);
+          sprintf(imm, "(0x%016lx)", (uint64_t)_inst->op1_idx);
           break;
         default:
           error("invalid operand");
@@ -329,13 +336,13 @@ static char *disas_mov_movn_movsn(inst *_inst) {
       char imm[OP_SIZE];
       switch (_inst->idx_len) {
         case 2:
-          sprintf(imm, "0x%04x", (uint16_t)_inst->op2_idx);
+          sprintf(imm, "(0x%04x)", (uint16_t)_inst->op2_idx);
           break;
         case 4:
-          sprintf(imm, "0x%08x", (uint32_t)_inst->op2_idx);
+          sprintf(imm, "(0x%08x)", (uint32_t)_inst->op2_idx);
           break;
         case 8:
-          sprintf(imm, "0x%016lx", (uint64_t)_inst->op2_idx);
+          sprintf(imm, "(0x%016lx)", (uint64_t)_inst->op2_idx);
           break;
         default:
           error("invalid operand");
@@ -377,12 +384,14 @@ static char *disas_movi_movin_movrel_cmpi(inst *_inst) {
 
   if (opcode >= CMPIeq && opcode <= CMPIugte) {
     strcat(op, "CMPI");
+#if 0
     if (_inst->mov_len == 4)
       strcat(op, "32");
     else if (_inst->mov_len == 8)
       strcat(op, "64");
     else
       error("invalid operand");
+#endif
   }
 
   if (opcode >= CMPIeq && opcode <= CMPIugte) {
@@ -407,6 +416,38 @@ static char *disas_movi_movin_movrel_cmpi(inst *_inst) {
     }
   }
 
+  if (opcode == MOVI) {
+    switch (_inst->mov_len) {
+      case 1:
+        strcat(op, "b");
+        break;
+      case 2:
+        strcat(op, "w");
+        break;
+      case 4:
+        strcat(op, "d");
+        break;
+      case 8:
+        strcat(op, "q");
+        break;
+      default:
+        error("invalid opcode");
+    }
+    switch (_inst->imm_len) {
+      case 2:
+        strcat(op, "w");
+        break;
+      case 4:
+        strcat(op, "d");
+        break;
+      case 8:
+        strcat(op, "q");
+        break;
+      default:
+        error("invalid opcode");
+    }
+  }
+
   strcat(op, " ");
   if (_inst->op1_indirect)
     strcat(op, "@");
@@ -421,9 +462,23 @@ static char *disas_movi_movin_movrel_cmpi(inst *_inst) {
   }
 
   strcat(op, ", ");
-  if (opcode == MOVI
-      || opcode == MOVREL
-      || (opcode >= CMPIeq && opcode <= CMPIugte)) {
+  if (opcode >= CMPIeq && opcode <= CMPIugte) {
+    char imm[OP_SIZE];
+    switch (_inst->imm_len) {
+      case 2:
+        sprintf(imm, "(0x%04x)", (uint16_t)_inst->imm_data);
+        break;
+      case 4:
+        sprintf(imm, "(0x%08x)", (uint32_t)_inst->imm_data);
+        break;
+      case 8:
+        sprintf(imm, "(0x%016lx)", (uint64_t)_inst->imm_data);
+        break;
+      default:
+        error("invalid operand");
+    }
+    strcat(op, imm);
+  } else if (opcode == MOVI || opcode == MOVREL) {
     char imm[OP_SIZE];
     switch (_inst->imm_len) {
       case 2:
