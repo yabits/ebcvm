@@ -1114,7 +1114,17 @@ static vm *exec_loadsp(vm *_vm, inst *_inst) {
 }
 
 static vm *exec_storesp(vm *_vm, inst *_inst) {
-  _vm->regs->regs[_inst->operand1] = _vm->regs->regs[_inst->operand2];
+  switch (_inst->operand2) {
+    case FLAGS:
+      _vm->regs->regs[_inst->operand1] = _vm->regs->regs[_inst->operand2];
+      break;
+    case IP:
+      /* XXX: according to EbcExecute.c, pass next IP */
+      _vm->regs->regs[_inst->operand1] = _vm->regs->regs[_inst->operand2] + 2;
+      break;
+    default:
+      raise_except(ENCODE, "STORESP", __FILE__, __LINE__);
+  }
 
   return _vm;
 }
