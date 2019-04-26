@@ -10,9 +10,9 @@ static int##bits##_t decode_index##bits(uint##bits##_t index) {     \
   uint##bits##_t nm = 0;                                            \
   uint##bits##_t cm = 0;                                            \
   if (4 + cl != bits)                                               \
-    nm = ~0 >> (4 + cl);                                            \
+    nm = UINT##bits##_MAX >> (4 + cl);                              \
   if (4 + nl != bits)                                               \
-    cm = (~0 >> (4 + nl)) << nl;                                    \
+    cm = (UINT##bits##_MAX >> (4 + nl)) << nl;                      \
   int##bits##_t n = (s ? -1 : 1) * (index & nm);                    \
   int##bits##_t c = (s ? -1 : 1) * ((index & cm) >> nl);            \
   int##bits##_t offset = (c + n * ARCH_BYTES);                      \
