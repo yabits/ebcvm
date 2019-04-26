@@ -416,6 +416,38 @@ static char *disas_movi_movin_movrel_cmpi(inst *_inst) {
     }
   }
 
+  if (opcode == MOVI) {
+    switch (_inst->mov_len) {
+      case 1:
+        strcat(op, "b");
+        break;
+      case 2:
+        strcat(op, "w");
+        break;
+      case 4:
+        strcat(op, "d");
+        break;
+      case 8:
+        strcat(op, "q");
+        break;
+      default:
+        error("invalid opcode");
+    }
+    switch (_inst->imm_len) {
+      case 2:
+        strcat(op, "w");
+        break;
+      case 4:
+        strcat(op, "d");
+        break;
+      case 8:
+        strcat(op, "q");
+        break;
+      default:
+        error("invalid opcode");
+    }
+  }
+
   strcat(op, " ");
   if (_inst->op1_indirect)
     strcat(op, "@");
@@ -430,8 +462,7 @@ static char *disas_movi_movin_movrel_cmpi(inst *_inst) {
   }
 
   strcat(op, ", ");
-  if (opcode == MOVI
-      || (opcode >= CMPIeq && opcode <= CMPIugte)) {
+  if (opcode >= CMPIeq && opcode <= CMPIugte) {
     char imm[OP_SIZE];
     switch (_inst->imm_len) {
       case 2:
@@ -447,7 +478,7 @@ static char *disas_movi_movin_movrel_cmpi(inst *_inst) {
         error("invalid operand");
     }
     strcat(op, imm);
-  } else if (opcode == MOVREL) {
+  } else if (opcode == MOVI || opcode == MOVREL) {
     char imm[OP_SIZE];
     switch (_inst->imm_len) {
       case 2:
