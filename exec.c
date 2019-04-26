@@ -228,7 +228,7 @@ static vm *exec_jmp8(vm *_vm, inst *_inst) {
   } else
     do_jmp = true;
   if (do_jmp)
-    _vm->regs->regs[IP] += 2 + (int8_t)_inst->jmp_imm * 2;
+    _vm->regs->regs[IP] += _inst->inst_len  + (int8_t)_inst->jmp_imm * 2;
   else
     _vm->regs->regs[IP] += _inst->inst_len;
 

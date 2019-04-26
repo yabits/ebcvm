@@ -8,6 +8,7 @@ static void jmp8_test01() {
   _inst->is_cs = false;
   _inst->opcode = JMP8;
   _inst->jmp_imm = 4;
+  _inst->inst_len = 2;
 
   _vm = init_vm();
   _vm->regs->regs[IP] = 0x01234560;
@@ -23,6 +24,7 @@ static void jmp8_test02() {
   _inst->is_cs = false;
   _inst->opcode = JMP8;
   _inst->jmp_imm = (int8_t)-51;
+  _inst->inst_len = 2;
 
   _vm = init_vm();
   _vm->regs->regs[IP] = 0x01234560;
@@ -38,6 +40,7 @@ static void jmp8_test03() {
   _inst->is_cs = false; /* jmp if FLAGS.C is clear */
   _inst->opcode = JMP8;
   _inst->jmp_imm = 4;
+  _inst->inst_len = 2;
 
   _vm = init_vm();
   _vm->regs->regs[FLAGS] &= ~0x01; /* FLAGS.C is clear */
@@ -50,7 +53,7 @@ static void jmp8_test03() {
   _vm->regs->regs[FLAGS] |= 0x01; /* FLAGS.C is set */
   _vm->regs->regs[IP] = 0x01234560;
   _vm = exec_op(_vm, _inst);
-  assert(_vm->regs->regs[IP] == 0x01234560);
+  assert(_vm->regs->regs[IP] == 0x01234562);
   fini_vm(_vm);
 }
 
@@ -61,12 +64,13 @@ static void jmp8_test04() {
   _inst->is_cs = true; /* jmp if FLAGS.C is set */
   _inst->opcode = JMP8;
   _inst->jmp_imm = 4;
+  _inst->inst_len = 2;
 
   _vm = init_vm();
   _vm->regs->regs[FLAGS] &= ~0x01; /* FLAGS.C is clear */
   _vm->regs->regs[IP] = 0x01234560;
   _vm = exec_op(_vm, _inst);
-  assert(_vm->regs->regs[IP] == 0x01234560);
+  assert(_vm->regs->regs[IP] == 0x01234562);
   fini_vm(_vm);
 
   _vm = init_vm();
