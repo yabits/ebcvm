@@ -88,8 +88,8 @@ const char *opcodes[] = {
 };
 
 const char *regsstr[] = {
-  "FLAGS",
-  "IP",
+  "[FLAGS]",
+  "[IP]",
   "RV2",
   "RV3",
   "RV4",
