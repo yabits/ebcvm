@@ -878,7 +878,7 @@ static vm *exec_movsn(vm *_vm, inst *_inst) {
   } else {
     op2 = _vm->regs->regs[_inst->operand2];
     if (_inst->is_op2_idx)
-      op2 = + (int64_t)_inst->op2_idx;
+      op2 += (int64_t)_inst->op2_idx;
   }
 
   if (_inst->op1_indirect) {
