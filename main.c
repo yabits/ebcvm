@@ -8,7 +8,7 @@ static void init() {
   FLAGS_stack = STACK_SIZE;
   FLAGS_heap = HEAP_SIZE;
   FLAGS_step = false;
-  FLAGS_reloc = false;
+  FLAGS_reloc = true;
 }
 
 static void print_usage(const char *argv0) {
