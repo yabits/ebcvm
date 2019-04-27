@@ -1,4 +1,4 @@
-# ebcvm
+# ebcvm [![CircleCI](https://circleci.com/gh/yabits/ebcvm.svg?style=shield)](https://circleci.com/gh/yabits/ebcvm)
 
 EFI Byte Code Virtual Machine in Userspace
 
