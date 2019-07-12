@@ -20,9 +20,6 @@ static vm *do_load_exe(const char *addr, vm *_vm) {
   if (fhdr->Machine != 0x0ebc)
     goto unsupported;
 
-  if (!(fhdr->Characteristics & IMAGE_FILE_32BIT_MACHINE))
-    goto unsupported;
-
   IMAGE_OPTIONAL_HEADER *opthdr = &nthdr->OptionalHeader;
   if (opthdr->Magic != 0x20b)
     goto unsupported;
