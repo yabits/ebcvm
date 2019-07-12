@@ -248,6 +248,8 @@ static vm *exec_call(vm *_vm, inst *_inst) {
     uint64_t op;
     if (_inst->is_rel)
       op = _vm->regs->regs[IP] + (int64_t)_inst->jmp_imm;
+    else
+      op = _inst->jmp_imm;
     if (_inst->is_native)
       raise_excall(op, _vm);
     else
