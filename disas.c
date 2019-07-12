@@ -148,10 +148,8 @@ static char *disas_call_jmp_jmp8(inst *_inst) {
   } else if (opcode == CALL) {
     if (_inst->is_native)
       strcat(op, "EX");
-#if 0
     if (!_inst->is_rel)
       strcat(op, "a");
-#endif
   }
 
   strcat(op, " ");
