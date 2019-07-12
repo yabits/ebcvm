@@ -238,18 +238,20 @@ static vm *exec_jmp8(vm *_vm, inst *_inst) {
 static vm *exec_call(vm *_vm, inst *_inst) {
   size_t inst_len = _inst->is_jmp64 ? 10 : (_inst->is_jmp_imm ? 6 : 2);
   /* XXX: PUSH64 return address */
-  _vm->regs->regs[R0] -= 8;
+  _vm->regs->regs[R0] -= 16;
   write_mem64(_vm->mem,
       _vm->regs->regs[R0], _vm->regs->regs[IP] + inst_len);
 
   if (_inst->is_jmp64) {
-    if (_inst->is_native) {
-      raise_excall((uint64_t)_inst->jmp_imm, _vm);
-    } else
-      if (_inst->is_jmp_imm)
-        _vm->regs->regs[IP] = (uint64_t)_inst->jmp_imm;
-      else
+    if (!_inst->is_jmp_imm)
         raise_except(ENCODE, "CALL", __FILE__, __LINE__);
+    uint64_t op;
+    if (_inst->is_rel)
+      op = _vm->regs->regs[IP] + (int64_t)_inst->jmp_imm;
+    if (_inst->is_native)
+      raise_excall(op, _vm);
+    else
+      _vm->regs->regs[IP] = op;
   } else {
     uint64_t op;
     if (_inst->operand1 != R0) {
