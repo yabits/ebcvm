@@ -12,9 +12,9 @@ static size_t calc_offset(size_t size) {
 static void bs_allocate_pool(vm *_vm) {
   uint64_t stack_top = _vm->regs->regs[R0];
   uint64_t ret_addr = read_mem64(_vm->mem, stack_top);
-  /* pool_size = stack_top + 8 */
-  uint64_t size = read_mem64(_vm->mem, stack_top + 16);
-  uint64_t buffer = read_mem64(_vm->mem, stack_top + 24);
+  /* pool_size = stack_top + 16 */
+  uint64_t size = read_mem64(_vm->mem, stack_top + 24);
+  uint64_t buffer = read_mem64(_vm->mem, stack_top + 32);
 
   if (size > FLAGS_heap)
     raise_except(MEMORY, "out of memory", __FILE__, __LINE__);
@@ -31,16 +31,16 @@ static void bs_allocate_pool(vm *_vm) {
   write_mem64(_vm->mem, buffer, heap_addr);
 
   _vm->regs->regs[R7] = EFI_SUCCESS;
-  /* XXX: POPn */
-  _vm->regs->regs[R0] += ARCH_BYTES;
+  /* XXX: MOVqq R0, R0 (+2, 0) */
+  _vm->regs->regs[R0] += ARCH_BYTES * 2;
   _vm->regs->regs[IP] = ret_addr;
 }
 
 static void conin_read_key_stroke(vm *_vm) {
   uint64_t stack_top = _vm->regs->regs[R0];
   uint64_t ret_addr = read_mem64(_vm->mem, stack_top);
-  /* this = stack_top + 8 */
-  uint64_t key = read_mem64(_vm->mem, stack_top + 16);
+  /* this = stack_top + 16 */
+  uint64_t key = read_mem64(_vm->mem, stack_top + 24);
 
   int c = fgetc(stdin);
   if (c == EOF)
@@ -52,8 +52,8 @@ static void conin_read_key_stroke(vm *_vm) {
   write_mem16(_vm->mem, key + offset, (CHAR16)c);
 
   _vm->regs->regs[R7] = EFI_SUCCESS;
-  /* XXX: POPn */
-  _vm->regs->regs[R0] += ARCH_BYTES;
+  /* XXX: MOVqq R0, R0 (+2, 0) */
+  _vm->regs->regs[R0] += ARCH_BYTES * 2;
   _vm->regs->regs[IP] = ret_addr;
 }
 
@@ -62,15 +62,17 @@ static void conin_read_key_stroke(vm *_vm) {
 static void conout_output_string(vm *_vm) {
   uint64_t stack_top = _vm->regs->regs[R0];
   uint64_t ret_addr = read_mem64(_vm->mem, stack_top);
-  /* this = stack_top + 8 */
-  uint64_t string = read_mem64(_vm->mem, stack_top + 16);
+  /* this = stack_top + 16 */
+  uint64_t string = read_mem64(_vm->mem, stack_top + 24);
 
-  for (uint64_t p = string; read_mem16(_vm->mem, p) != 0xffff; p += 2)
-    fputc((char)read_mem16(_vm->mem, p), stdout);
+  for (uint64_t p = string; read_mem16(_vm->mem, p) != 0x0000; p += 2) {
+    char c = (char)(read_mem16(_vm->mem, p) & 0x00ff);
+    fputc(c, stdout);
+  }
 
   _vm->regs->regs[R7] = EFI_SUCCESS;
-  /* XXX: POPn */
-  _vm->regs->regs[R0] += ARCH_BYTES;
+  /* XXX: MOVqq R0, R0 (+2, 0) */
+  _vm->regs->regs[R0] += ARCH_BYTES * 2;
   _vm->regs->regs[IP] = ret_addr;
 }
 
