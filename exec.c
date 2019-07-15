@@ -248,7 +248,7 @@ static vm *exec_call(vm *_vm, inst *_inst) {
         raise_except(ENCODE, "CALL", __FILE__, __LINE__);
     if (_inst->is_rel)
       raise_except(ENCODE, "CALL", __FILE__, __LINE__);
-    op = _inst->jmp_imm;
+    op = (uint64_t)_inst->jmp_imm;
     if (_inst->is_native)
       raise_excall(op, _vm);
     else
@@ -259,14 +259,14 @@ static vm *exec_call(vm *_vm, inst *_inst) {
         uint64_t addr = _vm->regs->regs[_inst->operand1];
         if (_inst->is_jmp_imm)
           addr += decode_index32(_inst->jmp_imm);
-        op = read_mem32(_vm->mem, addr);
+        op = read_mem64(_vm->mem, addr);
       } else {
         op = _vm->regs->regs[_inst->operand1];
         if (_inst->is_jmp_imm)
-          op += _inst->jmp_imm;
+          op += (int32_t)_inst->jmp_imm;
       }
     } else
-      op = _inst->jmp_imm;
+      op = (int32_t)_inst->jmp_imm;
     if (_inst->is_rel) {
       op += _vm->regs->regs[IP];
       if (!_inst->is_native)
