@@ -24,7 +24,7 @@ jobs:
       - run:
           name: Run elvm test
           command: |
-            export PATH=$(PWD):$PATH
+            export PATH=`pwd`:$PATH
             git clone https://github.com/retrage/elvm.git
             cd elvm
             git checkout retrage/ebc-v2
