@@ -12,7 +12,7 @@ jobs:
           name: Install toolchains
           command: |
             apt-get update
-            apt-get install -y build-essential make git
+            apt-get install -y build-essential make git ruby
             apt-get clean
       - checkout
       - run:
