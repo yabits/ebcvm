@@ -21,3 +21,11 @@ jobs:
       - run:
           name: Run test
           command: make test
+      - run:
+          name: Run elvm test
+          command: |
+            export PATH=$(PWD):$PATH
+            git clone https://github.com/retrage/elvm.git
+            cd elvm
+            git checkout retrage/ebc-v2
+            make ebc
