@@ -12,10 +12,10 @@
 #define MAJOR_VERSION 0x0001
 #define MINOR_VERSION 0x0000
 
-#define AUTO_MEM_SIZE 67108864
-#define MEM_SIZE      8388608
+#define AUTO_MEM_SIZE 0
+#define MEM_SIZE      0x800000
 #define STACK_SIZE    0x4000
-#define HEAP_SIZE     0x4000
+#define HEAP_SIZE     0x4000000
 #define STACK_MAGIC   0x0ebc0ebc0ebc0ebc
 #define RET_MAGIC     0xffffffffffffffff
 
