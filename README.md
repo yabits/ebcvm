@@ -48,17 +48,18 @@ Since there is no single EBC binary available in public,
 we created an EBC backend for
 [ELVM](https://github.com/shinh/elvm).
 
-To generate EBC binaries, run:
+To test EBC backend, run:
 
 ```
+$ export PATH=`pwd`:$PATH
 $ git clone https://github.com/retrage/elvm.git
-$ cd elvm && git checkout retrage/ebcvm
+$ cd elvm && git checkout retrage/ebc-v2
 $ make ebc
 ```
 
-The ELVM generates EBC binaries from EIR and C using modified
-[8cc](https://github.com/rui314/8cc)
-including 8cc compiler itself.
+The ELVM EBC backend will generate EBC binaries
+from EIR and C source code using modified
+[8cc](https://github.com/rui314/8cc).
 
 ## EFI native code emulations
 
