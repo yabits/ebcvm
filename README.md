@@ -34,12 +34,12 @@ Usage: ./ebcvm [OPTION] FILE
 EFI Byte Code Interpreter
 [OPTION]
   --debug={0,1}   debug mode
-  --mem=INT   size of memory
-  --stack=INT   size of stack
-  --heap=INT    size of heap
+  --mem=INT       size of memory
+  --stack=INT     size of stack
+  --heap=INT      size of heap
   --step={0,1}    step execution
   --reloc={0,1}   relocate sections
-  --help    show this help
+  --help          show this help
 ```
 
 ## Working with ELVM
