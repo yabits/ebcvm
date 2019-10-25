@@ -90,8 +90,7 @@ typedef struct _IMAGE_OPTIONAL_HEADER {
     ULONGLONG SizeOfHeapCommit;
     DWORD     LoaderFlags;
     DWORD     NumberOfRvaAndSizes;
-    IMAGE_DATA_DIRECTORY
-              DataDirecroty[IMAGE_NUMBEROF_DIRECTORY_ENTRIES];
+    IMAGE_DATA_DIRECTORY DataDirectory[0];
 } IMAGE_OPTIONAL_HEADER, *PIMAGE_OPTIONAL_HEADER;
 
 typedef struct _PE32_IMAGE_NT_HEADERS {
