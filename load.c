@@ -52,8 +52,9 @@ static vm *do_load_exe(const char *addr, vm *_vm) {
   IMAGE_SECTION_HEADER *sechdr;
   for (int i = 0; i < fhdr->NumberOfSections; i++) {
     sechdr = (IMAGE_SECTION_HEADER *)
-      (addr + doshdr->e_lfanew
-       + sizeof(IMAGE_NT_HEADERS) + sizeof(IMAGE_SECTION_HEADER) * i);
+      (addr + doshdr->e_lfanew + sizeof(IMAGE_NT_HEADERS)
+       + sizeof(IMAGE_DATA_DIRECTORY) * opthdr->NumberOfRvaAndSizes
+       + sizeof(IMAGE_SECTION_HEADER) * i);
     if (!memcmp(sechdr->Name, ".text", 5))
       _vm->memmap[i + 2].mem_type = MEM_TEXT;
     else if (!memcmp(sechdr->Name, ".data", 5))
@@ -80,8 +81,9 @@ static vm *do_load_exe(const char *addr, vm *_vm) {
   /* load sections */
   for (int i = 0; i < fhdr->NumberOfSections; i++) {
     sechdr = (IMAGE_SECTION_HEADER *)
-      (addr + doshdr->e_lfanew
-       + sizeof(IMAGE_NT_HEADERS) + sizeof(IMAGE_SECTION_HEADER) * i);
+      (addr + doshdr->e_lfanew + sizeof(IMAGE_NT_HEADERS)
+       + sizeof(IMAGE_DATA_DIRECTORY) * opthdr->NumberOfRvaAndSizes
+       + sizeof(IMAGE_SECTION_HEADER) * i);
     if (image_base + sechdr->VirtualAddress > _vm->mem->size)
       raise_except(MEMORY, "out of memory", __FILE__, __LINE__);
     void *dst = _vm->mem->body + image_base + sechdr->VirtualAddress;
