@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: MIT */
+
 #include "ebcvm.h"
 
 static opcode decode_opcode(uint8_t);

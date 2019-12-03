@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: MIT */
+
 #ifndef EBCVM_H_
 #define EBCVM_H_
 

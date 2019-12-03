@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: MIT */
+
 #include "ebcvm.h"
 
 void error(const char *format, ...) {
