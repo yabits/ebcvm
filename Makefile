@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+
 CFLAGS=-Wall -std=c11 -g -O0 -Iinclude
 HDRS=$(wildcard include/*.h)
 SRCS=$(wildcard *.c)

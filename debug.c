@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: MIT */
+
 #include "ebcvm.h"
 
 typedef enum cmd_type {

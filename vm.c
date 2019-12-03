@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: MIT */
+
 #include "ebcvm.h"
 
 static regs *init_regs(void);
