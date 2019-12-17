@@ -1,5 +1,7 @@
 *.o
 ebcvm
-tools/ebcdisas
+libebcvm.a
+tools/disas
+tools/ebcvm
 tools/fnv1
-*.exe
+test/*.exe
