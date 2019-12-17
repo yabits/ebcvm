@@ -1,30 +1,55 @@
 # SPDX-License-Identifier: MIT
 
-CFLAGS=-Wall -std=c11 -g -O0 -Iinclude
-HDRS=$(wildcard include/*.h)
-SRCS=$(wildcard *.c)
-OBJS=$(SRCS:.c=.o)
-TESTS=$(wildcard test/*.c)
-TOBJS=$(TESTS:.c=.o)
-TOOLS=$(wildcard tools/*.c)
-TOOLSOBJS=$(TOOLS:.c=.o)
-TARGET=ebcvm
+CFLAGS := -Wall -std=c11 -g -O0 -Iinclude
 
-all: $(TARGET) tools
+HDRS := \
+  include/ebcvm.h \
+  include/efi.h \
+  include/pe.h \
 
-$(TARGET): $(OBJS)
-	$(CC) -o $@ $^
+OBJS := \
+  src/debug.o \
+  src/decode.o \
+  src/disas.o \
+  src/efi.o \
+  src/exec.o \
+  src/load.o \
+  src/mem.o \
+  src/util.o \
+  src/vm.o \
+
+TOOLS := \
+  tools/ebcvm \
+  tools/disas \
+  tools/fnv1 \
+
+TEST_OBJS := $(patsubst %.c,%.o,$(wildcard test/*.c))
+TESTS := $(TEST_OBJS:.o=.exe)
+
+all: $(TOOLS)
+	@cp tools/ebcvm ebcvm
+
+$(TOOLS): libebcvm.a
+
+$(TESTS): test/%.exe: test/%.o libebcvm.a
+	$(CC) $(CFLAGS) -o $@ $^
+
+libebcvm.a: $(OBJS)
+	$(AR) -rc $@ $^
 
 $(OBJS): $(HDRS)
 
-tools: $(OBJS) $(TOOLSOBJS)
-	$(CC) -o tools/ebcdisas $(filter-out main.o, $(OBJS)) tools/ebcdisas.o
-	$(CC) -o tools/fnv1 tools/fnv1.o
-
-test: $(OBJS) $(TOBJS)
-	./test.sh
+test: $(TESTS)
+	@for test in $(TESTS) ; do \
+	  ./$${test} ; \
+	  out=$$? ; \
+	  if [ "$${out}" != 0 ]; then \
+	  	echo "$${test}: NG" ; \
+		exit $${out} ; \
+	  fi \
+	done
 
 clean:
-	rm -f $(TARGET) ebcdisas fnv1 tools/*.o *.o test/*.o test/*.exe
+	@rm -f ebcvm libebcvm.a $(TOOLS) $(TESTS) $(OBJS) $(TEST_OBJS)
 
 .PHONY: test clean
