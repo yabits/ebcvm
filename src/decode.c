@@ -96,6 +96,16 @@ static reg decode_dd_reg(uint8_t operand) {
   return operand + 0;
 }
 
+static bool is_native_opcode(inst *_inst) {
+  switch (_inst->opcode) {
+    case POPn:
+    case PUSHn:
+      return true;
+    default:
+      return false;
+  }
+}
+
 static inst *decode_jmp(inst *_inst, uint8_t *op) {
   if (!_inst || !op)
     goto fail;
@@ -364,10 +374,15 @@ inst *decode_op(uint8_t *op) {
       _inst->is_imm = true;
     else
       _inst->is_imm = false;
-    if (op[0] & 0x40)
-      _inst->is_64op = true;
-    else
-      _inst->is_64op = false;
+    if (is_native_opcode(_inst)) {
+      _inst->is_64op = ARCH_BYTES == 8 ? true : false;
+    } else {
+      if (op[0] & 0x40)
+        _inst->is_64op = true;
+      else
+        _inst->is_64op = false;
+    }
+
     if (_inst->is_imm) {
       _inst->imm = (op[2] << 0) + (op[3] << 8);
       _inst->inst_len += 2;
