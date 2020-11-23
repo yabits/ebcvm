@@ -1092,16 +1092,11 @@ static vm *exec_ret(vm *_vm, inst *_inst) {
 }
 
 static vm *exec_loadsp(vm *_vm, inst *_inst) {
-  if (_inst->operand1 <= RV2 && _inst->operand1 >= RV7)
-    raise_except(ENCODE, "LOADSP", __FILE__, __LINE__);
-
   if (_inst->operand1 != FLAGS)
     raise_except(ENCODE, "LOADSP", __FILE__, __LINE__);
 
-  if (_inst->operand1 == FLAGS) {
-    /* FIXME: save reserved bits 2..63 */
-    _vm->regs->regs[_inst->operand1] = _vm->regs->regs[_inst->operand2];
-  }
+  /* FIXME: save reserved bits 2..63 */
+  _vm->regs->regs[_inst->operand1] = _vm->regs->regs[_inst->operand2];
 
   return _vm;
 }
