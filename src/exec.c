@@ -55,10 +55,6 @@ static op##bits *read_op##bits(vm *_vm, inst *_inst) {              \
 
 #define EXEC_OP(type, name, op)                                     \
 static type op_##name(type op1, type op2) {                         \
-  if (!strcmp(#name, "div") || !strcmp(#name, "divu") ||            \
-      !strcmp(#name, "mod") || !strcmp(#name, "modu"))              \
-    if (op2 == 0)                                                   \
-      raise_except(DIV0, "devide by 0", __FILE__, __LINE__);        \
   return op;                                                        \
 }                                                                   \
 static vm *exec_##name(vm *_vm, inst *_inst) {                      \
