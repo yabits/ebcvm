@@ -5,11 +5,11 @@
 static opcode decode_opcode(uint8_t);
 static reg decode_gp_reg(uint8_t);
 static reg decode_dd_reg(uint8_t);
-static inst *decode_jmp(inst *, uint8_t *);
-static inst *decode_jmp8(inst *, uint8_t *);
-static inst *decode_cmpi(inst *, uint8_t *);
-static inst *decode_mov(inst *, uint8_t *);
-static inst *decode_movi(inst *, uint8_t *);
+static void decode_jmp(inst *, uint8_t *);
+static void decode_jmp8(inst *, uint8_t *);
+static void decode_cmpi(inst *, uint8_t *);
+static void decode_mov(inst *, uint8_t *);
+static void decode_movi(inst *, uint8_t *);
 
 opcode ops[] = {
   BREAK,   /* 0x00 */
@@ -106,7 +106,7 @@ static bool is_native_opcode(inst *_inst) {
   }
 }
 
-static inst *decode_jmp(inst *_inst, uint8_t *op) {
+static void decode_jmp(inst *_inst, uint8_t *op) {
   if (!_inst || !op)
     goto fail;
 
@@ -127,14 +127,13 @@ static inst *decode_jmp(inst *_inst, uint8_t *op) {
     _inst->inst_len += imm_len;
   }
 
-  return _inst;
+  return;
 
 fail:
   raise_except(ENCODE, "JMP", __FILE__, __LINE__);
-  return NULL;
 }
 
-static inst *decode_jmp8(inst *_inst, uint8_t *op) {
+static void decode_jmp8(inst *_inst, uint8_t *op) {
   if (!_inst || !op)
     goto fail;
 
@@ -144,14 +143,13 @@ static inst *decode_jmp8(inst *_inst, uint8_t *op) {
 
   _inst->jmp_imm = op[1];
 
-  return _inst;
+  return;
 
 fail:
   raise_except(ENCODE, "JMP8", __FILE__, __LINE__);
-  return NULL;
 }
 
-static inst *decode_cmpi(inst *_inst, uint8_t *op) {
+static void decode_cmpi(inst *_inst, uint8_t *op) {
   if (!_inst || !op)
     goto fail;
 
@@ -171,11 +169,10 @@ static inst *decode_cmpi(inst *_inst, uint8_t *op) {
     _inst->imm_data += (uint64_t)op[i + k] << (8 * k);
   _inst->inst_len += _inst->imm_len;
 
-  return _inst;
+  return;
 
 fail:
   raise_except(ENCODE, "CMPI", __FILE__, __LINE__);
-  return NULL;
 }
 
 static inst *decode_mov_idx(inst *_inst, uint8_t *op, size_t idx_len) {
@@ -197,7 +194,7 @@ static inst *decode_mov_idx(inst *_inst, uint8_t *op, size_t idx_len) {
   return _inst;
 }
 
-static inst *decode_mov(inst *_inst, uint8_t *op) {
+static void decode_mov(inst *_inst, uint8_t *op) {
   if (!_inst || !op)
     goto fail;
 
@@ -263,14 +260,13 @@ static inst *decode_mov(inst *_inst, uint8_t *op) {
       /* do nothing */
   }
 
-  return _inst;
+  return;
 
 fail:
   raise_except(ENCODE, "MOV", __FILE__, __LINE__);
-  return NULL;
 }
 
-static inst *decode_movi(inst *_inst, uint8_t *op) {
+static void decode_movi(inst *_inst, uint8_t *op) {
   if (!_inst || !op)
     goto fail;
 
@@ -328,11 +324,10 @@ static inst *decode_movi(inst *_inst, uint8_t *op) {
     _inst->imm_data += (uint64_t)op[i + k] << (8 * k);
   _inst->inst_len += _inst->imm_len;
 
-  return _inst;
+  return;
 
 fail:
   raise_except(ENCODE, "MOVI", __FILE__, __LINE__);
-  return NULL;
 }
 
 #ifdef DEBUG_INST
@@ -358,17 +353,17 @@ inst *decode_op(uint8_t *op) {
     _inst->break_code = op[1];
     goto done;
   } else if (_inst->opcode == JMP || _inst->opcode == CALL) {
-    _inst = decode_jmp(_inst, op);
+    decode_jmp(_inst, op);
   } else if (_inst->opcode == JMP8) {
-    _inst = decode_jmp8(_inst, op);
+    decode_jmp8(_inst, op);
   } else if (_inst->opcode >= CMPIeq && _inst->opcode <= CMPIugte) {
-    _inst = decode_cmpi(_inst, op);
+    decode_cmpi(_inst, op);
   } else if (_inst->opcode >= MOVbw && _inst->opcode <= MOVqq) {
-    _inst = decode_mov(_inst, op);
+    decode_mov(_inst, op);
   } else if (_inst->opcode >= MOVI && _inst->opcode <= MOVREL) {
-    _inst = decode_movi(_inst, op);
+    decode_movi(_inst, op);
   } else if (_inst->opcode >= MOVnw && _inst->opcode <= MOVsnd) {
-    _inst = decode_mov(_inst, op);
+    decode_mov(_inst, op);
   } else {
     if (op[0] & 0x80)
       _inst->is_imm = true;

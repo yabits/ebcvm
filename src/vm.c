@@ -230,6 +230,7 @@ size_t dump_inst(vm *_vm) {
 
   free(op);
   free(_inst);
+  free(disas);
 
   return op_len;
 }

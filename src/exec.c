@@ -55,10 +55,6 @@ static op##bits *read_op##bits(vm *_vm, inst *_inst) {              \
 
 #define EXEC_OP(type, name, op)                                     \
 static type op_##name(type op1, type op2) {                         \
-  if (!strcmp(#name, "div") || !strcmp(#name, "divu") ||            \
-      !strcmp(#name, "mod") || !strcmp(#name, "modu"))              \
-    if (op2 == 0)                                                   \
-      raise_except(DIV0, "devide by 0", __FILE__, __LINE__);        \
   return op;                                                        \
 }                                                                   \
 static vm *exec_##name(vm *_vm, inst *_inst) {                      \
@@ -284,7 +280,7 @@ static vm *exec_call(vm *_vm, inst *_inst) {
 }
 
 static vm *exec_extnd(vm *_vm, inst *_inst) {
-  uint64_t op2;
+  uint64_t op2 = 0;
   if (_inst->opcode == EXTNDB) {
     if (_inst->op2_indirect) {
       if (_inst->is_imm) {
@@ -468,7 +464,8 @@ static vm *exec_cmp(vm *_vm, inst *_inst) {
 
 static vm *exec_cmpi(vm *_vm, inst *_inst) {
   if (_inst->mov_len == 8) {
-    uint64_t op1, op2;
+    uint64_t op1 = 0;
+    uint64_t op2 = (uint64_t)_inst->imm_data;
     if (_inst->op1_indirect) {
       if (_inst->is_opt_idx) {
         op1 = read_mem64(_vm->mem,
@@ -484,7 +481,6 @@ static vm *exec_cmpi(vm *_vm, inst *_inst) {
       else
         op1 = _vm->regs->regs[_inst->operand1];
     }
-    op2 = (uint64_t)_inst->imm_data;
 
     switch (_inst->opcode) {
       case CMPIeq:
@@ -521,7 +517,8 @@ static vm *exec_cmpi(vm *_vm, inst *_inst) {
         raise_except(OPCODE, "CMPI", __FILE__, __LINE__);
     }
   } else if (_inst->mov_len == 4) {
-    uint32_t op1, op2;
+    uint32_t op1 = 0;
+    uint32_t op2 = (uint32_t)_inst->imm_data;
     if (_inst->op1_indirect) {
       if (_inst->is_opt_idx) {
         op1 = (int32_t)read_mem32(_vm->mem,
@@ -537,7 +534,6 @@ static vm *exec_cmpi(vm *_vm, inst *_inst) {
       else
         op1 = (int32_t)_vm->regs->regs[_inst->operand1];
     }
-    op2 = (uint32_t)_inst->imm_data;
 
     switch (_inst->opcode) {
       case CMPIeq:
@@ -581,7 +577,7 @@ static vm *exec_cmpi(vm *_vm, inst *_inst) {
 }
 
 static vm *exec_mov(vm *_vm, inst *_inst) {
-  uint64_t op;
+  uint64_t op = 0;
   if (_inst->op2_indirect) {
     uint64_t op2_addr = _vm->regs->regs[_inst->operand2];
     if (_inst->is_op2_idx) {
@@ -740,7 +736,7 @@ static vm *exec_movi(vm *_vm, inst *_inst) {
 }
 
 static vm *exec_movin(vm *_vm, inst *_inst) {
-  uint64_t op2;
+  uint64_t op2 = 0;
   switch (_inst->imm_len) {
     case 2:
       op2 = decode_index16(_inst->imm_data);
