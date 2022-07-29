@@ -125,7 +125,8 @@ vm *load_exe(const char *path, vm *_vm) {
     error("could not open file");
 
   struct stat sb;
-  fstat(fd, &sb);
+  if (fstat(fd, &sb))
+    error("fstat failed");
   char *addr = mmap(NULL, sb.st_size, PROT_READ, MAP_SHARED, fd, 0);
   if (!addr)
     error("mmap failed");
