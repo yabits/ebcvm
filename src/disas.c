@@ -171,8 +171,11 @@ static char *disas_call_jmp_jmp8(inst *_inst) {
           char imm32[OP_SIZE];
           sprintf(imm32, "(0x%08x)", (uint32_t)_inst->jmp_imm);
           strcat(op, imm32);
-        } else
-          strcat(op, disas_index32((uint32_t)_inst->jmp_imm));
+        } else {
+          char *idx = disas_index32((uint32_t)_inst->jmp_imm);
+          strcat(op, idx);
+          free(idx);
+        }
       }
     }
   }
