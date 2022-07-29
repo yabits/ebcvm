@@ -32,10 +32,11 @@ static vm *do_load_exe(const char *addr, vm *_vm) {
   uint32_t entry_point = opthdr->AddressOfEntryPoint;
   uint64_t image_base = opthdr->ImageBase;
 
-  uint32_t align = opthdr->SectionAlignment;
+  uint64_t align = (uint64_t)opthdr->SectionAlignment;
 
   if (FLAGS_reloc)
-    image_base = (((FLAGS_heap + FLAGS_stack) / align) + 1 ) * align;
+    image_base = ((((uint64_t)FLAGS_heap + (uint64_t)FLAGS_stack) / align)
+                  + 1 ) * align;
 
   _vm->memmap_size = fhdr->NumberOfSections + 2;
   _vm->memmap = malloc(sizeof(memmap) * _vm->memmap_size);
