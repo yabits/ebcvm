@@ -117,16 +117,14 @@ fail:
 }
 
 vm *load_exe(const char *path, vm *_vm) {
-  if (access(path, F_OK) == -1)
-    error("file does not exists");
-
   int fd = open(path, O_RDONLY);
   if (fd < 0)
     error("could not open file");
 
   struct stat sb;
-  if (fstat(fd, &sb))
-    error("fstat failed");
+  if (stat(path, &sb))
+    error("stat failed");
+
   char *addr = mmap(NULL, sb.st_size, PROT_READ, MAP_SHARED, fd, 0);
   if (!addr)
     error("mmap failed");
