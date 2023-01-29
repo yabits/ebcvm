@@ -8,6 +8,13 @@
 #include "ebcvm.h"
 #include "pe.h"
 
+/* Size of stack */
+int FLAGS_stack;
+/* Size of heap */
+int FLAGS_heap;
+/* Relocate sections */
+bool FLAGS_reloc;
+
 static vm *do_load_exe(const char *addr, vm *_vm) {
   /* check executable */
   IMAGE_DOS_HEADER *doshdr = (IMAGE_DOS_HEADER *)addr;

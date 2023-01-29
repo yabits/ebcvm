@@ -2,6 +2,9 @@
 
 #include "ebcvm.h"
 
+/* Size of memory */
+int FLAGS_mem;
+
 mem *init_mem() {
   int mem_size = FLAGS_mem;
   if (!FLAGS_mem)

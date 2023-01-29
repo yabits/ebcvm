@@ -202,20 +202,20 @@ typedef struct dbg {
 } dbg;
 
 /* Debugger */
-dbg *_dbg;
+extern dbg *_dbg;
 
 /* Debug mode */
-bool FLAGS_debug;
+extern bool FLAGS_debug;
 /* Size of memory */
-int FLAGS_mem;
+extern int FLAGS_mem;
 /* Size of stack */
-int FLAGS_stack;
+extern int FLAGS_stack;
 /* Size of heap */
-int FLAGS_heap;
+extern int FLAGS_heap;
 /* Step exection */
-bool FLAGS_step;
+extern bool FLAGS_step;
 /* Relocate sections */
-bool FLAGS_reloc;
+extern bool FLAGS_reloc;
 
 /* vm.c */
 vm *init_vm(void);
@@ -272,6 +272,9 @@ void handle_excall(uint64_t, vm *);
 char *disas_inst(inst *);
 
 /* util.c */
+#ifdef __GNUC__
+__attribute__((noreturn))
+#endif
 void error(const char *, ...);
 uint64_t uintn(uint64_t);
 

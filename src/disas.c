@@ -552,6 +552,8 @@ char *disas_inst(inst *_inst) {
     operands = disas_movi_movin_movrel_cmpi(_inst);
   } else {
     operands = malloc(sizeof(char) * OP_SIZE);
+    if (!operands)
+      error("malloc failed");
     operands[0] = '\0';
   }
   strcat(op, operands);
