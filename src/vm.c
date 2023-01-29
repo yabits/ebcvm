@@ -2,6 +2,11 @@
 
 #include "ebcvm.h"
 
+/* Debug mode */
+bool FLAGS_debug;
+/* Step exection */
+bool FLAGS_step;
+
 static regs *init_regs(void);
 static size_t maybe_fetch_opts(vm *, uint8_t **, size_t);
 static size_t maybe_fetch_imms(vm *, uint8_t **);

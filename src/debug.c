@@ -2,6 +2,9 @@
 
 #include "ebcvm.h"
 
+/* Debugger */
+dbg *_dbg;
+
 typedef enum cmd_type {
   INVALID,
   CONTINUE,
