@@ -32,6 +32,8 @@ typedef struct op##bits {                                           \
 #define READ_OP(bits)                                               \
 static op##bits *read_op##bits(vm *_vm, inst *_inst) {              \
   op##bits *_op##bits = malloc(sizeof(op##bits));                   \
+  if (!_op##bits)                                                   \
+    error("malloc failed");                                         \
   _op##bits->op2val = _vm->regs->regs[_inst->operand2];             \
   if (_inst->op2_indirect) {                                        \
     if (_inst->is_imm) {                                            \

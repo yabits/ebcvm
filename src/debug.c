@@ -97,6 +97,9 @@ static void print_help() {
 
 static cmds *parse_cmd(const char *str) {
   cmds *_cmds = malloc(sizeof(cmds));
+  if (!_cmds) {
+    return NULL;
+  }
 
   uint64_t addr = 0;
   size_t size = 8;
@@ -179,6 +182,8 @@ static void prompt(dbg *_dbg) {
       break;
 
     cmds *_cmds = parse_cmd(str);
+    if (!_cmds)
+      break;
     int res = exec_cmd(_dbg, _cmds);
     free(_cmds);
 
@@ -189,6 +194,9 @@ static void prompt(dbg *_dbg) {
 
 dbg *init_dbg(vm *_vm) {
   dbg *_dbg = malloc(sizeof(dbg));
+  if (!_dbg) {
+    return NULL;
+  }
 
   _dbg->_vm = _vm;
 
