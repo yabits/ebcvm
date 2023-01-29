@@ -272,6 +272,9 @@ void handle_excall(uint64_t, vm *);
 char *disas_inst(inst *);
 
 /* util.c */
+#ifdef __GNUC__
+__attribute__((noreturn))
+#endif
 void error(const char *, ...);
 uint64_t uintn(uint64_t);
 

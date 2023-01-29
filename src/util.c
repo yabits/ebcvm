@@ -2,6 +2,9 @@
 
 #include "ebcvm.h"
 
+#ifdef __GNUC__
+__attribute__((noreturn))
+#endif
 void error(const char *format, ...) {
   va_list ap;
   va_start(ap, format);
